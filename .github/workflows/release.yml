@@ -1,319 +1,203 @@
-name: Release Athenos Webcomponents Module
+# The only pipeline of @athenos/webcomponents: it runs on a tag v* (pushed
+# by fenrir infra/release/release.sh) or by hand, never on an ordinary push,
+# pull request or schedule (GitHub Actions minutes are scarce).
+#
+#   gates             lint (shared config, ESLint, Stylelint, i18n, tsc,
+#                     a11y, tokens:check, Prettier, knip), token pipeline
+#                     tests, unit tests (with and without zone.js),
+#                     build:lib, dist/ matches the build, npm audit
+#                     --audit-level=high (it replaces the former
+#                     security.yml).
+#   catalogue-a11y    Storybook build + axe on every story (Linux).
+#   catalogue-visual  Storybook build + screenshot comparison. The baselines
+#                     are rendered on macOS, so this job needs a macOS
+#                     runner (those minutes count tenfold).
+#   release           on a tag: `npm pack` of the package
+#                     (athenos-webcomponents-<version>.tgz) and SHA256SUMS on
+#                     the GitHub release of the tag. Nothing is published to
+#                     an npm registry: athenos-web takes the library as a git
+#                     dependency pinned to a commit.
+#
+# A manual run can regenerate the darwin screenshot baselines
+# (update_baselines) and upload them as an artifact.
+name: Release
 
 on:
   push:
-    branches: [main, develop, '**']
-    tags:
-      - 'v*'
-  pull_request:
-    branches: [main, develop]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: 'Regenerate the darwin screenshot baselines on the CI runner and upload them as an artifact'
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
-  pull-requests: read
-  issues: read
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Angular 22 needs Node ^22.22.3 or ^24.15 (W4-A; Storybook 10 >= 22.12).
+  NODE_VERSION: '24.15.0'
+  CI: 'true'
 
 jobs:
-  # Packaging runs only after the quality gates in ci.yml (quality step 1.8b,
-  # same pattern as the Rust modules' release.yml).
-  quality:
-    name: Quality Gate
-    uses: ./.github/workflows/ci.yml
-    secrets: inherit
-
-  build:
-    needs: quality
-    runs-on: ubuntu-latest
+  gates:
+    name: lint, unit tests, tokens, build:lib, npm audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          # Angular 22 needs Node ^22.22.3 or ^24.15 (W4-A).
-          node-version: '24.15.0'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Lint (shared config, ESLint, Stylelint, i18n, tsc, a11y, tokens:check, Prettier, knip)
+        run: npm run lint
+      - name: npm audit (high and critical)
+        run: npm audit --audit-level=high
+      - name: Token pipeline tests
+        run: npm run test:tokens
+      # Vitest in browser mode (W5-B): headless Chromium through Playwright,
+      # the version @playwright/test pins.
+      - name: Install Chromium for the unit tests
+        run: npx playwright install --with-deps --only-shell chromium
+      - name: Unit tests
+        run: npx ng test --watch=false
+      # The same specs without zone.js (quality step 4.1): a component that
+      # only updates because zone.js ticked fails here.
+      - name: Unit tests (zoneless)
+        run: npm run test:zoneless -- --watch=false
+      - name: Build library
+        run: npm run build:lib
+      # Git installs ship the committed dist/ and never build (package.json
+      # has no build/prepare/install scripts), so dist/ must be exactly what
+      # the sources build to, and every entry point the root package.json
+      # names must exist in it. Locally: npm run check:dist.
+      - name: dist/ matches the build, entry points exist, no install-time scripts
+        run: node scripts/check-package.mjs --dist
 
-      - name: Install dependencies
-        run: npm install --include=dev
-
-      # Unit tests run in ci.yml (no continue-on-error any more, QA-16).
-
-      - name: Build Angular library
-        run: node node_modules/@angular/cli/bin/ng.js build athenos-webcomponents --configuration production
+  # axe on every story in light and dark. Platform independent, so Linux.
+  catalogue-a11y:
+    name: Storybook build + axe
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps --only-shell chromium
+      - name: Build Storybook
+        run: npm run build-storybook
+      - name: axe on every story (violations not in a11y-baseline.json fail)
+        run: npm run test:storybook
         env:
-          NODE_ENV: production
-
-      - name: Collect package metadata
-        id: pkg
-        run: |
-          PKG_NAME=$(node -p "require('./package.json').name")
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          DESCRIPTION=$(node -p "require('./package.json').description || ''")
-          HOMEPAGE=$(node -p "require('./package.json').homepage || ''")
-          KEYWORDS=$(node -p "JSON.stringify(require('./package.json').keywords || [])")
-          echo "name=$PKG_NAME" >> "$GITHUB_OUTPUT"
-          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
-          echo "description=$DESCRIPTION" >> "$GITHUB_OUTPUT"
-          echo "homepage=$HOMEPAGE" >> "$GITHUB_OUTPUT"
-          echo "keywords=$KEYWORDS" >> "$GITHUB_OUTPUT"
-
-      - name: Detect git version info
-        id: git_version
-        run: |
-          BASE_VERSION="${{ steps.pkg.outputs.version }}"
-          REF_NAME="${GITHUB_REF#refs/*/}"
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            BASE_VERSION=${REF_NAME#v}
-            IS_TAG=true
-          else
-            IS_TAG=false
-          fi
-
-          LAST_TAG=$(git tag -l "v${BASE_VERSION}-*" | sort -V | tail -1)
-          if [[ -z "$LAST_TAG" ]]; then
-            LAST_TAG=$(git tag -l "v${BASE_VERSION}" | tail -1)
-          fi
-
-          if [[ -n "$LAST_TAG" ]]; then
-            COMMITS_SINCE_TAG=$(git rev-list --count ${LAST_TAG}..HEAD 2>/dev/null || echo 1)
-          else
-            COMMITS_SINCE_TAG=$(git rev-list --count HEAD 2>/dev/null || echo 1)
-          fi
-
-          if [[ "$IS_TAG" == true ]]; then
-            PRERELEASE=0
-            FULL_VERSION="$BASE_VERSION"
-          else
-            PRERELEASE=$COMMITS_SINCE_TAG
-            FULL_VERSION="${BASE_VERSION}-${PRERELEASE}"
-          fi
-
-          COMMIT_HASH=$(git rev-parse HEAD)
-          COMMIT_SHORT=$(git rev-parse --short HEAD)
-          TAG_NAME="v${FULL_VERSION}"
-
-          echo "branch=$REF_NAME" >> "$GITHUB_OUTPUT"
-          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
-          echo "full_version=$FULL_VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
-          echo "commit=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
-          echo "commit_short=$COMMIT_SHORT" >> "$GITHUB_OUTPUT"
-          echo "is_tag=$IS_TAG" >> "$GITHUB_OUTPUT"
-
-          echo "Version Info:"
-          echo "  Branch: $REF_NAME"
-          echo "  Base Version: $BASE_VERSION"
-          echo "  Pre-release: $PRERELEASE"
-          echo "  Full Version: $FULL_VERSION"
-          echo "  Tag Name: $TAG_NAME"
-          echo "  Commit: $COMMIT_SHORT"
-
-      - name: Package artifacts
-        id: package_artifact
-        run: |
-          MODULE_NAME="${{ steps.pkg.outputs.name }}"
-          FULL_VERSION="${{ steps.git_version.outputs.full_version }}"
-          SAFE_MODULE_NAME=$(echo "$MODULE_NAME" | sed 's/[^A-Za-z0-9._-]/-/g')
-          ARCHIVE_NAME="${SAFE_MODULE_NAME}-${FULL_VERSION}.tar.gz"
-
-          mkdir -p artifacts/package
-
-          if [ ! -d "dist/athenos-webcomponents" ]; then
-            echo "::error::Angular build output not found at dist/athenos-webcomponents"
-            exit 1
-          fi
-
-          cp -R dist/athenos-webcomponents artifacts/package/dist
-
-          if [ -d ".fenrir" ]; then
-            cp -R .fenrir artifacts/package/.fenrir
-          fi
-          if [ -f "README.md" ]; then
-            cp README.md artifacts/package/
-          fi
-
-          tar -czf "artifacts/${ARCHIVE_NAME}" -C artifacts/package .
-          echo "archive=${ARCHIVE_NAME}" >> "$GITHUB_OUTPUT"
-
-          echo "Artifact created: artifacts/${ARCHIVE_NAME}"
-          ls -lh artifacts/
-
-      - name: Generate manifest
-        run: |
-          MODULE_NAME="${{ steps.pkg.outputs.name }}"
-          DESCRIPTION="${{ steps.pkg.outputs.description }}"
-          HOMEPAGE="${{ steps.pkg.outputs.homepage }}"
-          KEYWORDS='${{ steps.pkg.outputs.keywords }}'
-          FULL_VERSION="${{ steps.git_version.outputs.full_version }}"
-          BASE_VERSION="${{ steps.git_version.outputs.base_version }}"
-          PRERELEASE="${{ steps.git_version.outputs.prerelease }}"
-          COMMIT="${{ steps.git_version.outputs.commit }}"
-          COMMIT_SHORT="${{ steps.git_version.outputs.commit_short }}"
-          BRANCH="${{ steps.git_version.outputs.branch }}"
-          TAG_NAME="${{ steps.git_version.outputs.tag_name }}"
-          IS_TAG="${{ steps.git_version.outputs.is_tag }}"
-          ARCHIVE_NAME="${{ steps.package_artifact.outputs.archive }}"
-
-          # Determine status
-          if [ "$PRERELEASE" = "0" ]; then
-            STATUS="release"
-          else
-            STATUS="development"
-          fi
-
-          # Read fenrir compatibility if available
-          if [ -f ".fenrir/config.toml" ]; then
-            FENRIR_MIN=$(grep 'fenrir_min_version' .fenrir/config.toml | sed 's/.*= "\(.*\)"/\1/' || echo "1.0.0")
-            FENRIR_MAX=$(grep 'fenrir_max_version' .fenrir/config.toml | sed 's/.*= "\(.*\)"/\1/' || echo "99.99.99")
-          else
-            FENRIR_MIN="1.0.0"
-            FENRIR_MAX="99.99.99"
-          fi
-
-          # Generate tag value (null if not a tag)
-          if [ "$IS_TAG" = "true" ]; then
-            TAG_VALUE="\"${TAG_NAME}\""
-          else
-            TAG_VALUE="null"
-          fi
-
-          jq -n \
-            --arg schema_version "2.0" \
-            --arg module_id "$MODULE_NAME" \
-            --arg module_name "$MODULE_NAME" \
-            --arg description "$DESCRIPTION" \
-            --arg homepage "$HOMEPAGE" \
-            --argjson keywords "$KEYWORDS" \
-            --arg base_version "$BASE_VERSION" \
-            --argjson prerelease "$PRERELEASE" \
-            --arg full_version "$FULL_VERSION" \
-            --arg commit "$COMMIT" \
-            --arg commit_short "$COMMIT_SHORT" \
-            --arg branch "$BRANCH" \
-            --argjson tag "$TAG_VALUE" \
-            --arg fenrir_min "$FENRIR_MIN" \
-            --arg fenrir_max "$FENRIR_MAX" \
-            --arg artifact_path "https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${ARCHIVE_NAME}" \
-            --arg build_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg repository "${{ github.repository }}" \
-            --arg status "$STATUS" \
-            '{
-              schema_version: $schema_version,
-              module: {id: $module_id, name: $module_name, description: $description, homepage: $homepage, keywords: $keywords},
-              version: {base: $base_version, prerelease: $prerelease, full: $full_version, commit: $commit, commit_short: $commit_short, branch: $branch, tag: $tag},
-              compatibility: {fenrir_min_version: $fenrir_min, fenrir_max_version: $fenrir_max},
-              dependencies: [],
-              artifact: {source: "ci", path: $artifact_path, build_commit: $commit, build_date: $build_date},
-              metadata: {generated_at: $generated_at, generated_by: "github-actions", repository: $repository, status: $status}
-            }' > artifacts/manifest.json
-
-          echo "Manifest generated:"
-          cat artifacts/manifest.json
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+          SB_VISUAL: 'off'
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: athenos-webcomponents-${{ steps.git_version.outputs.full_version }}
-          path: |
-            artifacts/*.tar.gz
-            artifacts/manifest.json
-          retention-days: 90
+          name: catalogue-a11y-report
+          path: test-results/
+          retention-days: 14
 
-      - name: Create Git tag (if not exists)
-        id: create_tag
-        if: steps.git_version.outputs.is_tag != 'true'
-        run: |
-          TAG_NAME="${{ steps.git_version.outputs.tag_name }}"
-
-          # Check if tag already exists on remote
-          if git ls-remote --tags origin "$TAG_NAME" | grep -q "$TAG_NAME"; then
-            echo "Tag $TAG_NAME already exists on remote, skipping creation"
-            echo "tag_exists=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Check if tag already exists locally
-          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
-            echo "Tag $TAG_NAME already exists locally, deleting and recreating"
-            git tag -d "$TAG_NAME" 2>/dev/null || true
-          fi
-
-          echo "Creating tag $TAG_NAME"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG_NAME" -m "Release ${{ steps.git_version.outputs.full_version }}"
-          echo "tag_exists=false" >> $GITHUB_OUTPUT
-
-          # Push tag
-          git push origin "$TAG_NAME"
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
-        continue-on-error: true
+  # Screenshot comparison. The committed baselines are rendered on macOS
+  # (tests/storybook/__screenshots__/darwin); font rasterisation differs on
+  # Linux, so this job runs on a macOS runner. See README, "Component catalogue".
+  catalogue-visual:
+    name: Storybook build + screenshots
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          files: |
-            artifacts/*.tar.gz
-            artifacts/manifest.json
-          tag_name: ${{ steps.git_version.outputs.tag_name }}
-          name: Release ${{ steps.git_version.outputs.full_version }}
-          body: |
-            ## Module: ${{ steps.pkg.outputs.name }}
-
-            **Version:** ${{ steps.git_version.outputs.full_version }}
-            **Branch:** ${{ steps.git_version.outputs.branch }}
-            **Commit:** ${{ steps.git_version.outputs.commit_short }}
-            **Status:** ${{ steps.git_version.outputs.prerelease == '0' && 'Release' || 'Development' }}
-
-            ### Artifact
-            - `${{ steps.package_artifact.outputs.archive }}`
-            - `manifest.json`
-
-            ### Installation
-            ```bash
-            wget https://github.com/${{ github.repository }}/releases/download/${{ steps.git_version.outputs.tag_name }}/${{ steps.package_artifact.outputs.archive }}
-            tar -xzf ${{ steps.package_artifact.outputs.archive }}
-            ```
-          draft: false
-          prerelease: ${{ steps.git_version.outputs.prerelease != '0' }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --only-shell chromium
+      - name: Build Storybook
+        run: npm run build-storybook
+      - name: Compare screenshots (light/dark × 375/768/1280)
+        if: ${{ !inputs.update_baselines }}
+        run: npm run test:storybook
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prune older prerelease releases (keep tags)
-        if: steps.git_version.outputs.prerelease != '0'
+          SB_A11Y: 'off'
+      - name: Regenerate baselines
+        if: ${{ inputs.update_baselines }}
+        run: npm run test:storybook:update
         env:
-          BASE_VERSION: ${{ steps.git_version.outputs.base_version }}
-          KEEP_TAG: ${{ steps.git_version.outputs.tag_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SB_A11Y: 'off'
+      - name: Upload regenerated baselines
+        if: ${{ inputs.update_baselines }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: catalogue-baselines-darwin
+          path: tests/storybook/__screenshots__/darwin/
+          retention-days: 14
+      - name: Upload diffs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: catalogue-visual-diffs
+          path: test-results/
+          retention-days: 14
+
+  release:
+    name: GitHub release
+    needs: [gates, catalogue-a11y, catalogue-visual]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write # gh release create/upload, only in the publish step
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Version
+        id: version
         run: |
-          # Delete GitHub releases for older prereleases of the same base version; keep tags
-          RELEASES=$(gh release list --limit 100 --json tagName | jq -r '.[].tagName' | grep "^v${BASE_VERSION}-" | grep -v "^${KEEP_TAG}$" || true)
-          if [ -z "$RELEASES" ]; then
-            echo "No older prerelease releases to delete for base ${BASE_VERSION}"
-            exit 0
-          fi
-
-          echo "Deleting old prerelease releases (keeping tags):"
-          for rel in $RELEASES; do
-            echo " - $rel"
-            gh release delete "$rel" -y || true
+          version=${GITHUB_REF_NAME#v}
+          for f in package.json projects/athenos-webcomponents/package.json dist/athenos-webcomponents/package.json; do
+            v=$(jq -r .version "$f")
+            [ "$v" = "$version" ] ||
+              { echo "::error::tag $GITHUB_REF_NAME, but $f says $v (release with fenrir infra/release/release.sh)"; exit 1; }
           done
-
-      - name: Summary
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?$ ]] || { echo "::error::not X.Y.Z-N: $version"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      # The committed dist/ is what git installs get (the gates checked it
+      # matches the sources); pack it without running any script.
+      - name: Pack
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Module:** ${{ steps.pkg.outputs.name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version:** ${{ steps.git_version.outputs.full_version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ steps.git_version.outputs.branch }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ steps.git_version.outputs.commit_short }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ steps.git_version.outputs.prerelease == '0' && 'Release' || 'Development' }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- Archive: \`${{ steps.package_artifact.outputs.archive }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Manifest: \`manifest.json\`" >> $GITHUB_STEP_SUMMARY
+          mkdir -p release
+          npm pack --ignore-scripts --pack-destination release
+          (cd release && sha256sum -- *.tgz > SHA256SUMS && cat SHA256SUMS)
+      - name: Publish to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "athenos-webcomponents $TAG" \
+              --notes "npm pack of @athenos/webcomponents at $GITHUB_SHA. athenos-web pins this commit. Verify with: sha256sum -c SHA256SUMS" ||
+            gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber release/*.tgz release/SHA256SUMS
