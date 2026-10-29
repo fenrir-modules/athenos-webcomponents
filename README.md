@@ -499,7 +499,7 @@ Storybook 10 with the Angular builder: the targets `athenos-webcomponents:storyb
 
 ### Updating baselines
 
-- **Screenshots** after an intended visual change: `npm run test:storybook:update` (rewrites the images of the stories that ran; add `--grep` to limit it), look at the changed PNGs in the diff, commit them with the change. Delete the folder of a removed or renamed story. Baselines are per platform; the committed set is `darwin`, and CI compares on a macOS runner. If the runner's rendering drifts from local macOS, run the CI workflow by hand with `update_baselines` and commit the uploaded artifact instead.
+- **Screenshots** after an intended visual change: `npm run test:storybook:update` (rewrites the images of the stories that ran; add `--grep` to limit it), look at the changed PNGs in the diff, commit them with the change. Delete the folder of a removed or renamed story. Baselines are per platform; the committed set is `darwin`. The release pipeline does not compare screenshots (macOS runner minutes count tenfold), so run `npm run test:storybook` locally on macOS before a release.
 - **axe**: fix the component where you can. To record what is left: add a reason for the rule under `reasons` in `a11y-baseline.json`, then `npm run test:storybook:a11y-baseline`, which rewrites `violations` from a full run. After a fix the same command shrinks the file; never grow it by hand.
 
 Pipeline (`.github/workflows/release.yml`, only on a tag `v*` or by hand, never on a push): lint, npm audit, token tests, unit tests and `build:lib` on Linux; Storybook build + axe on Linux; Storybook build + screenshots on macOS. The GitHub release (`npm pack` + `SHA256SUMS`) is made only after these pass. Tags come from fenrir `infra/release/release.sh`.

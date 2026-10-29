@@ -9,28 +9,21 @@
 #                     --audit-level=high (it replaces the former
 #                     security.yml).
 #   catalogue-a11y    Storybook build + axe on every story (Linux).
-#   catalogue-visual  Storybook build + screenshot comparison. The baselines
-#                     are rendered on macOS, so this job needs a macOS
-#                     runner (those minutes count tenfold).
 #   release           on a tag: `npm pack` of the package
 #                     (athenos-webcomponents-<version>.tgz) and SHA256SUMS on
 #                     the GitHub release of the tag. Nothing is published to
 #                     an npm registry: athenos-web takes the library as a git
 #                     dependency pinned to a commit.
 #
-# A manual run can regenerate the darwin screenshot baselines
-# (update_baselines) and upload them as an artifact.
+# The screenshot comparison (macOS baselines, `npm run test:storybook`) is
+# not part of this pipeline: macOS runner minutes count tenfold, so it runs
+# locally before a release.
 name: Release
 
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
-    inputs:
-      update_baselines:
-        description: 'Regenerate the darwin screenshot baselines on the CI runner and upload them as an artifact'
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -115,55 +108,9 @@ jobs:
           path: test-results/
           retention-days: 14
 
-  # Screenshot comparison. The committed baselines are rendered on macOS
-  # (tests/storybook/__screenshots__/darwin); font rasterisation differs on
-  # Linux, so this job runs on a macOS runner. See README, "Component catalogue".
-  catalogue-visual:
-    name: Storybook build + screenshots
-    runs-on: macos-15
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - name: Install
-        run: npm ci
-      - name: Install Chromium for Playwright
-        run: npx playwright install --only-shell chromium
-      - name: Build Storybook
-        run: npm run build-storybook
-      - name: Compare screenshots (light/dark × 375/768/1280)
-        if: ${{ !inputs.update_baselines }}
-        run: npm run test:storybook
-        env:
-          SB_A11Y: 'off'
-      - name: Regenerate baselines
-        if: ${{ inputs.update_baselines }}
-        run: npm run test:storybook:update
-        env:
-          SB_A11Y: 'off'
-      - name: Upload regenerated baselines
-        if: ${{ inputs.update_baselines }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: catalogue-baselines-darwin
-          path: tests/storybook/__screenshots__/darwin/
-          retention-days: 14
-      - name: Upload diffs
-        if: failure()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: catalogue-visual-diffs
-          path: test-results/
-          retention-days: 14
-
   release:
     name: GitHub release
-    needs: [gates, catalogue-a11y, catalogue-visual]
+    needs: [gates, catalogue-a11y]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
