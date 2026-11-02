@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink, type Params } from '@angular/router';
+import { AthSkeletonComponent } from '../skeleton/skeleton.component';
 import { AthSparklineComponent } from '../sparkline';
+import { injectAthLabels } from '../../i18n/labels';
 
 export type KpiDeltaDirection = 'up' | 'down' | 'neutral';
 
@@ -50,7 +52,7 @@ export function hasKpiTrend(spark: readonly number[] | null | undefined): boolea
  */
 @Component({
   selector: 'ath-kpi-tile',
-  imports: [RouterLink, AthSparklineComponent],
+  imports: [RouterLink, AthSkeletonComponent, AthSparklineComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[attr.data-tone]': 'tone()',
@@ -60,7 +62,10 @@ export function hasKpiTrend(spark: readonly number[] | null | undefined): boolea
   styleUrl: './kpi-tile.component.scss',
 })
 export class AthKpiTileComponent {
+  private readonly labels = injectAthLabels();
+
   readonly label = input.required<string>();
+  /** The figure; `null` (or `undefined`): still loading, drawn as a 48 × 22 skeleton. */
   readonly value = input<number | string | null | undefined>(0);
 
   /** Pre-formatted delta ("+1", "−2"); `null` hides the badge. */
@@ -76,7 +81,11 @@ export class AthKpiTileComponent {
   /** Overrides the tone's trend colour. */
   readonly sparkColor = input<string | null>(null);
 
-  /** A small quiet note bottom-right ("3 done"), drawn instead of a trend. */
+  /**
+   * A small quiet note under the figure ("3 done"), drawn instead of a
+   * trend; one line, ending in an ellipsis when the tile is narrow (the
+   * full text is the tooltip unless `noteTitle` says more).
+   */
   readonly note = input<string | null | undefined>(null);
   readonly noteTitle = input<string | null | undefined>(null);
 
@@ -98,8 +107,12 @@ export class AthKpiTileComponent {
   /** Accessible name of the link; defaults to the label. */
   readonly linkLabel = input<string | null>(null);
 
+  protected readonly loading = computed(() => this.value() == null);
+  protected readonly loadingLabel = computed(() => this.labels.loading());
   protected readonly samples = computed(() => this.spark() ?? null);
-  protected readonly showTrend = computed(() => !this.muted() && hasKpiTrend(this.samples()));
+  protected readonly showTrend = computed(
+    () => !this.muted() && !this.loading() && hasKpiTrend(this.samples())
+  );
   protected readonly trendColor = computed(() => this.sparkColor() ?? SPARK_COLOR[this.tone()]);
   protected readonly routerLink = computed(() => this.link() as string | unknown[]);
   /** `alert` and `muted` say more than a status colour, so they win. */

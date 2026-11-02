@@ -30,16 +30,27 @@
   }
 </div>
 
-<div class="ath-kpi__bottom">
-  <span
-    class="ath-kpi__value"
-    [attr.data-tone]="figureTone()"
-    [class.ath-kpi__value--alert]="alert()"
-    [class.ath-kpi__value--muted]="muted()"
-    >{{ value() }}</span
-  >
+<div class="ath-kpi__bottom" [class.ath-kpi__bottom--note]="!!note()">
+  @if (loading()) {
+    <!-- The figure is not there yet: a skeleton the size of a number, not
+         a fake "–" or 0. -->
+    <span class="ath-kpi__value ath-kpi__value--loading">
+      <ath-skeleton variant="rectangular" width="48px" height="22px" />
+      <span class="ath-kpi__sr">{{ loadingLabel() }}</span>
+    </span>
+  } @else {
+    <span
+      class="ath-kpi__value"
+      [attr.data-tone]="figureTone()"
+      [class.ath-kpi__value--alert]="alert()"
+      [class.ath-kpi__value--muted]="muted()"
+      >{{ value() }}</span
+    >
+  }
   @if (note()) {
-    <span class="ath-kpi__note" [attr.title]="noteTitle()">{{ note() }}</span>
+    <!-- Under the figure; a narrow tile ends it in an ellipsis, the full
+         text is the tooltip. -->
+    <span class="ath-kpi__note" [attr.title]="noteTitle() ?? note()">{{ note() }}</span>
   } @else if (showTrend()) {
     <ath-sparkline [data]="samples()" [color]="trendColor()" />
   } @else {

@@ -24,10 +24,12 @@
   text-transform: none;
   white-space: normal;
   color: var(--fg);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  // Raised: in dark a visible step above cards, dialogs and the chrome
+  // (--surface sat 1.05:1 on the sidebar), with a hairline top highlight.
+  background: var(--surface-raised);
+  border: 1px solid var(--border-raised);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-raised);
   animation: ath-popover-in var(--t-base);
 
   &:focus {
@@ -78,9 +80,9 @@
   top: -6px;
   width: 10px;
   height: 10px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-left: 1px solid var(--border);
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border-raised);
+  border-left: 1px solid var(--border-raised);
   transform: translateX(-50%) rotate(45deg);
   pointer-events: none;
 

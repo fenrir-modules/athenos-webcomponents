@@ -87,3 +87,23 @@ export const LongText: Story = {
     `,
   }),
 };
+
+/**
+ * Notes as on a project's reports: the note sits under the figure in the
+ * sans face and ends in an ellipsis when the tile is narrow (the full text
+ * is its tooltip). A figure still loading (`null`) is a skeleton.
+ */
+export const NotesAndLoading: Story = {
+  render: () => ({
+    template: `
+      <div style="max-width:720px">
+        <ath-kpi-strip [columns]="4">
+          <ath-kpi-tile label="Sprint progress" value="–" [muted]="true" note="No sprint to measure" />
+          <ath-kpi-tile label="Average velocity" value="–" [muted]="true" note="No sprint finished yet" />
+          <ath-kpi-tile label="Resolved" [value]="9" note="in the last 7 days" />
+          <ath-kpi-tile label="Created" [value]="null" note="in the last 7 days" />
+        </ath-kpi-strip>
+      </div>
+    `,
+  }),
+};

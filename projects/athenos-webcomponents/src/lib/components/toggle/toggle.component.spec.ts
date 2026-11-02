@@ -1,5 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AthToggleComponent } from './toggle.component';
+import {
+  backdrop,
+  contrast as rgbaContrast,
+  inTheme,
+  parseColour,
+  tokenColour,
+} from '../../testing/colour';
 
 describe('AthToggleComponent', () => {
   let fixture: ComponentFixture<AthToggleComponent>;
@@ -92,3 +99,33 @@ function contrast(a: string, b: string): number {
   const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 }
+
+describe('AthToggleComponent off state (P04, WCAG 1.4.11)', () => {
+  it('draws the off track at 3:1 or more against the surfaces it sits on, with a white thumb', () => {
+    const fixture = TestBed.configureTestingModule({
+      imports: [AthToggleComponent],
+    }).createComponent(AthToggleComponent);
+    fixture.componentRef.setInput('ariaLabel', 'Flag');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const track = el.querySelector<HTMLElement>('.ath-toggle__track')!;
+    const thumb = el.querySelector<HTMLElement>('.ath-toggle__thumb')!;
+    for (const node of [track, thumb]) node.style.transition = 'none';
+    for (const theme of ['light', 'dark'] as const) {
+      inTheme(theme, () => {
+        const fill = backdrop(track);
+        for (const surface of ['surface', 'bg-0', 'bg-1', 'surface-2']) {
+          expect(
+            rgbaContrast(fill, tokenColour(surface)),
+            `${theme} on --${surface}`
+          ).toBeGreaterThanOrEqual(3);
+        }
+        expect(parseColour(getComputedStyle(thumb).backgroundColor), theme).toEqual([
+          255, 255, 255, 1,
+        ]);
+        expect(getComputedStyle(thumb).boxShadow, theme).not.toBe('none');
+        expect(getComputedStyle(track).borderColor, theme).toBe('rgba(0, 0, 0, 0)');
+      });
+    }
+  });
+});

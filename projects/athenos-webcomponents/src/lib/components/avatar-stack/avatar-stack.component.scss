@@ -1,38 +1,45 @@
 :host {
   display: inline-flex;
   align-items: center;
+
+  // A stack on the chrome or a tinted row re-sets --avatar-stack-ring.
+  --_overlap: -6px;
+}
+
+// 20-px avatars: a 6-px overlap covered the next avatar's second initial
+// ("MM" read "MN").
+:host([data-size='xs']),
+:host([data-size='sm']) {
+  --_overlap: -4px;
 }
 
 .ath-stack__item {
   display: inline-flex;
 
-  // Overlap subsequent avatars with a clean outline that adapts to background
   & + .ath-stack__item,
   & + .ath-stack__more {
-    margin-left: -6px;
+    margin-left: var(--_overlap);
   }
 }
 
-// Inner ring on stacked avatars so they "pop" off each other.
-// We can't reach into the avatar's element, but we can use box-shadow as a
-// faux border on the host of each stacked avatar via ::ng-deep-style attribute selectors.
-// Cleaner: apply ring via host class.
+// A ring on each stacked avatar's host so the avatars pop off each other.
 :host ath-avatar {
   border-radius: 999px;
-  box-shadow: 0 0 0 1.5px var(--bg-1);
+  box-shadow: 0 0 0 2px var(--avatar-stack-ring);
 }
 
+// "+N" reads as a count, not a ghost: a firmer fill and the second text step.
 .ath-stack__more {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: -6px;
+  margin-left: var(--_overlap);
   border-radius: 999px;
-  background: var(--bg-2);
-  color: var(--fg-3);
+  background: var(--bg-3);
+  color: var(--fg-2);
   font-family: var(--font-sans);
   font-weight: 600;
-  border: 1.5px solid var(--bg-1);
+  box-shadow: 0 0 0 2px var(--avatar-stack-ring);
   letter-spacing: 0;
 }
 

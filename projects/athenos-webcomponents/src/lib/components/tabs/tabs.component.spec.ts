@@ -66,3 +66,75 @@ describe('AthTabsComponent', () => {
     expect(tabs().map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1]);
   });
 });
+
+const MANY: TabItem[] = [
+  'Overview',
+  'Tickets',
+  'Board',
+  'Backlog',
+  'Roadmap',
+  'Releases',
+  'Sprints',
+  'Reports',
+  'Members',
+  'Settings',
+].map((label) => ({ id: label.toLowerCase(), label }));
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthTabsComponent],
+  template: `<div [style.width.px]="width()">
+    <ath-tabs [tabs]="tabs" [activeTab]="active()" (tabChanged)="active.set($event)" />
+  </div>`,
+})
+class ManyTabsHostComponent {
+  readonly tabs = MANY;
+  readonly width = signal(340);
+  readonly active = signal('reports');
+}
+
+describe('AthTabsComponent overflow (P04)', () => {
+  const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+
+  it('scrolls inside its width, fades the side with more tabs and shows the active one', async () => {
+    const fixture = TestBed.createComponent(ManyTabsHostComponent);
+    fixture.detectChanges();
+    await frame();
+    await frame();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const list = el.querySelector<HTMLElement>('[role="tablist"]')!;
+    expect(el.querySelector('ath-tabs')!.getBoundingClientRect().width).toBe(340);
+    expect(list.scrollWidth).toBeGreaterThan(list.clientWidth);
+    const bar = list.getBoundingClientRect();
+    const active = el.querySelector<HTMLElement>('[aria-selected="true"]')!.getBoundingClientRect();
+    expect(active.left).toBeGreaterThanOrEqual(bar.left);
+    expect(active.right).toBeLessThanOrEqual(bar.right);
+    // Scrolled towards the end: tabs hidden on the left, more on the right.
+    expect(list.classList).toContain('ath-tabs--fade-left');
+    expect(list.classList).toContain('ath-tabs--fade-right');
+    expect(getComputedStyle(list).maskImage).toContain('linear-gradient');
+
+    fixture.componentInstance.active.set('overview');
+    fixture.detectChanges();
+    await frame();
+    fixture.detectChanges();
+    expect(list.scrollLeft).toBe(0);
+    expect(list.classList).not.toContain('ath-tabs--fade-left');
+    expect(list.classList).toContain('ath-tabs--fade-right');
+  });
+
+  it('draws no fade when every tab fits', async () => {
+    const fixture = TestBed.createComponent(ManyTabsHostComponent);
+    fixture.componentInstance.width.set(1400);
+    fixture.detectChanges();
+    await frame();
+    await frame();
+    fixture.detectChanges();
+    const list = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '[role="tablist"]'
+    )!;
+    expect(list.className).not.toContain('fade');
+    expect(getComputedStyle(list).maskImage).toBe('none');
+  });
+});

@@ -19,7 +19,10 @@ import { Typeahead, edgeIndex, isTypeaheadKey, stepIndex } from '../floating/lis
 import { AthMenuItemComponent } from './menu-item.component';
 import { ATH_MENU_PARENT, type AthMenuParent } from './menu-parent';
 
-/** Which item gets focus when the menu opens. */
+/**
+ * Which item gets focus when the menu opens. `'first'` is the current item
+ * instead when the menu picks a value (an item with `[selected]="true"`).
+ */
 export type MenuFocus = 'first' | 'last' | 'none';
 
 let nextMenuId = 0;
@@ -198,7 +201,12 @@ export class AthMenuComponent implements AthMenuParent {
     if (focus === 'none' || !this.open()) return;
     const items = this.items();
     const enabled = (i: number): boolean => !items[i].disabled();
-    let index = edgeIndex(items.length, enabled, focus === 'last');
+    // A menu that picks a value opens on the current one.
+    const current = items.findIndex((item, i) => item.selected() === true && enabled(i));
+    let index =
+      focus === 'first' && current >= 0
+        ? current
+        : edgeIndex(items.length, enabled, focus === 'last');
     if (index < 0) index = focus === 'last' ? items.length - 1 : 0;
     if (items[index]) items[index].focus();
     else this.popover().focusPanel('panel');

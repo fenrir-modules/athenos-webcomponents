@@ -18,3 +18,11 @@ export const Default: Story = {};
 export const NothingPicked: Story = { args: { value: null } };
 export const Disabled: Story = { args: { disabled: true, value: 'green' } };
 export const RightToLeft: Story = { globals: { dir: 'rtl' } };
+/** `tone="solid"`: the full colour, where the choice shows solid next to the picker (onboarding's workspace tile). */
+export const Solid: Story = {
+  args: { value: 'purple' },
+  render: (args) => ({
+    props: args,
+    template: `<ath-color-swatch [(value)]="value" [label]="label" tone="solid" />`,
+  }),
+};

@@ -137,3 +137,64 @@ describe('AthKpiTileComponent', () => {
     });
   });
 });
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthKpiStripComponent, AthKpiTileComponent],
+  template: `
+    <div style="width: 480px">
+      <ath-kpi-strip [columns]="4">
+        <ath-kpi-tile label="Created" [value]="null" note="in the last 7 days" />
+        <ath-kpi-tile
+          label="Resolved"
+          [value]="9"
+          note="in the last 7 days, across all projects of this workspace together"
+        />
+        <ath-kpi-tile label="Velocity" value="–" [muted]="true" note="No sprint finished yet" />
+        <ath-kpi-tile label="Open" [value]="0" />
+      </ath-kpi-strip>
+    </div>
+  `,
+})
+class NotesHostComponent {}
+
+describe('AthKpiTileComponent loading and notes (P04)', () => {
+  it('draws a 48x22 skeleton for a null figure, with the loading label for screen readers', () => {
+    const fixture = TestBed.createComponent(NotesHostComponent);
+    fixture.detectChanges();
+    const [loading, , , zero] = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ath-kpi-tile')
+    );
+    const skeleton = loading.querySelector<HTMLElement>('ath-skeleton')!;
+    const box = skeleton.getBoundingClientRect();
+    expect([box.width, box.height]).toEqual([48, 22]);
+    expect(loading.querySelector('.ath-kpi__value')!.textContent.trim()).toBe('Loading');
+    // A real zero is a zero, not a skeleton.
+    expect(zero.querySelector('ath-skeleton')).toBeNull();
+    expect(zero.querySelector('.ath-kpi__value')!.textContent.trim()).toBe('0');
+  });
+
+  it('puts the note under the figure in the sans face, one line ending in an ellipsis', () => {
+    const fixture = TestBed.createComponent(NotesHostComponent);
+    fixture.detectChanges();
+    const tiles = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ath-kpi-tile')
+    );
+    for (const tile of tiles.slice(0, 3)) {
+      const value = tile.querySelector('.ath-kpi__value')!.getBoundingClientRect();
+      const note = tile.querySelector<HTMLElement>('.ath-kpi__note')!;
+      expect(note.getBoundingClientRect().top).toBeGreaterThanOrEqual(value.bottom - 1);
+      const style = getComputedStyle(note);
+      expect(style.fontFamily).toContain('Geist');
+      expect(style.fontFamily).not.toContain('Mono');
+      expect(style.textOverflow).toBe('ellipsis');
+      expect(note.getBoundingClientRect().right).toBeLessThanOrEqual(
+        tile.getBoundingClientRect().right
+      );
+    }
+    const long = tiles[1].querySelector<HTMLElement>('.ath-kpi__note')!;
+    expect(long.scrollWidth).toBeGreaterThan(long.clientWidth);
+    // The full text stays reachable as the tooltip.
+    expect(long.title).toBe('in the last 7 days, across all projects of this workspace together');
+  });
+});

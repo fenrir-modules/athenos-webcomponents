@@ -2,13 +2,18 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  Directive,
   ElementRef,
+  TemplateRef,
   computed,
+  contentChild,
   effect,
+  inject,
   input,
   output,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import type { AthIconData } from '../floating/icon';
 import type { FloatingAlign } from '../floating/floating';
 import { AthMenuComponent } from '../menu/menu.component';
@@ -51,6 +56,22 @@ export function isDropdownSeparator(item: DropdownItem): item is DropdownSeparat
 type Entry = { key: string; action: DropdownAction | null };
 
 /**
+ * Static content at the top of the menu, above the first item (who is
+ * signed in: avatar, name, email). Built only while the menu is open, like
+ * the items. Not focusable and not an item: keep controls out of it.
+ *
+ * @example
+ * <ath-dropdown [items]="items">
+ *   <ath-button variant="ghost">Account</ath-button>
+ *   <ng-template athDropdownHeader><strong>Mira Mock</strong> mira@example.com</ng-template>
+ * </ath-dropdown>
+ */
+@Directive({ selector: 'ng-template[athDropdownHeader]' })
+export class AthDropdownHeaderDirective {
+  readonly template = inject<TemplateRef<unknown>>(TemplateRef);
+}
+
+/**
  * Horizontal alignment hint.
  * `'auto'` picks left or right based on available viewport space.
  */
@@ -71,14 +92,22 @@ const CONTROL = 'button, a[href], input, select, textarea, [tabindex]:not([tabin
  * `aria-expanded` and `aria-controls` on it. Plain content (text, an icon)
  * gets a `role="button"` wrapper instead.
  *
+ * A menu that picks a value (a status, a priority) takes `activeId`: the
+ * items become `menuitemradio`s, the current one carries a trailing check
+ * and the menu opens on it.
+ *
  * @example
  * <ath-dropdown [items]="menuItems" (itemClicked)="onAction($event)">
  *   <ath-button variant="ghost">Actions</ath-button>
+ * </ath-dropdown>
+ * <ath-dropdown [items]="statuses" [activeId]="ticket.status" (itemClicked)="setStatus($event)">
+ *   <ath-status-pill [status]="ticket.status" />
  * </ath-dropdown>
  */
 @Component({
   selector: 'ath-dropdown',
   imports: [
+    NgTemplateOutlet,
     AthMenuComponent,
     AthMenuItemComponent,
     AthMenuSeparatorComponent,
@@ -95,6 +124,21 @@ const CONTROL = 'button, a[href], input, select, textarea, [tabindex]:not([tabin
 export class AthDropdownComponent implements AfterViewInit {
   /** Menu entries: actions, and `DROPDOWN_SEPARATOR` between groups. */
   readonly items = input<readonly DropdownItem[]>([]);
+
+  /**
+   * The id of the current value when the menu picks one: that item gets a
+   * trailing check and focus on open. `null` (default): an action menu.
+   */
+  readonly activeId = input<string | null | undefined>(null);
+
+  /** `<ng-template athDropdownHeader>`: content above the first item. */
+  protected readonly header = contentChild(AthDropdownHeaderDirective);
+
+  /** `[selected]` of an item: `null` in an action menu. */
+  protected selectedOf(item: DropdownAction): boolean | null {
+    const active = this.activeId();
+    return active === null || active === undefined ? null : item.id === active;
+  }
 
   /** Separators are keyed by position, actions by id. */
   protected readonly entries = computed<Entry[]>(() =>

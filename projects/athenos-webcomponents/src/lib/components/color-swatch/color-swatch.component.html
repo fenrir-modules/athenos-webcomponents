@@ -1,5 +1,6 @@
 <div
   class="ath-swatch"
+  [class.ath-swatch--solid]="tone() === 'solid'"
   role="radiogroup"
   [attr.aria-label]="groupLabel()"
   [attr.aria-disabled]="disabled() || null"

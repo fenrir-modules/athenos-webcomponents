@@ -83,3 +83,22 @@ export const RightToLeft: Story = {
     `,
   }),
 };
+
+/** An error that wraps (password rules in a narrow column): the icon keeps its size at the first line. */
+export const WrappedError: Story = {
+  args: {
+    label: 'Password',
+    type: 'password',
+    placeholder: '',
+    required: true,
+    error: 'At least 12 characters with upper and lower case letters, a number and a symbol.',
+  },
+  render: (args) => ({
+    props: { ...args, value: '' },
+    template: `
+      <div style="max-width:260px">
+        <ath-input [label]="label" [type]="type" [error]="error" [required]="required" [(ngModel)]="value" />
+      </div>
+    `,
+  }),
+};

@@ -24,11 +24,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: var(--control-h-sm);
-    height: var(--control-h-sm);
+    width: 32px;
+    height: 32px;
     border-radius: var(--r-full);
     border: 1px solid var(--border);
-    color: var(--surface);
+    // The check: white with a soft drop shadow, so it reads on every hue in
+    // both themes (it was --surface: a dark check on dark mode's mid-tones).
+    color: var(--mark-on-color);
     transition:
       transform var(--t-fast),
       box-shadow var(--t-fast);
@@ -37,6 +39,10 @@
       &[data-color='#{$name}'] {
         background: $value;
       }
+    }
+
+    ath-icon {
+      filter: drop-shadow(var(--mark-shadow));
     }
 
     &:hover:not(:disabled) {
@@ -57,6 +63,17 @@
 
     &:disabled {
       cursor: not-allowed;
+    }
+  }
+
+  // Solid: the colour as it is used next to the picker, not the muted mark.
+  &--solid &__item {
+    border-color: transparent;
+
+    @each $name, $value in d.$deco-solid-colors {
+      &[data-color='#{$name}'] {
+        background: $value;
+      }
     }
   }
 }

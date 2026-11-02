@@ -14,6 +14,13 @@ import { injectAthLabels } from '../../i18n/labels';
 import { ATH_DECO_COLORS, type AthDecoColor, athDecoColorLabel } from './deco-color';
 
 /**
+ * How the swatches paint their colour: `muted` the deco marks (role badges,
+ * avatar rings) as they appear elsewhere; `solid` the full colour, for a
+ * choice shown solid next to the picker (a workspace tile).
+ */
+export type AthColorSwatchTone = 'muted' | 'solid';
+
+/**
  * A colour from the decorative palette, as a radio group (WAI-ARIA radio
  * pattern): one tab stop, the arrow keys move and pick, Home/End jump.
  * Each swatch is named for screen readers ("Blue"), the selected one also
@@ -21,6 +28,7 @@ import { ATH_DECO_COLORS, type AthDecoColor, athDecoColorLabel } from './deco-co
  *
  * @example
  * <ath-color-swatch [(value)]="role.color" label="Rollenfarbe" />
+ * <ath-color-swatch [(value)]="workspace.color" tone="solid" />
  */
 @Component({
   selector: 'ath-color-swatch',
@@ -38,6 +46,8 @@ export class AthColorSwatchComponent {
   /** The group's accessible name; defaults to the "Colour" label. */
   readonly label = input<string | null>(null);
   readonly disabled = input(false, { transform: booleanAttribute });
+  /** `muted` (default) or `solid`: draw the swatches as the colour is used. */
+  readonly tone = input<AthColorSwatchTone>('muted');
   /** The tokens offered, in order (default: the whole palette). */
   readonly colors = input<readonly AthDecoColor[]>(ATH_DECO_COLORS);
 

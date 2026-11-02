@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AthSegmentComponent, type SegmentOption } from './segment.component';
+import { backdrop, inTheme, luminance } from '../../testing/colour';
 
 const VIEWS: SegmentOption[] = [
   { value: 'list', label: 'List' },
@@ -81,5 +82,21 @@ describe('AthSegmentComponent', () => {
     expect(fixture.componentInstance.view()).toBe('board');
     press('Home');
     expect(document.activeElement).toBe(tabs()[0]);
+  });
+});
+
+describe('AthSegmentComponent active item (P04)', () => {
+  it('raises the active item above its track in both themes (lighter fill, a shadow)', () => {
+    const fixture = TestBed.createComponent(SegmentHostComponent);
+    fixture.detectChanges();
+    const host = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('ath-segment')!;
+    const active = host.querySelector<HTMLElement>('.ath-seg__item--active')!;
+    active.style.transition = 'none';
+    for (const theme of ['light', 'dark'] as const) {
+      inTheme(theme, () => {
+        expect(luminance(backdrop(active)), theme).toBeGreaterThan(luminance(backdrop(host)));
+        expect(getComputedStyle(active).boxShadow, theme).not.toBe('none');
+      });
+    }
   });
 });

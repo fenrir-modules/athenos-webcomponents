@@ -24,3 +24,21 @@ export const Empty: Story = {
   render: () => ({ template: `<ath-avatar-stack [users]="[]" />` }),
 };
 export const RightToLeft: Story = { globals: { dir: 'rtl' }, args: { size: 'md' } };
+
+/** Small avatars with like initials ("MM", "MW"): each initial stays readable, and "+3" reads clearly. */
+export const SmallSimilarInitials: Story = {
+  render: () => ({
+    props: {
+      users: [
+        { id: 'u-mm', name: 'Mira Mock' },
+        { id: 'u-mw', name: 'Mona Weber' },
+        { id: 'u-ew', name: 'Elias Weber' },
+        { id: 'u-sm', name: 'Sara Moll' },
+        { id: 'u-jk', name: 'Jonas Keller' },
+        { id: 'u-lb', name: 'Lea Brandt' },
+        { id: 'u-tn', name: 'Tim Novak' },
+      ],
+    },
+    template: `<div style="padding:8px;background:var(--surface)"><ath-avatar-stack [users]="users" [max]="4" size="sm" /></div>`,
+  }),
+};

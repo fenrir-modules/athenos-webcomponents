@@ -69,12 +69,20 @@
     pointer-events: none;
   }
 
+  // The icon keeps its 14px at the first line when the message wraps (it
+  // used to shrink to a 5-px dot between two lines).
   &__error {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-1);
     font-size: var(--text-sm);
+    line-height: 1.4;
     color: var(--red-text);
+
+    ath-icon {
+      flex: none;
+      margin-top: 2px;
+    }
   }
 
   &__hint {

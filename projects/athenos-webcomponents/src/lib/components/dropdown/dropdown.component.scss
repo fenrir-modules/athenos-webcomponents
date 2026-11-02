@@ -19,3 +19,10 @@
     @include m.focus-ring;
   }
 }
+
+// Static content above the items (who is signed in).
+.ath-dropdown__header {
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  color: var(--fg);
+  font-size: var(--text-sm);
+}

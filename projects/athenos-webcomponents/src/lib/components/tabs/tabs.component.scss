@@ -2,10 +2,48 @@
 // ATH-TABS STYLES
 // ===========================================
 
+:host {
+  display: block;
+  min-width: 0;
+  // The base line lives on the host, under the scrolling list, so the
+  // active tab's indicator covers it and the fade does not thin it out.
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
 .ath-tabs {
+  --_fade-l: 0px;
+  --_fade-r: 0px;
+
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // Only while there is more to scroll to: a fade on that side.
+  // (A mask reads only alpha: --fg stands for "opaque".)
+  &--fade-left,
+  &--fade-right {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      var(--fg) var(--_fade-l),
+      var(--fg) calc(100% - var(--_fade-r)),
+      transparent
+    );
+  }
+
+  &--fade-left {
+    --_fade-l: 24px;
+  }
+
+  &--fade-right {
+    --_fade-r: 32px;
+  }
 
   &__tab {
     position: relative;
@@ -19,7 +57,6 @@
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
     cursor: pointer;
     transition: all var(--t-fast);
     white-space: nowrap;

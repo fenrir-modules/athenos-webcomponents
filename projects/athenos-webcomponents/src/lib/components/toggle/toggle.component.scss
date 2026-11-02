@@ -15,6 +15,7 @@
 // separate, opt-in shape — without it, a toggle dropped beside a label
 // that the page already renders drew an empty box around a 36px pill.
 .ath-toggle {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
@@ -53,14 +54,17 @@
     }
   }
 
+  // Off: a solid track at 3:1 against the surface it sits on (WCAG 1.4.11;
+  // the bg-2 track with a hairline was 1.04:1 on the canvas) and a white
+  // thumb lifted by a shadow.
   &__track {
     position: relative;
     flex-shrink: 0;
     width: 36px;
     height: 20px;
     border-radius: var(--r-full);
-    background: var(--bg-2);
-    border: 1px solid var(--border);
+    background: var(--control-off-bg);
+    border: 1px solid transparent;
     transition:
       background-color var(--t-fast),
       border-color var(--t-fast);
@@ -73,7 +77,8 @@
     width: 14px;
     height: 14px;
     border-radius: var(--r-full);
-    background: var(--fg-3);
+    background: var(--control-off-thumb);
+    box-shadow: var(--control-thumb-shadow);
     transition:
       transform var(--t-fast),
       background-color var(--t-fast);
@@ -111,6 +116,17 @@
     .ath-toggle__thumb {
       transform: translateX(16px);
       background: var(--action-primary-fg);
+    }
+  }
+
+  // -------------------------------------------
+  // Touch: a 44-px target around the bare switch, same drawn size
+  // -------------------------------------------
+  @media (pointer: coarse) {
+    &:not(.ath-toggle--boxed)::before {
+      content: '';
+      position: absolute;
+      inset: -12px -4px;
     }
   }
 

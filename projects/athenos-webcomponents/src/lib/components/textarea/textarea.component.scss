@@ -60,12 +60,20 @@
     gap: var(--space-2);
   }
 
+  // The icon keeps its 14px at the first line when the message wraps (it
+  // used to shrink to a 5-px dot between two lines).
   &__error {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-1);
     font-size: var(--text-sm);
+    line-height: 1.4;
     color: var(--red-text);
+
+    ath-icon {
+      flex: none;
+      margin-top: 2px;
+    }
   }
 
   &__hint {
@@ -96,5 +104,13 @@
     .ath-textarea__label {
       opacity: 0.5;
     }
+  }
+}
+
+// A coarse pointer (a phone): text under 16px makes iOS Safari zoom the page
+// when the field takes focus.
+@media (pointer: coarse) {
+  .ath-textarea__field {
+    font-size: max(16px, var(--text-md));
   }
 }

@@ -1,4 +1,11 @@
-<div class="ath-tabs" role="tablist">
+<div
+  #list
+  class="ath-tabs"
+  role="tablist"
+  [class.ath-tabs--fade-left]="fadeLeft()"
+  [class.ath-tabs--fade-right]="fadeRight()"
+  (scroll)="syncFade()"
+>
   @for (tab of tabs(); track tab.id; let i = $index) {
     <button
       type="button"

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AthColorSwatchComponent } from './color-swatch.component';
 import { ATH_DECO_COLORS, isAthDecoColor } from './deco-color';
+import { inTheme, parseColour, tokenColour } from '../../testing/colour';
 
 describe('AthColorSwatchComponent', () => {
   let fixture: ComponentFixture<AthColorSwatchComponent>;
@@ -89,5 +90,44 @@ describe('AthColorSwatchComponent', () => {
     expect(isAthDecoColor('purple')).toBe(true);
     expect(isAthDecoColor('#ff0000')).toBe(false);
     expect(isAthDecoColor(null)).toBe(false);
+  });
+});
+
+describe('AthColorSwatchComponent tones (P04)', () => {
+  function swatches(tone?: string): HTMLButtonElement[] {
+    const fixture = TestBed.createComponent(AthColorSwatchComponent);
+    fixture.componentRef.setInput('value', 'purple');
+    if (tone) fixture.componentRef.setInput('tone', tone);
+    fixture.detectChanges();
+    const items = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="radio"]')
+    );
+    for (const item of items) item.style.transition = 'none';
+    return items;
+  }
+  const bg = (el: HTMLElement) => parseColour(getComputedStyle(el).backgroundColor);
+
+  it('paints the full colour with tone="solid" and the muted mark by default, 32px each', () => {
+    // One fixture at a time: a second createComponent detaches the first.
+    const solid = swatches('solid');
+    const purple = solid.find((s) => s.dataset['color'] === 'purple')!;
+    for (const theme of ['light', 'dark'] as const) {
+      inTheme(theme, () => expect(bg(purple), theme).toEqual(tokenColour('purple')));
+    }
+    expect(solid.map((s) => s.getBoundingClientRect().width)).toEqual(solid.map(() => 32));
+    const muted = swatches().find((s) => s.dataset['color'] === 'purple')!;
+    for (const theme of ['light', 'dark'] as const) {
+      inTheme(theme, () => expect(bg(muted), theme).toEqual(tokenColour('purple-muted')));
+    }
+  });
+
+  it('draws the check white with a drop shadow in both themes', () => {
+    const picked = swatches('solid').find((s) => s.getAttribute('aria-checked') === 'true')!;
+    for (const theme of ['light', 'dark'] as const) {
+      inTheme(theme, () => {
+        expect(parseColour(getComputedStyle(picked).color), theme).toEqual([255, 255, 255, 1]);
+        expect(getComputedStyle(picked.querySelector('ath-icon')!).filter).toContain('drop-shadow');
+      });
+    }
   });
 });

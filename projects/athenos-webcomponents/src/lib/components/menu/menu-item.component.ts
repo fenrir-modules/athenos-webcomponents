@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   booleanAttribute,
+  computed,
   inject,
   input,
   output,
@@ -47,6 +48,9 @@ let nextReasonId = 0;
       </span>
     }
     <span class="ath-menu-item__label"><ng-content /></span>
+    @if (selected()) {
+      <ath-icon class="ath-menu-item__current" [img]="checkIcon" [size]="16" aria-hidden="true" />
+    }
     @if (shortcut()) {
       <kbd class="ath-menu-item__shortcut" aria-hidden="true">{{ shortcut() }}</kbd>
     }
@@ -64,8 +68,8 @@ let nextReasonId = 0;
     // disabled items stay focusable (aria-disabled).
     '[attr.disabled]': 'null',
     '[attr.type]': "isButton ? 'button' : null",
-    '[attr.role]': "checked() === null ? 'menuitem' : 'menuitemcheckbox'",
-    '[attr.aria-checked]': 'checked() === null ? null : checked()',
+    '[attr.role]': 'role()',
+    '[attr.aria-checked]': 'checked() ?? selected()',
     '[attr.aria-disabled]': 'disabled() || null',
     '[attr.aria-describedby]': 'disabled() && disabledReason() ? reasonId : null',
     '[attr.aria-keyshortcuts]': 'keyshortcuts()',
@@ -99,11 +103,25 @@ export class AthMenuItemComponent {
   readonly tooltip = input<string | null | undefined>(null);
   /** `true`/`false` makes it a `menuitemcheckbox` with a check mark. */
   readonly checked = input<boolean | null>(null);
+  /**
+   * `true`/`false` makes it a `menuitemradio`, one of a menu that picks a
+   * value: the current one carries a trailing check (`ath-dropdown
+   * [activeId]`), and the menu opens on it.
+   */
+  readonly selected = input<boolean | null>(null);
   /** Leave the menu open after activation. */
   readonly keepOpen = input(false, { transform: booleanAttribute });
 
   /** The item was chosen (click, Enter or Space) and is not disabled. */
   readonly triggered = output<void>();
+
+  protected readonly role = computed(() =>
+    this.checked() !== null
+      ? 'menuitemcheckbox'
+      : this.selected() !== null
+        ? 'menuitemradio'
+        : 'menuitem'
+  );
 
   /** The visible label, for typeahead. */
   label(): string {

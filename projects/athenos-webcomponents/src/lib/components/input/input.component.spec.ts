@@ -116,3 +116,27 @@ describe('AthInputComponent', () => {
     expect(toggle.getAttribute('aria-label')).toBe('Show password');
   });
 });
+
+describe('AthInputComponent wrapped error (P04)', () => {
+  it('keeps the 14px error icon at the first line when the message wraps', () => {
+    const fixture = TestBed.configureTestingModule({
+      imports: [AthInputComponent],
+    }).createComponent(AthInputComponent);
+    fixture.componentRef.setInput('label', 'Password');
+    fixture.componentRef.setInput(
+      'error',
+      'At least 12 characters with upper and lower case letters, a number and a symbol.'
+    );
+    (fixture.nativeElement as HTMLElement).style.cssText = 'display:block;width:240px';
+    fixture.detectChanges();
+    const error = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '.ath-input__error'
+    )!;
+    const icon = error.querySelector('ath-icon')!.getBoundingClientRect();
+    const box = error.getBoundingClientRect();
+    expect(box.height).toBeGreaterThan(30); // two lines
+    expect(icon.width).toBe(14);
+    expect(icon.height).toBe(14);
+    expect(icon.top - box.top).toBeLessThan(6); // at the first line, not centred
+  });
+});

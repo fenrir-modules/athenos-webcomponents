@@ -3,7 +3,21 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AthButtonComponent } from '../button/button.component';
 import { AthMenuComponent } from '../menu/menu.component';
-import { AthDropdownComponent, DROPDOWN_SEPARATOR, DropdownItem } from './dropdown.component';
+import {
+  AthDropdownComponent,
+  AthDropdownHeaderDirective,
+  DROPDOWN_SEPARATOR,
+  DropdownItem,
+} from './dropdown.component';
+import {
+  backdrop,
+  contrast,
+  inTheme,
+  luminance,
+  over,
+  parseColour,
+  tokenColour,
+} from '../../testing/colour';
 
 const ITEMS: DropdownItem[] = [
   { id: 'profile', label: 'Profile' },
@@ -151,5 +165,102 @@ describe('AthDropdownComponent', () => {
     );
     await settle();
     expect(q('.plain .ath-dropdown__menu')).not.toBeNull();
+  });
+});
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthDropdownComponent, AthDropdownHeaderDirective, AthButtonComponent],
+  template: `
+    <div style="padding:8px;background:var(--surface)">
+      <ath-dropdown [items]="items" [activeId]="current()" (itemClicked)="current.set($event)">
+        <ath-button variant="ghost">Status</ath-button>
+        <ng-template athDropdownHeader><span class="who">Move WEB-42 to</span></ng-template>
+      </ath-dropdown>
+    </div>
+  `,
+})
+class PickerHostComponent {
+  readonly items: DropdownItem[] = [
+    { id: 'open', label: 'Open' },
+    { id: 'progress', label: 'In progress' },
+    { id: 'review', label: 'In review' },
+  ];
+  readonly current = signal<string | null>('progress');
+}
+
+describe('AthDropdownComponent picking a value (P04)', () => {
+  let fixture: ComponentFixture<PickerHostComponent>;
+  let root: HTMLElement;
+  const label = (el: Element | null): string =>
+    (el?.querySelector('.ath-menu-item__label')?.textContent ?? '').trim();
+
+  async function open(): Promise<void> {
+    const button = root.querySelector<HTMLElement>('button')!;
+    button.focus();
+    button.click();
+    fixture.detectChanges();
+    await wait();
+    fixture.detectChanges();
+  }
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(PickerHostComponent);
+    root = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => fixture.destroy());
+
+  it('marks the current value with a trailing check and opens on it', async () => {
+    await open();
+    const items = Array.from(root.querySelectorAll<HTMLElement>('[role=menuitemradio]'));
+    expect(items.map((i) => i.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
+    expect(items[1].querySelector('.ath-menu-item__current')).not.toBeNull();
+    expect(items[0].querySelector('.ath-menu-item__current')).toBeNull();
+    // The check sits after the label, at the row's end.
+    const check = items[1].querySelector('.ath-menu-item__current')!.getBoundingClientRect();
+    expect(check.left).toBeGreaterThan(
+      items[1].querySelector('.ath-menu-item__label')!.getBoundingClientRect().left
+    );
+    expect(label(document.activeElement)).toBe('In progress');
+  });
+
+  it('renders the header above the first item, outside the item list', async () => {
+    expect(root.querySelector('.who')).toBeNull(); // lazy, like the items
+    await open();
+    const header = root.querySelector<HTMLElement>('.ath-dropdown__header')!;
+    expect(header.textContent.trim()).toBe('Move WEB-42 to');
+    expect(header.getAttribute('role')).toBe('none');
+    const first = root.querySelector<HTMLElement>('[role=menuitemradio]')!;
+    expect(header.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      first.getBoundingClientRect().top
+    );
+  });
+
+  it('stays an action menu without activeId', async () => {
+    fixture.componentInstance.current.set(null);
+    await open();
+    expect(root.querySelectorAll('[role=menuitemradio]').length).toBe(0);
+    expect(root.querySelectorAll('[role=menuitem]').length).toBe(3);
+    expect(label(document.activeElement)).toBe('Open');
+  });
+
+  it('lifts the panel off cards and the chrome in dark (raised surface, a visible edge)', async () => {
+    await open();
+    const panel = root.querySelector<HTMLElement>('.ath-dropdown__menu')!;
+    panel.style.animation = 'none';
+    inTheme('dark', () => {
+      const fill = backdrop(panel);
+      for (const below of ['surface', 'bg-1']) {
+        expect(luminance(fill), below).toBeGreaterThan(luminance(tokenColour(below)));
+      }
+      const edge = parseColour(getComputedStyle(panel).borderTopColor);
+      expect(contrast(over(edge, fill), tokenColour('bg-1'))).toBeGreaterThanOrEqual(1.4);
+      expect(getComputedStyle(panel).boxShadow).toContain('inset');
+    });
+    inTheme('light', () => {
+      expect(backdrop(panel)).toEqual([255, 255, 255, 1]);
+    });
   });
 });

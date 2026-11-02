@@ -47,3 +47,29 @@ export const RightToLeft: Story = {
     template: `<ath-tabs [tabs]="tabs" [activeTab]="active" (tabChanged)="active = $event" />`,
   }),
 };
+
+/**
+ * More tabs than fit (a project's ten tabs on a phone): the bar scrolls
+ * sideways, a fade marks the side that has more, and the active tab is
+ * scrolled into view.
+ */
+export const Overflow: Story = {
+  render: () => ({
+    props: {
+      tabs: [
+        'Overview',
+        'Tickets',
+        'Board',
+        'Backlog',
+        'Roadmap',
+        'Releases',
+        'Sprints',
+        'Reports',
+        'Members',
+        'Settings',
+      ].map((label) => ({ id: label.toLowerCase(), label })),
+      active: 'reports',
+    },
+    template: `<div style="max-width:340px"><ath-tabs [tabs]="tabs" [activeTab]="active" (tabChanged)="active = $event" /></div>`,
+  }),
+};

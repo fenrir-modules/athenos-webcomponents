@@ -29,7 +29,7 @@
 :host(.ath-menu-item:hover),
 :host(.ath-menu-item:focus) {
   color: var(--fg);
-  background: var(--hover-strong);
+  background: var(--menu-item-hover);
   outline: none;
 }
 
@@ -75,6 +75,13 @@
   white-space: nowrap;
 }
 
+// The current value of a picking menu: a check at the row's end.
+.ath-menu-item__current {
+  flex-shrink: 0;
+  margin-inline-start: var(--space-3);
+  color: var(--accent-text);
+}
+
 .ath-menu-item__shortcut {
   flex-shrink: 0;
   margin-inline-start: var(--space-4);
@@ -97,5 +104,6 @@
   display: block;
   height: 1px;
   margin: var(--space-1) calc(var(--space-1) * -1);
-  background: var(--border-faint);
+  // The panel's own edge colour: --border-faint vanished on the raised panel in dark.
+  background: var(--border-raised);
 }

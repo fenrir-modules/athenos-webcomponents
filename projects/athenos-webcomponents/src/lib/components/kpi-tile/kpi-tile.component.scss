@@ -1,3 +1,5 @@
+@use '../../styles/mixins' as m;
+
 // One cell of a KPI strip. No border, radius or shadow of its own: the
 // strip (kpi-strip.component.scss) owns those, the tiles are separated by
 // a hairline on their left edge.
@@ -130,14 +132,36 @@
     color: var(--fg-4);
     font-weight: var(--weight-medium);
   }
+
+  // Still loading: the skeleton keeps the figure's line.
+  &--loading {
+    display: inline-flex;
+    align-items: center;
+    height: 1em;
+  }
+}
+
+// With a note: the note stacks under the figure instead of sharing its
+// row, so a long one ("in the last 7 days") is not cut mid-word.
+.ath-kpi__bottom--note {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
 }
 
 .ath-kpi__note {
+  overflow: hidden;
+  min-width: 0;
   color: var(--fg-3);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--text-xs);
-  line-height: 22px;
+  line-height: 16px;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ath-kpi__sr {
+  @include m.visually-hidden;
 }
 
 // Projected content under the figure (a progress bar); gone when empty.

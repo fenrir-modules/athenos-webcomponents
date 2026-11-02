@@ -11,6 +11,12 @@
 >
   <!-- Built only while open: a closed row menu holds no items. -->
   <ng-template athPopoverContent>
+    @if (header(); as h) {
+      <div class="ath-dropdown__header" role="none">
+        <ng-container [ngTemplateOutlet]="h.template" />
+      </div>
+      <ath-menu-separator />
+    }
     @for (entry of entries(); track entry.key) {
       @if (entry.action; as item) {
         <button
@@ -24,6 +30,7 @@
           [disabledReason]="item.title"
           [tooltip]="item.title"
           [shortcut]="item.shortcut ?? null"
+          [selected]="selectedOf(item)"
           (triggered)="itemClicked.emit(item.id)"
         >
           {{ item.label }}

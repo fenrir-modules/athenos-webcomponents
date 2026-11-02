@@ -13,7 +13,6 @@
 //     rail move as one.
 // ───────────────────────────────────────────────────────────────────
 
-$row-h: 30px;
 $icon-cell-w: 40px;
 $margin-x: 2px;
 $indicator-w: 2px;
@@ -28,7 +27,9 @@ $dur-fast: 120ms;
   display: flex;
   align-items: center;
   width: auto; // stretches to parent (column flex)
-  height: $row-h;
+  // 32px in sidebar and rail alike (the same rows fold into the rail, so a
+  // per-mode height would jump); a phone drawer sets --nav-row-h: 44px.
+  height: var(--nav-row-h);
   margin: 0 $margin-x;
   padding: 0;
   border-radius: var(--r-sm);
@@ -95,7 +96,7 @@ $dur-fast: 120ms;
   color: var(--fg);
 }
 
-// Project shortcut: an outlined mono key in the project's colour (ref 2).
+// Project shortcut: a tinted mono key in the project's colour (ref 2).
 // It used to be a grey key with a coloured corner dot, which read as an
 // unexplained notification badge.
 .ath-nav-item__chip {
@@ -105,17 +106,19 @@ $dur-fast: 120ms;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 26px;
+  min-width: 28px;
   height: 18px;
   padding: 0 4px;
-  // Decorative: the project hue at --deco-mix strength (ref 02 pastel keys).
-  border: 1px solid color-mix(in srgb, var(--chip-color) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chip-color) 28%, transparent);
   border-radius: var(--r-xs);
-  background: transparent;
-  color: color-mix(in srgb, var(--chip-color) var(--deco-mix), var(--bg-1));
+  background: color-mix(in srgb, var(--chip-color) 10%, transparent);
+  // The key is text: the hue mixed toward --fg (dark in light, light in
+  // dark) clears 4.5:1 in both themes. Mixing toward the background, as
+  // before, gave 2.0:1 (light) and 2.6:1 (dark).
+  color: color-mix(in srgb, var(--chip-color) 72%, var(--fg));
   font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 9.5px;
+  font-weight: 600;
+  font-size: 10px;
   letter-spacing: 0.02em;
 }
 

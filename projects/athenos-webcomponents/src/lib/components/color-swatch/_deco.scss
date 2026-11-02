@@ -9,3 +9,15 @@ $deco-colors: (
   'purple': var(--purple-muted),
   'pink': var(--pink-muted),
 );
+
+// The same palette at full strength (`ath-color-swatch tone="solid"`): where
+// the chosen colour is shown solid next to the picker (a workspace tile).
+$deco-solid-colors: (
+  'neutral': var(--fg-4),
+  'blue': var(--blue),
+  'green': var(--green),
+  'amber': var(--amber),
+  'red': var(--red),
+  'purple': var(--purple),
+  'pink': var(--pink),
+);

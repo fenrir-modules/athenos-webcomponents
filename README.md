@@ -30,6 +30,7 @@ All design tokens live in **DTCG JSON** under `projects/athenos-webcomponents/to
 | `themes/dark.json`                                      | Values for `[data-theme="dark"]`. It may only re-value tokens from `base.json`.                                      |
 | `accents/<name>.light.json`, `accents/<name>.dark.json` | Accent presets for `[data-accent]` and `[data-theme="dark"][data-accent]`                                            |
 | `tokens.config.json`                                    | Output paths, block order (which is the cascade order), the theme × accent contexts and the **contrast gate**        |
+| `media/touch.json`                                      | Sizes for a phone width or a coarse pointer (a block with `media`); a media block may only re-value sizes            |
 
 `scripts/tokens/build.mjs` (`npm run tokens:build`) generates these files:
 
@@ -45,16 +46,19 @@ All design tokens live in **DTCG JSON** under `projects/athenos-webcomponents/to
 - **The CSS name is the leaf key**, so `color.surface.bg-0` becomes `--bg-0`. Groups only organise the tokens. Leaf keys are unique, and the build fails on duplicates.
 - Aliases are emitted as `var(--leaf)`, not resolved, so dark and accent overrides still flow through the cascade. If a `$value` contains `var(--…)` instead of an alias, the build fails, and so it does for unknown aliases, alias cycles in any theme × accent context and overrides of tokens that don't exist.
 - Light also matches an explicit `data-theme="light"` (DS-15). Components never carry theme selectors; a difference between themes belongs in a token.
+- A block with `"media": "(pointer: coarse), (max-width: 639px)"` is wrapped in that `@media` rule (P04: `--control-h-sm` and `--control-h` are 36px on phones and coarse pointers). Its set may hold no colour or shadow token (the build fails), because the contrast gate and the cascade emulation have no media context.
+- Floating panels (popover, menu, dropdown) use `--surface-raised`, `--border-raised` and `--shadow-raised`: in dark a visible step above cards, dialogs and the chrome. Unread is `--notify-dot` = the accent in both themes. `--bg-3` is a firmer neutral fill for small marks (the avatar stack's "+N"); `--control-off-bg` is an off switch's track at ≥ 3:1. `--nav-row-h` (32px) is the height of an `ath-nav-item` row; a phone drawer sets 44px on its container.
 
 ### Contrast gate
 
-`tokens.config.json → contrast` lists foreground/background pairs with a minimum ratio. The build resolves them in all 12 theme × accent contexts using WCAG 2.x maths; translucent values are composited, and `color-mix()` is evaluated. A translucent `bg` (a tint) is composited over the canvas (`--bg-0`), or over each token in the rule's `over` list, the surfaces it sits on: `{ "fg": "red-text", "bg": ["red-tint"], "over": ["bg-0", "surface"], "min": 4.5 }`. Today that is 1296 checks, among them:
+`tokens.config.json → contrast` lists foreground/background pairs with a minimum ratio. The build resolves them in all 12 theme × accent contexts using WCAG 2.x maths; translucent values are composited, and `color-mix()` is evaluated. A translucent `bg` (a tint) is composited over the canvas (`--bg-0`), or over each token in the rule's `over` list, the surfaces it sits on: `{ "fg": "red-text", "bg": ["red-tint"], "over": ["bg-0", "surface"], "min": 4.5 }`. Today that is 1572 checks, among them:
 
 - `--focus-ring-color` at ≥ 3:1 on all surfaces (WCAG 1.4.11)
 - `--fg` through `--fg-4` and `--fg-label` at ≥ 4.5:1
 - the status text tokens `--red-text`, `--amber-text`, `--green-text`, `--blue-text`, `--purple-text` at ≥ 4.5:1 on `--surface`, `--bg-0`, `--bg-1`, `--surface-2`, `--bg-2` and on their own tint over `--bg-0` and `--surface`
 - `--accent-text` on the surfaces and on `--accent-faint` / `--accent-ring`, and the dark accent roles that carry text (active tab, nav item and badge, segment count, primary and active chips, outline button, selection bar) on their tints
 - the labels of "+ New", the primary button (also pressed), the danger button and the avatars at ≥ 4.5:1
+- an off switch's track (`--control-off-bg`) at ≥ 3:1 on the surfaces and its white thumb at ≥ 3:1 on it, the unread dot at ≥ 3:1, and menu text (`--fg`, `--fg-4`, `--red-text`) at ≥ 4.5:1 on `--surface-raised`
 
 ### Using tokens
 
@@ -198,7 +202,7 @@ The Athenos AI mark ("Perch"): a solid rounded A — Athenos' A and a perched li
 - `ath-permission-row`: icon, name, one-line explanation (`--fg-3`, ellipsis), optional `inheritedHint`; the control is projected. With `interactive` a click anywhere on the row outside the control emits `activate` (a click on the control is left to it, so nothing toggles twice); the row adds no tab stop. `disabledReason` is the control's tooltip and is read out. Below 480 px the control moves under the text. `labelId` / `descriptionId` are public for `aria-describedby`.
 - `ath-tri-state`: _Deny · Inherit · Allow_ as a radio group (not `ath-segment`, a tab list): one tab stop, arrows move and choose (mirrored in RTL), Home/End, Space/Enter. `inherited` is read out with "Inherit (currently allowed)". `compact`, and phones, show icons only (each still named).
 - `ath-save-bar`: sticky at the bottom of its scroll container (`--selection-bar-*`), a named region whose appearance is announced (`aria-live="polite"`). `confirmDiscard`: _Discard_ asks first; Escape starts the question and focuses it, a second Escape takes it back; Escape is left to open overlays (`AthOverlayStack`). `saving` shows the spinner and blocks both buttons. Full width on phones.
-- `ath-color-swatch`, `ath-role-badge`, `ath-avatar [ring]`: the palette `AthDecoColor` (`neutral`, `blue`, `green`, `amber`, `red`, `purple`, `pink`; the same tokens as `TicketTypeColor` in athenos-contracts), drawn with the `--<hue>-muted` deco tokens (`--grey-muted` for neutral). The swatch is a radio group with named swatches and a check on the picked one; an unknown token is neutral on a badge and no ring on an avatar. `ath-role-badge` also takes a `#RRGGBB` colour (a team's, W4-F team queues) and draws it as it is. `ATH_DECO_COLORS`, `isAthDecoColor()` and `athDecoColorLabel()` are exported.
+- `ath-color-swatch`, `ath-role-badge`, `ath-avatar [ring]`: the palette `AthDecoColor` (`neutral`, `blue`, `green`, `amber`, `red`, `purple`, `pink`; the same tokens as `TicketTypeColor` in athenos-contracts), drawn with the `--<hue>-muted` deco tokens (`--grey-muted` for neutral). The swatch is a radio group of 32px swatches with names and a white check (drop shadow) on the picked one; `tone="solid"` paints the full `--<hue>` where the choice shows solid next to the picker; an unknown token is neutral on a badge and no ring on an avatar. `ath-role-badge` also takes a `#RRGGBB` colour (a team's, W4-F team queues) and draws it as it is. `ATH_DECO_COLORS`, `isAthDecoColor()` and `athDecoColorLabel()` are exported.
 - Words: the `AthLabels` `triState*`, `saveBar*`, `color*`, `colorPicker` and `roleLocked` (English defaults; the app translates them in its `ATH_LABELS` provider).
 
 ### `ath-chip`
@@ -285,7 +289,7 @@ The app provides its parser once (`{ provide: ATH_MARKDOWN_PARSER, useValue: ren
 </ath-kpi-strip>
 ```
 
-One KPI API (the app's `metric-card` features): `label`, `value`, `delta`, `deltaDirection`, `deltaTitle`, `tone` (trend colour), `spark` (≥ 2 samples, not all zero), `note`/`noteTitle`, `alert`, `muted`, `link`/`linkParams`/`linkLabel` (the whole tile is the hit area). For counts per status: `valueTone` (`amber|blue|green|red|purple`, the figure in the `--*-text` shade; `alert` and `muted` win), `dot` (a CSS colour for a small key before the label), and projected content under the figure (a progress bar). The strip draws the card and the hairlines and drops to two columns below 920px. `ath-sparkline` (`data`, `width` 70, `height` 22, `color`, `showDot`, `showArea`, `strokeWidth` 1.2) is decorative; `sparklineGeometry()` is the pure path maths.
+One KPI API (the app's `metric-card` features): `label`, `value` (`null` or `undefined`: still loading, a 48 × 22 skeleton with the loading label for screen readers; pass a real figure or `–` with `muted` otherwise), `delta`, `deltaDirection`, `deltaTitle`, `tone` (trend colour), `spark` (≥ 2 samples, not all zero), `note`/`noteTitle` (under the figure in the sans face, one line ending in an ellipsis; the note is its own tooltip unless `noteTitle` says more), `alert`, `muted`, `link`/`linkParams`/`linkLabel` (the whole tile is the hit area). For counts per status: `valueTone` (`amber|blue|green|red|purple`, the figure in the `--*-text` shade; `alert` and `muted` win), `dot` (a CSS colour for a small key before the label), and projected content under the figure (a progress bar). The strip draws the card and the hairlines and drops to two columns below 920px. `ath-sparkline` (`data`, `width` 70, `height` 22, `color`, `showDot`, `showArea`, `strokeWidth` 1.2) is decorative; `sparklineGeometry()` is the pure path maths.
 
 ## Page frame: `ath-page`, `ath-panel-grid`, `ath-panel`
 
@@ -368,7 +372,7 @@ Inputs: `athFloating` (anchor element, `ElementRef`, or a `FloatingVirtualAnchor
 </ath-menu>
 ```
 
-The WAI-ARIA menu button. Trigger: click, Enter, Space and ArrowDown open on the first item, ArrowUp on the last; the menu is labelled by the trigger. Menu: ArrowDown/ArrowUp (wrapping), Home/End, typeahead, Enter/Space activate, Escape closes (focus back to the trigger), Tab closes and moves on. Items (`button[athMenuItem]`, `a[athMenuItem]` or `<ath-menu-item>`): `icon`, `shortcut` (hint, hidden from AT; `keyshortcuts` sets `aria-keyshortcuts`), `variant="danger"`, `disabled` (stays focusable with `aria-disabled`; `disabledReason` is the tooltip and the accessible description), `tooltip`, `checked` (`menuitemcheckbox`), `keepOpen`; output `triggered` (not for disabled items; use it instead of `(click)`). `ath-menu` inputs: `open` (two-way), `anchor`, `align`, `side`, `maxHeight`, `ariaLabel`, `panelClass`; methods `show(anchor?, 'first' | 'last' | 'none')`, `hide(restoreFocus?)`, `toggle()`; outputs `opened`, `closed`.
+The WAI-ARIA menu button. Trigger: click, Enter, Space and ArrowDown open on the first item, ArrowUp on the last; the menu is labelled by the trigger. Menu: ArrowDown/ArrowUp (wrapping), Home/End, typeahead, Enter/Space activate, Escape closes (focus back to the trigger), Tab closes and moves on. Items (`button[athMenuItem]`, `a[athMenuItem]` or `<ath-menu-item>`): `icon`, `shortcut` (hint, hidden from AT; `keyshortcuts` sets `aria-keyshortcuts`), `variant="danger"`, `disabled` (stays focusable with `aria-disabled`; `disabledReason` is the tooltip and the accessible description), `tooltip`, `checked` (`menuitemcheckbox`), `selected` (`menuitemradio` with a trailing check on the current value; the menu opens on it), `keepOpen`; output `triggered` (not for disabled items; use it instead of `(click)`). `ath-menu` inputs: `open` (two-way), `anchor`, `align`, `side`, `maxHeight`, `ariaLabel`, `panelClass`; methods `show(anchor?, 'first' | 'last' | 'none')`, `hide(restoreFocus?)`, `toggle()`; outputs `opened`, `closed`.
 
 ### `ath-listbox`
 
@@ -430,7 +434,7 @@ A styled native `<select>` with `ControlValueAccessor` (`[(ngModel)]`, forms). A
 
 ### `ath-toggle`
 
-A `role="switch"` button. With `label` (and `description`) it is a boxed, self-labelling row; without, the bare switch. In a settings row or a table cell that names it, pass `ariaLabel` instead of a hidden label: `<ath-toggle [ariaLabel]="'Email on mention'" [checked]="on" (toggled)="set($event)" />`.
+A `role="switch"` button. With `label` (and `description`) it is a boxed, self-labelling row; without, the bare switch (a 44px hit area on a coarse pointer). Off: a `--control-off-bg` track at ≥ 3:1 against the surfaces and a white thumb. In a settings row or a table cell that names it, pass `ariaLabel` instead of a hidden label: `<ath-toggle [ariaLabel]="'Email on mention'" [checked]="on" (toggled)="set($event)" />`.
 
 ### `ath-sheet`
 
@@ -456,7 +460,7 @@ A non-modal side sheet at the inline end (the right in LTR, the left in RTL), fo
 
 ### `ath-dropdown`, `ath-combobox` (presets)
 
-Thin presets: `ath-dropdown` = `ath-menu` from a flat `items: DropdownItem[]`, each a `DropdownAction` (`id`, `label`, `icon`, `variant`, `disabled`, `title` = tooltip and, on disabled items, the accessible reason, `shortcut`) or `DROPDOWN_SEPARATOR` between groups (`isDropdownSeparator()`; the old pseudo-item `{ id, label: '', divider: true }` is gone). The projected button is the menu button itself (one tab stop, ARIA on the button); plain text gets a `role="button"` wrapper. `ath-combobox` = single-select `ath-option-picker` (`options: ListboxOption[]`, `[(value)]`, `placeholder`, `searchPlaceholder`, `disabled`, `clearable`, `loading`, `bare`, `optionTpl`, `queryChange`, `opened`, `closed`, `toggle()`, `openPanel()`, `close()`, `select()`). For anything richer use `ath-menu` or `ath-option-picker` directly.
+Thin presets: `ath-dropdown` = `ath-menu` from a flat `items: DropdownItem[]`, each a `DropdownAction` (`id`, `label`, `icon`, `variant`, `disabled`, `title` = tooltip and, on disabled items, the accessible reason, `shortcut`) or `DROPDOWN_SEPARATOR` between groups (`isDropdownSeparator()`; the old pseudo-item `{ id, label: '', divider: true }` is gone). The projected button is the menu button itself (one tab stop, ARIA on the button); plain text gets a `role="button"` wrapper. A menu that picks a value takes `activeId`: the items become `menuitemradio`s, the current one shows a trailing check and gets focus on open. `<ng-template athDropdownHeader>` puts static content above the first item (who is signed in), built only while open. `ath-combobox` = single-select `ath-option-picker` (`options: ListboxOption[]`, `[(value)]`, `placeholder`, `searchPlaceholder`, `disabled`, `clearable`, `loading`, `bare`, `optionTpl`, `queryChange`, `opened`, `closed`, `toggle()`, `openPanel()`, `close()`, `select()`). For anything richer use `ath-menu` or `ath-option-picker` directly.
 
 ### Unused components kept (quality step 2.7)
 

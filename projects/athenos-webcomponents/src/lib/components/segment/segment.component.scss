@@ -42,10 +42,12 @@
   }
 }
 
+// Raised off the track in both themes (dark: a lighter fill and a top
+// highlight; it used to be darker than its track and read as pressed).
 .ath-seg__item--active {
   background: var(--segment-active-bg);
   color: var(--segment-active-fg);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--segment-active-shadow);
 }
 
 .ath-seg__item--disabled {
@@ -82,5 +84,14 @@ body.compact :host {
     height: calc(var(--control-h-sm) - 6px);
     padding: 0 9px;
     font-size: 12.5px;
+  }
+}
+
+// A phone or a coarse pointer: items a thumb can hit (22px before).
+@media (pointer: coarse), (max-width: 639px) {
+  :host .ath-seg__item,
+  :host([data-size='sm']) .ath-seg__item {
+    min-height: 32px;
+    padding: 0 12px;
   }
 }
