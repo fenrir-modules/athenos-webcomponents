@@ -92,7 +92,9 @@ describe('AthSaveBarComponent', () => {
     let events = 0;
     fixture.componentInstance.save.subscribe(() => events++);
     fixture.componentInstance.discard.subscribe(() => events++);
-    expect(buttons().every((b) => b.disabled)).toBe(true);
+    expect(buttons()[0].disabled).toBe(true);
+    // Busy is aria-disabled (it keeps focus), not natively disabled.
+    expect(buttons()[1].getAttribute('aria-disabled')).toBe('true');
     expect(buttons()[1].getAttribute('aria-busy')).toBe('true');
     buttons().forEach((b) => b.click());
     expect(events).toBe(0);

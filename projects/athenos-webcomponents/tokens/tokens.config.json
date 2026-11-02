@@ -251,7 +251,7 @@
       "fg": "action-primary-fg",
       "bg": ["action-primary-bg", "action-primary-bg-hover", "action-primary-bg-active"],
       "min": 4.5,
-      "why": "WCAG 1.4.3 — primary button label, also pressed"
+      "why": "WCAG 1.4.3 — primary button label, also pressed; also a checked switch's thumb on its track"
     },
     {
       "fg": "action-danger-fg",

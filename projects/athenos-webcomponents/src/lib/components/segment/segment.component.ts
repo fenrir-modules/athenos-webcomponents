@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
+import { nextTabIndex, tabStopIndex } from '../tabs/tab-keys';
 
 export interface SegmentOption<T = string> {
   value: T;
@@ -42,6 +51,17 @@ export class AthSegmentComponent<T = string> {
 
   readonly valueChange = output<T>();
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** The one option in the tab order; the arrow keys reach the others. */
+  protected readonly tabStop = computed(() => {
+    const options = this.options();
+    return tabStopIndex(
+      options.findIndex((option) => option.value === this.value()),
+      options.map((option) => !!option.disabled)
+    );
+  });
+
   trackByValue = (_: number, item: SegmentOption<T>): unknown => item.value;
 
   select(option: SegmentOption<T>): void {
@@ -49,6 +69,20 @@ export class AthSegmentComponent<T = string> {
     if (option.value !== this.value()) {
       this.valueChange.emit(option.value);
     }
+  }
+
+  protected onKey(event: KeyboardEvent, index: number): void {
+    const options = this.options();
+    const next = nextTabIndex(
+      event,
+      index,
+      options.map((option) => !!option.disabled),
+      this.host.nativeElement
+    );
+    if (next === null) return;
+    event.preventDefault();
+    this.select(options[next]);
+    this.host.nativeElement.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
   }
 
   isActive(option: SegmentOption<T>): boolean {

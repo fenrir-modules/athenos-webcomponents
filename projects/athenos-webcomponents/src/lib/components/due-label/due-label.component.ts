@@ -10,6 +10,7 @@ import { AthIconComponent } from '../icon/icon.component';
 import { AlertTriangle, Zap } from 'lucide';
 import { formatAthLabel, injectAthLabels } from '../../i18n/labels';
 import { ATH_DATE_CONTEXT, type AthDateContext, type DueSource, describeDue } from './due-date';
+import { AthToday } from './today';
 
 /**
  * The one way a due date is shown: text, never a pill.
@@ -43,6 +44,7 @@ export class AthDueLabelComponent {
   private readonly labels = injectAthLabels();
   private readonly localeId = inject(LOCALE_ID);
   private readonly dateContext = inject(ATH_DATE_CONTEXT, { optional: true });
+  private readonly today = inject(AthToday);
 
   /** ISO date or timestamp; empty shows `placeholder` (or nothing). */
   readonly date = input<string | null | undefined>(null);
@@ -56,7 +58,7 @@ export class AthDueLabelComponent {
   readonly placeholder = input<string | null>(null);
   /** Narrow columns: the sprint icon only, "Sprint end" moves to the tooltip. */
   readonly compact = input(false);
-  /** Reference time, for stories and tests. */
+  /** Reference time, for stories and tests; default the current day (`AthToday`). */
   readonly now = input<Date | null>(null);
 
   protected readonly ic = { sprint: Zap, warn: AlertTriangle } as const;
@@ -66,13 +68,19 @@ export class AthDueLabelComponent {
     ...(this.dateContext?.() ?? {}),
   }));
 
+  /** The time now, read fresh; the tick only makes `view` re-run around midnight. */
+  private currentTime(): Date {
+    this.today.tick();
+    return new Date();
+  }
+
   protected readonly view = computed(() =>
     describeDue(
       {
         date: this.date(),
         done: this.done(),
         source: this.source(),
-        now: this.now() ?? undefined,
+        now: this.now() ?? this.currentTime(),
       },
       {
         overdue: this.labels.dueOverdue(),

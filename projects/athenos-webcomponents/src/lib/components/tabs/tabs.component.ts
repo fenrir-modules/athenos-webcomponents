@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
+import { nextTabIndex, tabStopIndex } from './tab-keys';
 
 /**
  * Tab item definition
@@ -35,10 +44,35 @@ export class AthTabsComponent {
   /** Tab change event */
   readonly tabChanged = output<string>();
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** The one tab in the tab order; the arrow keys reach the others. */
+  protected readonly tabStop = computed(() => {
+    const tabs = this.tabs();
+    return tabStopIndex(
+      tabs.findIndex((tab) => tab.id === this.activeTab()),
+      tabs.map((tab) => !!tab.disabled)
+    );
+  });
+
   selectTab(tab: TabItem): void {
     if (!tab.disabled && tab.id !== this.activeTab()) {
       this.tabChanged.emit(tab.id);
     }
+  }
+
+  protected onKey(event: KeyboardEvent, index: number): void {
+    const tabs = this.tabs();
+    const next = nextTabIndex(
+      event,
+      index,
+      tabs.map((tab) => !!tab.disabled),
+      this.host.nativeElement
+    );
+    if (next === null) return;
+    event.preventDefault();
+    this.selectTab(tabs[next]);
+    this.host.nativeElement.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
   }
 
   getTabClasses(tab: TabItem): string {

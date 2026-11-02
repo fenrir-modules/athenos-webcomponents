@@ -20,6 +20,9 @@
       [placeholder]="placeholder()"
       [disabled]="isDisabled()"
       [readonly]="readonly()"
+      [attr.aria-required]="required() || null"
+      [attr.aria-invalid]="error() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
       [autocomplete]="autocomplete()"
       [value]="fieldValue()"
       (input)="onInput($event)"
@@ -34,7 +37,7 @@
         (click)="togglePassword()"
         [attr.aria-label]="showPassword() ? hidePasswordText() : showPasswordText()"
         [attr.aria-pressed]="showPassword()"
-        tabindex="-1"
+        [attr.aria-controls]="inputId()"
       >
         <ath-icon [img]="showPassword() ? eyeOffIcon : eyeIcon" [size]="18" />
       </button>
@@ -42,13 +45,13 @@
   </div>
 
   @if (error()) {
-    <div class="ath-input__error">
+    <div class="ath-input__error" [id]="errorId()">
       <ath-icon [img]="alertIcon" [size]="14" />
       {{ error() }}
     </div>
   }
 
   @if (hint() && !error()) {
-    <div class="ath-input__hint">{{ hint() }}</div>
+    <div class="ath-input__hint" [id]="hintId()">{{ hint() }}</div>
   }
 </div>

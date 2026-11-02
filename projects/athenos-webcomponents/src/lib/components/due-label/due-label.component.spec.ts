@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ATH_LABELS } from '../../i18n/labels';
 import { ATH_DATE_CONTEXT } from './due-date';
 import { AthDueLabelComponent } from './due-label.component';
+import { AthToday } from './today';
 
 const NOW = new Date(2026, 9, 22, 10, 0);
 
@@ -127,5 +128,65 @@ describe('AthDueLabelComponent', () => {
       },
     ]);
     expect(label()!.getAttribute('title')).toBe('Due Dienstag, 27. Oktober 2026, 18:30');
+  });
+
+  describe('across midnight', () => {
+    afterEach(() => vi.useRealTimers());
+
+    /** R-78: a label left on screen overnight kept yesterday's words. */
+    it('moves on at local midnight without a reload', () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+      vi.setSystemTime(new Date(2026, 9, 22, 23, 59));
+      TestBed.configureTestingModule({
+        providers: [{ provide: ATH_DATE_CONTEXT, useValue: () => ({}) }],
+      });
+      fixture = TestBed.createComponent(AthDueLabelComponent);
+      fixture.componentRef.setInput('date', '2026-10-23');
+      fixture.detectChanges();
+      expect(shown()).toBe('tomorrow');
+
+      vi.advanceTimersByTime(60_000);
+      fixture.detectChanges();
+      expect(shown()).toBe('today');
+      expect(label()!.dataset['tone']).toBe('today');
+    });
+
+    /** A stored moment lands on the wrong day when the reader's zone is not the browser's. */
+    it("moves on at midnight in the reader's time zone, not only the browser's", () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+      // 23:59 on 22 Oct in a zone hours away from the test run's own.
+      const tokyo = Date.UTC(2026, 9, 22, 14, 59);
+      const [timeZone, at] =
+        new Date(tokyo).getTimezoneOffset() === -540
+          ? ['Pacific/Honolulu', Date.UTC(2026, 9, 23, 9, 59)]
+          : ['Asia/Tokyo', tokyo];
+      vi.setSystemTime(at);
+      TestBed.configureTestingModule({
+        providers: [{ provide: ATH_DATE_CONTEXT, useValue: () => ({ timeZone }) }],
+      });
+      fixture = TestBed.createComponent(AthDueLabelComponent);
+      fixture.componentRef.setInput('date', '2026-10-23');
+      fixture.detectChanges();
+      expect(shown()).toBe('tomorrow');
+
+      vi.advanceTimersByTime(60_000);
+      fixture.detectChanges();
+      expect(shown()).toBe('today');
+    });
+
+    it('reads the current time when a label is created, not when the app started', () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+      vi.setSystemTime(new Date(2026, 9, 22, 10, 0));
+      TestBed.configureTestingModule({
+        providers: [{ provide: ATH_DATE_CONTEXT, useValue: () => ({}) }],
+      });
+      TestBed.inject(AthToday);
+      // A day later without the timer having fired (e.g. a suspended tab).
+      vi.setSystemTime(new Date(2026, 9, 23, 10, 0));
+      fixture = TestBed.createComponent(AthDueLabelComponent);
+      fixture.componentRef.setInput('date', '2026-10-23');
+      fixture.detectChanges();
+      expect(shown()).toBe('today');
+    });
   });
 });

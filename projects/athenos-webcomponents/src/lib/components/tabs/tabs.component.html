@@ -1,12 +1,14 @@
 <div class="ath-tabs" role="tablist">
-  @for (tab of tabs(); track tab.id) {
+  @for (tab of tabs(); track tab.id; let i = $index) {
     <button
       type="button"
       role="tab"
       [class]="getTabClasses(tab)"
       [attr.aria-selected]="tab.id === activeTab()"
+      [attr.tabindex]="i === tabStop() ? 0 : -1"
       [disabled]="tab.disabled"
       (click)="selectTab(tab)"
+      (keydown)="onKey($event, i)"
     >
       <span class="ath-tabs__label">{{ tab.label }}</span>
       @if (tab.count != null && tab.count !== 0 && tab.count !== '') {

@@ -29,7 +29,10 @@
       0 0 0 4px var(--accent);
   }
 
-  &:disabled {
+  // Busy is aria-disabled, not disabled: a native disabled button drops
+  // the focus it had (to <body>) the moment its action starts.
+  &:disabled,
+  &[aria-disabled='true'] {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -146,7 +149,8 @@
 
     // Disabled reads neutral in every theme — dark mode's accent outline
     // must not survive into the disabled state (QA D11).
-    &:disabled {
+    &:disabled,
+    &[aria-disabled='true'] {
       color: var(--fg-3);
       border-color: var(--border);
     }

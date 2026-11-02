@@ -18,6 +18,9 @@
       [id]="selectId()"
       [attr.aria-label]="ariaLabel() || null"
       [disabled]="isDisabled()"
+      [attr.aria-required]="required() || null"
+      [attr.aria-invalid]="error() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
       [value]="fieldValue()"
       (change)="onSelectionChange($event)"
       (blur)="onTouched()"
@@ -42,13 +45,13 @@
   </div>
 
   @if (error()) {
-    <div class="ath-select__error">
+    <div class="ath-select__error" [id]="errorId()">
       <ath-icon [img]="alertIcon" [size]="14" />
       {{ error() }}
     </div>
   }
 
   @if (hint() && !error()) {
-    <div class="ath-select__hint">{{ hint() }}</div>
+    <div class="ath-select__hint" [id]="hintId()">{{ hint() }}</div>
   }
 </div>

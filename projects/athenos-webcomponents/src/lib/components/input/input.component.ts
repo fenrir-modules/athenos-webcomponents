@@ -82,6 +82,13 @@ export class AthInputComponent implements ControlValueAccessor {
   /** Unique input ID */
   readonly inputId = input(`ath-input-${Math.random().toString(36).substr(2, 9)}`);
 
+  /** Ids of the rendered error / hint, so the field can point aria-describedby at them. */
+  protected readonly errorId = computed(() => `${this.inputId()}-error`);
+  protected readonly hintId = computed(() => `${this.inputId()}-hint`);
+  protected readonly describedBy = computed(() =>
+    this.error() ? this.errorId() : this.hint() ? this.hintId() : null
+  );
+
   // Written by the forms API (e.g. a setValue after an async lookup) outside
   // an input change; signals, so OnPush (and zoneless) views follow. Not
   // `value`: Storybook copies a story prop of that name onto the instance.

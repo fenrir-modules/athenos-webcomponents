@@ -1,4 +1,4 @@
-@for (option of options(); track trackByValue($index, option)) {
+@for (option of options(); track trackByValue($index, option); let i = $index) {
   <button
     type="button"
     role="tab"
@@ -7,8 +7,10 @@
     [class.ath-seg__item--disabled]="option.disabled"
     [attr.aria-selected]="isActive(option)"
     [attr.aria-disabled]="option.disabled || null"
+    [attr.tabindex]="i === tabStop() ? 0 : -1"
     [disabled]="option.disabled"
     (click)="select(option)"
+    (keydown)="onKey($event, i)"
   >
     <span class="ath-seg__label">{{ option.label }}</span>
     @if (option.count != null) {

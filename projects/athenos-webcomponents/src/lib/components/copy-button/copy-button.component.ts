@@ -10,6 +10,7 @@ import {
 import { AthIconComponent } from '../icon/icon.component';
 import { Copy, Check } from 'lucide';
 import { injectAthLabels } from '../../i18n/labels';
+import { copyText } from './clipboard';
 
 /**
  * Athenos Copy Button Component
@@ -47,20 +48,8 @@ export class AthCopyButtonComponent {
   }
 
   async copy(): Promise<void> {
-    const value = this.value();
-    try {
-      await navigator.clipboard.writeText(value);
-    } catch {
-      // Fallback for older browsers
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    }
+    // "Copied" only when it is true: a refused clipboard keeps the copy label.
+    if (!(await copyText(this.value()))) return;
     this.copied.set(true);
     // Feedback timer, not change detection: the signal schedules the render.
     clearTimeout(this.resetTimeout);

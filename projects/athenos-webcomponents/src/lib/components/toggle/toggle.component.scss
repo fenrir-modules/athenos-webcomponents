@@ -105,9 +105,12 @@
       border-color: var(--action-primary-bg);
     }
 
+    // The primary label colour, not white: on dark mode's light fills
+    // (neutral ink, green, orange) a white thumb fell under 3:1. The pair is
+    // checked at 4.5:1 in every theme and accent (tokens.config.json).
     .ath-toggle__thumb {
       transform: translateX(16px);
-      background: #fff;
+      background: var(--action-primary-fg);
     }
   }
 

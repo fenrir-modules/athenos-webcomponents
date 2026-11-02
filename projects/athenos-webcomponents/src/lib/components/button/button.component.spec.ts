@@ -1,5 +1,5 @@
 import type { MockedObject } from 'vitest';
-import { ErrorHandler } from '@angular/core';
+import { Component, ErrorHandler, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { AthButtonComponent } from './button.component';
@@ -63,13 +63,13 @@ describe('AthButtonComponent', () => {
       inner().click();
       fixture.detectChanges();
       expect(action).toHaveBeenCalledTimes(1);
-      expect(inner().disabled).toBe(true);
+      expect(inner().getAttribute('aria-disabled')).toBe('true');
       expect(inner().getAttribute('aria-busy')).toBe('true');
       expect(inner().querySelector('.ath-button__loader')).not.toBeNull();
       resolve();
       await settle();
       fixture.detectChanges();
-      expect(inner().disabled).toBe(false);
+      expect(inner().hasAttribute('aria-disabled')).toBe(false);
       expect(inner().querySelector('.ath-button__loader')).toBeNull();
       inner().click();
       expect(action).toHaveBeenCalledTimes(2);
@@ -136,6 +136,31 @@ describe('AthButtonComponent', () => {
       expect(errorHandler.handleError).toHaveBeenCalledTimes(1);
     });
 
+    /** R-78: a natively disabled button sent focus to <body> once busy. */
+    it('keeps focus while busy: aria-disabled, not disabled', async () => {
+      let resolve!: () => void;
+      fixture.componentRef.setInput('action', () => new Promise<void>((r) => (resolve = r)));
+      fixture.detectChanges();
+      inner().focus();
+      inner().click();
+      fixture.detectChanges();
+      expect(inner().disabled).toBe(false);
+      expect(inner().getAttribute('aria-disabled')).toBe('true');
+      expect(document.activeElement).toBe(inner());
+      resolve();
+      await settle();
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(inner());
+    });
+
+    it('stays natively disabled when [disabled] is set', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.componentRef.setInput('loading', true);
+      fixture.detectChanges();
+      expect(inner().disabled).toBe(true);
+      expect(inner().hasAttribute('aria-disabled')).toBe(false);
+    });
+
     it('blocks a busy submit button from submitting its form', () => {
       fixture.componentRef.setInput('type', 'submit');
       fixture.componentRef.setInput('loading', true);
@@ -143,6 +168,38 @@ describe('AthButtonComponent', () => {
       const event = new MouseEvent('click', { cancelable: true });
       fixture.componentInstance.handleClick(event);
       expect(event.defaultPrevented).toBe(true);
+    });
+  });
+
+  /** Native disabled never let a click reach a listener on the host element. */
+  describe('(click) on the host', () => {
+    @Component({
+      imports: [AthButtonComponent],
+      template: `<ath-button [loading]="loading()" (click)="save()">Save</ath-button>`,
+    })
+    class HostComponent {
+      readonly loading = signal(false);
+      readonly save = vi.fn().mockName('save');
+    }
+
+    let host: ComponentFixture<HostComponent>;
+    const hostInner = () => (host.nativeElement as HTMLElement).querySelector('button')!;
+
+    beforeEach(() => {
+      host = TestBed.createComponent(HostComponent);
+      host.detectChanges();
+    });
+
+    it('fires for a click on an idle button', () => {
+      hostInner().click();
+      expect(host.componentInstance.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not fire while loading', () => {
+      host.componentInstance.loading.set(true);
+      host.detectChanges();
+      hostInner().click();
+      expect(host.componentInstance.save).not.toHaveBeenCalled();
     });
   });
 });
