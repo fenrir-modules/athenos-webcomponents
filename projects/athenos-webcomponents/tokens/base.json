@@ -28,6 +28,14 @@
         "$value": "#eaeaed",
         "$description": "Deep wells — inputs, kbd, inner fills"
       },
+      "bg-3": {
+        "$value": "#d4d4d8",
+        "$description": "A stronger neutral fill than bg-2 for small marks on a surface: the avatar stack's \"+N\" (fg-2 on it clears 4.5:1)."
+      },
+      "surface-raised": {
+        "$value": "#ffffff",
+        "$description": "Floating panels (menus, dropdowns, popovers): a step lighter than --surface in dark, so a menu over a card, a dialog or the chrome reads as raised."
+      },
       "hover": {
         "$value": "#00000009",
         "$description": "3.5% black overlay for hover"
@@ -59,6 +67,10 @@
       },
       "rule": {
         "$value": "#e2e2e6"
+      },
+      "border-raised": {
+        "$value": "{color.border.border}",
+        "$description": "Edge of a floating panel (--surface-raised)."
       }
     },
     "text": {
@@ -233,6 +245,11 @@
         "segment-active-bg": {
           "$value": "{color.surface.surface}"
         },
+        "segment-active-shadow": {
+          "$type": "shadow",
+          "$value": "{shadow.shadow-1}",
+          "$description": "The active segment is raised off its track in both themes."
+        },
         "segment-active-fg": {
           "$value": "{color.text.fg}"
         },
@@ -296,6 +313,18 @@
         "control-mark": {
           "$value": "{color.role.control.control-checked}",
           "$description": "Marks that were ink before the accent presets reached light (a done task box, an editor checkbox, a pressed toggle's border, an ink focus outline): the checked-control colour in light, so ink under neutral; ink in dark, which keeps its look."
+        },
+        "control-off-bg": {
+          "$value": "#85858e",
+          "$description": "The track of an off switch: 3:1 against the surfaces it sits on (WCAG 1.4.11), with a white thumb."
+        },
+        "mark-on-color": {
+          "$value": "#ffffff",
+          "$description": "A mark on a coloured fill (the check on a colour swatch, an off switch's thumb): white in both themes, lifted by --mark-shadow."
+        },
+        "control-off-thumb": {
+          "$value": "{color.role.control.mark-on-color}",
+          "$description": "The thumb of an off switch, white in both themes over --control-off-bg."
         }
       },
       "selection-bar": {
@@ -344,7 +373,8 @@
       "notify": {
         "$type": "color",
         "notify-dot": {
-          "$value": "#43946c"
+          "$value": "{color.accent.accent}",
+          "$description": "Unread: the accent in both themes, as the sidebar's unread count (green means done or on track)."
         }
       },
       "rail": {
@@ -356,6 +386,13 @@
         "rail-tile-bg": {
           "$value": "{color.surface.bg-2}"
         }
+      },
+      "menu": {
+        "$type": "color",
+        "menu-item-hover": {
+          "$value": "{color.surface.hover-strong}",
+          "$description": "Hover and focus fill of a menu item on --surface-raised."
+        }
       }
     },
     "avatar": {
@@ -366,6 +403,10 @@
       },
       "avatar-neutral-fg": {
         "$value": "{color.text.fg-3}"
+      },
+      "avatar-stack-ring": {
+        "$value": "{color.surface.surface}",
+        "$description": "The ring between stacked avatars: the colour behind the stack. A stack on the chrome or a tinted row re-sets it there."
       },
       "avatar-1-bg": {
         "$value": "#a95c25"
@@ -659,6 +700,18 @@
     "shadow-3": {
       "$value": "0 16px 40px -12px rgba(15, 23, 42, 0.18), 0 4px 12px -2px rgba(15, 23, 42, 0.06)"
     },
+    "shadow-raised": {
+      "$value": "{shadow.shadow-3}",
+      "$description": "Floating panels on --surface-raised; dark adds a hairline top highlight."
+    },
+    "mark-shadow": {
+      "$value": "0 1px 1px rgba(0, 0, 0, 0.45)",
+      "$description": "drop-shadow() of a white mark on a colour (the swatch check)."
+    },
+    "control-thumb-shadow": {
+      "$value": "0 1px 2px rgba(0, 0, 0, 0.25)",
+      "$description": "A switch thumb over its track."
+    },
     "shadow-drawer": {
       "$value": "6px 0 20px -6px rgba(15, 23, 42, 0.12)"
     },
@@ -789,6 +842,10 @@
       },
       "control-h-sm": {
         "$value": "28px"
+      },
+      "nav-row-h": {
+        "$value": "32px",
+        "$description": "One row of ath-nav-item (sidebar, rail, settings nav); a drawer on a phone sets 44px."
       },
       "control-h": {
         "$value": "32px"

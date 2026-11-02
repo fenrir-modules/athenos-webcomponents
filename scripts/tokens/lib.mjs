@@ -166,8 +166,19 @@ export function buildBlocks(config, loadJson) {
           };
         });
     }
+    // A media block (touch sizes) re-values sizes only: the contrast gate and
+    // the cascade emulation have no media context, so a colour there would
+    // escape them.
+    if (b.media) {
+      const colour = decls.find((d) => d.token.type === 'color' || d.token.type === 'shadow');
+      if (colour)
+        throw new TokenError(
+          `${b.set}: --${colour.name} is a ${colour.token.type}; a media block may only re-value sizes`
+        );
+    }
     blocks.push({
       selector: b.selector,
+      ...(b.media ? { media: b.media } : {}),
       when: b.when ?? {},
       set: b.set,
       title: b.title,
@@ -195,14 +206,17 @@ export function themeContexts(config) {
 
 const matches = (when, ctx) => Object.entries(when).every(([k, v]) => ctx[k] === v);
 
-/** Cascade emulation: later matching blocks win (all selectors target <html>). */
+/**
+ * Cascade emulation: later matching blocks win (all selectors target <html>).
+ * Media blocks are left out: they only re-value sizes (checked in buildBlocks).
+ */
 export function effectiveMap(blocks, ctx) {
   const map = new Map();
   const ordered = [...blocks].map((b, i) => ({ b, i, spec: Object.keys(b.when).length }));
   // Specificity first (attribute count), then source order.
   ordered.sort((x, y) => x.spec - y.spec || x.i - y.i);
   for (const { b } of ordered) {
-    if (!matches(b.when, ctx)) continue;
+    if (b.media || !matches(b.when, ctx)) continue;
     for (const d of b.declarations) map.set(d.name, d.css);
   }
   return map;
@@ -385,6 +399,7 @@ export function renderScss({ blocks, docs }, { sourceLabel }) {
   let out = HEADER(sourceLabel);
   for (const b of blocks) {
     out += `\n// ---------------------------------------------------------------------\n// ${b.title ?? b.selector}\n// ---------------------------------------------------------------------\n`;
+    if (b.media) out += `@media ${b.media} {\n`;
     out += `${b.selector} {\n`;
     const full = b === blocks[0];
     let group = null;
@@ -417,6 +432,7 @@ export function renderScss({ blocks, docs }, { sourceLabel }) {
     }
     for (const [prop, value] of Object.entries(b.extra)) out += `\n  ${prop}: ${value};\n`;
     out += '}\n';
+    if (b.media) out += '}\n';
   }
   return out;
 }

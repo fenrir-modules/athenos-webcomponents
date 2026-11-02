@@ -103,6 +103,37 @@ test('cascade emulation: specificity, then source order', () => {
   assert.equal(resolveValue(m('dark', null), 'bg'), '#111113');
 });
 
+test('a media block wraps its selector, re-values sizes only and stays out of the cascade emulation', () => {
+  const sets = {
+    ...structuredClone(tinySets),
+    touch: { z: { 'z-a': { $value: 2 } } },
+  };
+  const config = {
+    ...tiny,
+    blocks: [...tiny.blocks, { selector: ':root', media: '(pointer: coarse)', set: 'touch' }],
+  };
+  const built = buildBlocks(config, load(sets));
+  const scss = renderScss(built, { sourceLabel: 'tiny' });
+  assert.match(scss, /@media \(pointer: coarse\) \{\n:root \{\n {2}--z-a: 2;\n\}\n\}\n/);
+  assert.equal(
+    resolveValue(effectiveMap(built.blocks, { theme: 'light', accent: null }), 'z-a'),
+    '1'
+  );
+  const colour = { ...sets, touch: { color: { bg: { $value: '#000000' } } } };
+  assert.throws(() => buildBlocks(config, load(colour)), /may only re-value sizes/);
+});
+
+test('the touch block raises --control-h-sm on phones and coarse pointers', () => {
+  const scss = readFileSync(
+    new URL('../../projects/athenos-webcomponents/src/lib/styles/_tokens.scss', import.meta.url),
+    'utf8'
+  );
+  assert.match(
+    scss,
+    /@media \(pointer: coarse\), \(max-width: 639px\) \{\n:root,\n\[data-theme\] \{\n {2}--control-h-sm: 36px;.*\n {2}--control-h: 36px;/
+  );
+});
+
 test('rendered SCSS marks deprecated aliases and keeps descriptions', () => {
   const built = buildBlocks(tiny, load(tinySets));
   const scss = renderScss(built, { sourceLabel: 'tiny' });

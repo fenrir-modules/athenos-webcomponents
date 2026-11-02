@@ -25,6 +25,13 @@
         "$value": "#26262e",
         "$description": "Inputs, kbd chips, inner wells"
       },
+      "bg-3": {
+        "$value": "#3f3f46"
+      },
+      "surface-raised": {
+        "$value": "#24242a",
+        "$description": "A visible step above --surface (#1c1c21) and the chrome (#18181c)."
+      },
       "hover": {
         "$value": "#ffffff0b",
         "$description": "4% white overlay"
@@ -53,6 +60,9 @@
       },
       "rule": {
         "$value": "#2c2c34"
+      },
+      "border-raised": {
+        "$value": "rgba(255, 255, 255, 0.1)"
       }
     },
     "text": {
@@ -151,7 +161,11 @@
       },
       "tab": {
         "segment-active-bg": {
-          "$value": "{color.surface.bg-1}"
+          "$value": "{color.surface.surface-3}",
+          "$description": "Lighter than its bg-2 track, so the active item is raised as in light (was bg-1, which read as punched in)."
+        },
+        "segment-active-shadow": {
+          "$value": "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4)"
         },
         "progress-track": {
           "$value": "{color.surface.bg-2}"
@@ -184,12 +198,20 @@
       },
       "notify": {
         "notify-dot": {
-          "$value": "{color.status.green}"
+          "$value": "{color.accent.accent}"
         }
       },
       "control": {
         "control-mark": {
           "$value": "{color.role.ink.ink}"
+        },
+        "control-off-bg": {
+          "$value": "#6b6b75"
+        }
+      },
+      "menu": {
+        "menu-item-hover": {
+          "$value": "rgba(255, 255, 255, 0.06)"
         }
       }
     },
@@ -343,6 +365,9 @@
     },
     "shadow-3": {
       "$value": "0 20px 52px -12px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.4)"
+    },
+    "shadow-raised": {
+      "$value": "inset 0 1px 0 rgba(255, 255, 255, 0.04), {shadow.shadow-3}"
     },
     "shadow-drawer": {
       "$value": "8px 0 24px -6px rgba(0, 0, 0, 0.55)"

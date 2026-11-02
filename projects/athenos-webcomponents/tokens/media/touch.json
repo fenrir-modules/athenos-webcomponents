@@ -1,0 +1,14 @@
+{
+  "density": {
+    "control": {
+      "control-h-sm": {
+        "$value": "36px",
+        "$description": "Small controls (buttons, chips, compact segments) reach a thumb on a phone or a coarse pointer; was 28px everywhere."
+      },
+      "control-h": {
+        "$value": "36px",
+        "$description": "Default controls match, so a small button is never taller than a default one."
+      }
+    }
+  }
+}

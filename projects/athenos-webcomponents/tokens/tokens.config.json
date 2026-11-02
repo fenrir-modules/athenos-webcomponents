@@ -124,6 +124,12 @@
         "accent": "neutral"
       },
       "set": "accents/neutral.dark.json"
+    },
+    {
+      "title": "TOUCH — a phone width or a coarse pointer: larger small controls (sizes only)",
+      "selector": ":root,\n[data-theme]",
+      "media": "(pointer: coarse), (max-width: 639px)",
+      "set": "media/touch.json"
     }
   ],
   "contrast": [
@@ -394,6 +400,48 @@
       "over": ["bg-0", "surface"],
       "min": 4.5,
       "why": "WCAG 1.4.3 — toast detail line under a title (W5-D)"
+    },
+    {
+      "fg": "control-off-bg",
+      "bg": ["surface", "bg-0", "bg-1", "surface-2", "bg-2"],
+      "min": 3,
+      "why": "WCAG 1.4.11 — an off switch's track against what it sits on"
+    },
+    {
+      "fg": "control-off-thumb",
+      "bg": ["control-off-bg"],
+      "min": 3,
+      "why": "WCAG 1.4.11 — the white thumb of an off switch on its track"
+    },
+    {
+      "fg": "fg-2",
+      "bg": ["bg-3"],
+      "min": 4.5,
+      "why": "WCAG 1.4.3 — the avatar stack's \"+N\""
+    },
+    {
+      "fg": "notify-dot",
+      "bg": ["bg-1", "surface"],
+      "min": 3,
+      "why": "WCAG 1.4.11 — the unread dot on the rail and the bell"
+    },
+    {
+      "fg": "fg",
+      "bg": ["surface-raised"],
+      "min": 4.5,
+      "why": "WCAG 1.4.3 — menu and popover text"
+    },
+    {
+      "fg": "fg-4",
+      "bg": ["surface-raised"],
+      "min": 4.5,
+      "why": "WCAG 1.4.3 — disabled items and shortcut hints in menus"
+    },
+    {
+      "fg": "red-text",
+      "bg": ["surface-raised"],
+      "min": 4.5,
+      "why": "WCAG 1.4.3 — danger items in menus"
     }
   ]
 }

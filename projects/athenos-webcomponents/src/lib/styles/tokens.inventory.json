@@ -31,6 +31,16 @@
       "type": "color"
     },
     {
+      "name": "--bg-3",
+      "path": "color.surface.bg-3",
+      "type": "color"
+    },
+    {
+      "name": "--surface-raised",
+      "path": "color.surface.surface-raised",
+      "type": "color"
+    },
+    {
       "name": "--hover",
       "path": "color.surface.hover",
       "type": "color"
@@ -68,6 +78,11 @@
     {
       "name": "--rule",
       "path": "color.border.rule",
+      "type": "color"
+    },
+    {
+      "name": "--border-raised",
+      "path": "color.border.border-raised",
       "type": "color"
     },
     {
@@ -276,6 +291,11 @@
       "type": "color"
     },
     {
+      "name": "--segment-active-shadow",
+      "path": "color.role.tab.segment-active-shadow",
+      "type": "shadow"
+    },
+    {
       "name": "--segment-active-fg",
       "path": "color.role.tab.segment-active-fg",
       "type": "color"
@@ -361,6 +381,21 @@
       "type": "color"
     },
     {
+      "name": "--control-off-bg",
+      "path": "color.role.control.control-off-bg",
+      "type": "color"
+    },
+    {
+      "name": "--mark-on-color",
+      "path": "color.role.control.mark-on-color",
+      "type": "color"
+    },
+    {
+      "name": "--control-off-thumb",
+      "path": "color.role.control.control-off-thumb",
+      "type": "color"
+    },
+    {
       "name": "--selection-bar-bg",
       "path": "color.role.selection-bar.selection-bar-bg",
       "type": "color"
@@ -431,6 +466,11 @@
       "type": "color"
     },
     {
+      "name": "--menu-item-hover",
+      "path": "color.role.menu.menu-item-hover",
+      "type": "color"
+    },
+    {
       "name": "--avatar-neutral-bg",
       "path": "color.avatar.avatar-neutral-bg",
       "type": "color"
@@ -438,6 +478,11 @@
     {
       "name": "--avatar-neutral-fg",
       "path": "color.avatar.avatar-neutral-fg",
+      "type": "color"
+    },
+    {
+      "name": "--avatar-stack-ring",
+      "path": "color.avatar.avatar-stack-ring",
       "type": "color"
     },
     {
@@ -791,6 +836,21 @@
       "type": "shadow"
     },
     {
+      "name": "--shadow-raised",
+      "path": "shadow.shadow-raised",
+      "type": "shadow"
+    },
+    {
+      "name": "--mark-shadow",
+      "path": "shadow.mark-shadow",
+      "type": "shadow"
+    },
+    {
+      "name": "--control-thumb-shadow",
+      "path": "shadow.control-thumb-shadow",
+      "type": "shadow"
+    },
+    {
       "name": "--shadow-drawer",
       "path": "shadow.shadow-drawer",
       "type": "shadow"
@@ -953,6 +1013,11 @@
     {
       "name": "--control-h-sm",
       "path": "density.control.control-h-sm",
+      "type": "dimension"
+    },
+    {
+      "name": "--nav-row-h",
+      "path": "density.control.nav-row-h",
       "type": "dimension"
     },
     {
