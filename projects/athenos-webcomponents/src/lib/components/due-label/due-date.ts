@@ -36,22 +36,35 @@ export interface DueTextLabels {
 
 const DAY_MS = 86_400_000;
 
+/** One formatter per time zone: building an Intl.DateTimeFormat is the expensive part. */
+const wallClockFormats = new Map<string, Intl.DateTimeFormat>();
+
+function wallClockFormat(timeZone: string): Intl.DateTimeFormat {
+  let format = wallClockFormats.get(timeZone);
+  if (!format) {
+    // Throws a RangeError for an unknown zone, as before; nothing is cached then.
+    format = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    });
+    wallClockFormats.set(timeZone, format);
+  }
+  return format;
+}
+
 /**
  * `date` as wall-clock time in `timeZone`: a Date whose local fields read
  * what a clock in that zone shows. Only for day comparisons.
  */
 export function zonedWallClock(date: Date, timeZone?: string): Date {
   if (!timeZone) return new Date(date);
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-  }).formatToParts(date);
+  const parts = wallClockFormat(timeZone).formatToParts(date);
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
   return new Date(
     get('year'),

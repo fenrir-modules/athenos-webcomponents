@@ -7,6 +7,7 @@ import {
   fullDueDate,
   isDayOnly,
   shortDay,
+  zonedWallClock,
 } from './due-date';
 
 const LABELS = {
@@ -148,5 +149,22 @@ describe('due-date', () => {
       });
       expect(view).toEqual(expect.objectContaining({ tone: 'soon', text: '23.10.' }));
     });
+  });
+});
+
+describe('zonedWallClock', () => {
+  it('reads the clock of the zone, building one formatter per zone (P04: 12 ms on the board)', () => {
+    const at = new Date('2026-10-30T23:30:00Z');
+    const spy = vi.spyOn(Intl, 'DateTimeFormat');
+    const first = zonedWallClock(at, 'Pacific/Auckland');
+    for (let i = 0; i < 50; i++) zonedWallClock(at, 'Pacific/Auckland');
+    const berlin = zonedWallClock(at, 'Europe/Berlin');
+    expect([first.getDate(), first.getHours(), first.getMinutes()]).toEqual([31, 12, 30]);
+    expect([berlin.getDate(), berlin.getHours()]).toEqual([31, 0]);
+    expect(spy.mock.calls.length).toBeLessThanOrEqual(2);
+  });
+
+  it('still rejects an unknown zone', () => {
+    expect(() => zonedWallClock(new Date(), 'Mars/Olympus')).toThrow(RangeError);
   });
 });
