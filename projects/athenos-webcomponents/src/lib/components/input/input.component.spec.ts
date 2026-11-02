@@ -77,4 +77,42 @@ describe('AthInputComponent', () => {
     host.detectChanges();
     expect(field.disabled).toBe(false);
   });
+
+  /** R-53: hint, error and required reached sighted users only. */
+  it('exposes error, hint and required to assistive tech', () => {
+    fixture.componentRef.setInput('inputId', 'mail');
+    fixture.componentRef.setInput('hint', 'Work address');
+    fixture.componentRef.setInput('required', true);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const field = root.querySelector('input')!;
+    expect(field.getAttribute('aria-required')).toBe('true');
+    expect(field.hasAttribute('aria-invalid')).toBe(false);
+    expect(document.getElementById(field.getAttribute('aria-describedby')!)?.textContent).toBe(
+      'Work address'
+    );
+
+    fixture.componentRef.setInput('error', 'Address is taken');
+    fixture.detectChanges();
+    expect(field.getAttribute('aria-invalid')).toBe('true');
+    expect(field.getAttribute('aria-describedby')).toBe('mail-error');
+    expect(root.querySelector('#mail-error')?.textContent).toContain('Address is taken');
+
+    fixture.componentRef.setInput('error', '');
+    fixture.componentRef.setInput('hint', '');
+    fixture.componentRef.setInput('required', false);
+    fixture.detectChanges();
+    expect(field.hasAttribute('aria-describedby')).toBe(false);
+    expect(field.hasAttribute('aria-required')).toBe(false);
+  });
+
+  it('keeps the password reveal button in the tab order', () => {
+    fixture.componentRef.setInput('type', 'password');
+    fixture.detectChanges();
+    const toggle = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '.ath-input__toggle'
+    )!;
+    expect(toggle.tabIndex).toBe(0);
+    expect(toggle.getAttribute('aria-label')).toBe('Show password');
+  });
 });

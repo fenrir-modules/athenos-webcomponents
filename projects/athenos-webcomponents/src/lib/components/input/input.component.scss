@@ -94,6 +94,11 @@
       color: var(--fg-2);
       background-color: var(--bg-2);
     }
+
+    // In the tab order, so a keyboard user can check what they typed.
+    &:focus-visible {
+      @include m.focus-ring-inset;
+    }
   }
 
   // -------------------------------------------

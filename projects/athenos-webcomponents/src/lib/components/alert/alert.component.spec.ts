@@ -61,11 +61,12 @@ describe('AthAlertComponent', () => {
     button.click();
     fixture.detectChanges();
     expect(retry).toHaveBeenCalledTimes(1);
-    expect(button.disabled).toBe(true);
+    // Busy is aria-disabled (it keeps focus), not natively disabled.
+    expect(button.getAttribute('aria-disabled')).toBe('true');
     resolve();
     await settle();
     fixture.detectChanges();
-    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute('aria-disabled')).toBe(false);
   });
 
   it('dismisses with a labelled button', () => {

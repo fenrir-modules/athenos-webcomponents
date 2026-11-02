@@ -89,6 +89,38 @@ describe('AthToastService', () => {
     service.clear();
     expect(service.toasts().length).toBe(0);
   });
+
+  /** R-78: a retry loop stacked the same error without end. */
+  it('merges an identical toast: one entry, moved to the newest place, clock restarted', () => {
+    const first = service.error('Offline', 1000);
+    service.info('Other', 0);
+    vi.advanceTimersByTime(800);
+    expect(service.error('Offline', 1000)).toBe(first);
+    expect(service.toasts().map((t) => t.message)).toEqual(['Other', 'Offline']);
+    vi.advanceTimersByTime(800);
+    expect(service.toasts().length).toBe(2);
+    vi.advanceTimersByTime(201);
+    expect(service.toasts().map((t) => t.message)).toEqual(['Other']);
+  });
+
+  it('keeps toasts apart that differ in variant, title or action', () => {
+    service.error('Offline', 0);
+    service.warning('Offline', 0);
+    service.error('Offline', { duration: 0, title: 'Sync' });
+    const run = () => undefined;
+    service.info('Deleted', { duration: 0, action: { label: 'Undo', run } });
+    service.info('Deleted', { duration: 0, action: { label: 'Undo', run } });
+    expect(service.toasts().length).toBe(5);
+  });
+
+  it('keeps at most maxQueued toasts, closing the oldest', () => {
+    service.maxQueued = 3;
+    for (const n of [1, 2, 3, 4, 5]) service.info(`Toast ${n}`, 1000);
+    expect(service.toasts().map((t) => t.message)).toEqual(['Toast 3', 'Toast 4', 'Toast 5']);
+    // The dropped ones leave no clock behind.
+    vi.advanceTimersByTime(1001);
+    expect(service.toasts().length).toBe(0);
+  });
 });
 
 describe('AthToastContainerComponent', () => {

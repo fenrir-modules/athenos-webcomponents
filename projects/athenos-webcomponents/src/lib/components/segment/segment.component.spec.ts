@@ -58,4 +58,28 @@ describe('AthSegmentComponent', () => {
     expect(segment.getAttribute('aria-label')).toBe('View');
     expect(segment.dataset['size']).toBe('sm');
   });
+
+  /** R-78: the segments had ARIA tab roles but no arrow keys. */
+  it('keeps one tab stop and moves with the arrow keys, skipping disabled options', () => {
+    const { fixture, tabs } = setup();
+    const press = (key: string) => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+      );
+      fixture.detectChanges();
+    };
+    expect(tabs().map((tab) => tab.tabIndex)).toEqual([0, -1, -1]);
+    tabs()[0].focus();
+    press('ArrowRight');
+    expect(fixture.componentInstance.view()).toBe('board');
+    expect(document.activeElement).toBe(tabs()[1]);
+    expect(tabs().map((tab) => tab.tabIndex)).toEqual([-1, 0, -1]);
+    // "Off" is disabled: Right wraps to the first option.
+    press('ArrowRight');
+    expect(fixture.componentInstance.view()).toBe('list');
+    press('End');
+    expect(fixture.componentInstance.view()).toBe('board');
+    press('Home');
+    expect(document.activeElement).toBe(tabs()[0]);
+  });
 });

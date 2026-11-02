@@ -1,6 +1,7 @@
 <button
   [type]="type()"
-  [disabled]="disabled() || busy()"
+  [disabled]="disabled()"
+  [attr.aria-disabled]="busy() && !disabled() ? 'true' : null"
   [class]="buttonClasses()"
   [attr.aria-label]="ariaLabel()"
   [attr.aria-busy]="busy()"

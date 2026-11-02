@@ -17,6 +17,9 @@
     [rows]="rows()"
     [placeholder]="placeholder()"
     [disabled]="isDisabled()"
+    [attr.aria-required]="required() || null"
+    [attr.aria-invalid]="error() ? 'true' : null"
+    [attr.aria-describedby]="describedBy()"
     [value]="fieldValue()"
     [attr.maxlength]="maxLength()"
     [style.resize]="resize()"
@@ -27,12 +30,12 @@
 
   <div class="ath-textarea__meta">
     @if (error()) {
-      <div class="ath-textarea__error">
+      <div class="ath-textarea__error" [id]="errorId()">
         <ath-icon [img]="alertIcon" [size]="14" />
         {{ error() }}
       </div>
     } @else if (hint()) {
-      <div class="ath-textarea__hint">{{ hint() }}</div>
+      <div class="ath-textarea__hint" [id]="hintId()">{{ hint() }}</div>
     } @else {
       <div></div>
     }

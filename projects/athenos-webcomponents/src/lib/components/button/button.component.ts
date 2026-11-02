@@ -42,8 +42,8 @@ export type ButtonType = 'button' | 'submit' | 'reset';
  *
  * `[action]` makes the button track its own work: pass a function that
  * returns a Promise or an Observable and the button is busy until it
- * settles: disabled, a spinner, `aria-busy`, and a second click (or a
- * double click) does nothing. No hand-kept `saving` signal (QA-13).
+ * settles: `aria-disabled` (so it keeps focus), a spinner, `aria-busy`,
+ * and a second click (or a double click) does nothing. No hand-kept `saving` signal (QA-13).
  *
  * @example
  * <ath-button variant="primary" (clicked)="handleClick()">Click me</ath-button>
@@ -132,8 +132,11 @@ export class AthButtonComponent {
 
   handleClick(event: MouseEvent): void {
     if (this.disabled() || this.busy()) {
-      // A submit button must not submit its form while busy either.
+      // A submit button must not submit its form while busy either, and a
+      // (click) bound on <ath-button> itself must not fire: with
+      // aria-disabled instead of native disabled the click would bubble.
       event.preventDefault();
+      event.stopImmediatePropagation();
       return;
     }
     this.clicked.emit(event);

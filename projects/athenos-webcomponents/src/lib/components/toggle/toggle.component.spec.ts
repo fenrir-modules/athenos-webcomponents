@@ -47,4 +47,48 @@ describe('AthToggleComponent', () => {
     fixture.componentInstance.toggle();
     expect(seen).toEqual([true]);
   });
+
+  /** The release check: a checked switch's white thumb on dark mode's light fills (1.37:1 in neutral). */
+  it('keeps the checked thumb at 3:1 or more against its track in every theme and accent', () => {
+    const root = document.documentElement;
+    const before = { theme: root.dataset['theme'], accent: root.dataset['accent'] };
+    render({ ariaLabel: 'Flag', checked: true });
+    const track = button().querySelector<HTMLElement>('.ath-toggle__track')!;
+    const thumb = button().querySelector<HTMLElement>('.ath-toggle__thumb')!;
+    // No transitions: the computed colour is the end state at once.
+    for (const el of [track, thumb]) el.style.transition = 'none';
+    try {
+      for (const theme of ['light', 'dark']) {
+        for (const accent of ['', 'violet', 'blue', 'green', 'orange', 'neutral']) {
+          root.dataset['theme'] = theme;
+          if (accent) root.dataset['accent'] = accent;
+          else delete root.dataset['accent'];
+          const ratio = contrast(
+            getComputedStyle(thumb).backgroundColor,
+            getComputedStyle(track).backgroundColor
+          );
+          expect(ratio, `${theme} ${accent || 'default'}`).toBeGreaterThanOrEqual(3);
+        }
+      }
+    } finally {
+      for (const [key, value] of Object.entries(before)) {
+        if (value === undefined) delete root.dataset[key];
+        else root.dataset[key] = value;
+      }
+    }
+  });
 });
+
+/** WCAG 2.x contrast of two opaque colours, as `rgb()` or (a color-mix) `color(srgb …)`. */
+function contrast(a: string, b: string): number {
+  const lum = (css: string) => {
+    const scale = css.startsWith('color(') ? 1 : 255;
+    const [r, g, bl] = (css.match(/[\d.]+/g) ?? []).slice(0, 3).map((v) => {
+      const c = Number(v) / scale;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}

@@ -56,6 +56,11 @@ interface ToastClock {
  * one toast's clock, so a toast collapsed behind the visible ones does not
  * run out unseen. A stopped toast keeps the time it had left.
  *
+ * The same words again (a retry loop, a double click) are one toast: it
+ * moves to the newest place with a fresh clock instead of stacking. A toast
+ * with an action is never merged, its action may differ. At most
+ * `maxQueued` toasts are kept; past that the oldest goes.
+ *
  * @example
  * constructor(private toast: AthToastService) {}
  * this.toast.success('Item created');
@@ -70,6 +75,9 @@ export class AthToastService {
   private readonly pausedSignal = signal(false);
   /** True while at least one `pause(reason)` is in effect. */
   readonly paused = this.pausedSignal.asReadonly();
+
+  /** Most toasts kept at once; a new one past it closes the oldest. */
+  maxQueued = 10;
 
   private readonly clocks = new Map<string, ToastClock>();
   private readonly pauses = new Set<string>();
@@ -163,17 +171,48 @@ export class AthToastService {
     const opts: ToastOptions = typeof options === 'number' ? { duration: options } : options;
     const action = opts.action;
     const duration = opts.duration ?? (action ? Math.max(fallback, ACTION_MIN_DURATION) : fallback);
+    const same = action
+      ? undefined
+      : this.toastsSignal().find(
+          (t) =>
+            !t.action &&
+            t.variant === variant &&
+            t.message === message &&
+            (t.title ?? '') === (opts.title ?? '')
+        );
+    if (same) return this.repeat(same, duration);
+
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const toast: ToastMessage = { id, variant, message, duration, action };
     if (opts.title) toast.title = opts.title;
 
     this.toastsSignal.update((toasts) => [...toasts, toast]);
+    this.startClock(id, duration);
 
-    if (duration > 0) {
-      this.clocks.set(id, { remaining: duration, since: null, handle: null });
-      this.sync(id);
+    const list = this.toastsSignal();
+    for (const old of list.slice(0, Math.max(0, list.length - Math.max(1, this.maxQueued)))) {
+      this.remove(old.id);
     }
     return id;
+  }
+
+  /** An identical toast again: the existing one moves to the newest place, its clock restarted. */
+  private repeat(toast: ToastMessage, duration: number): string {
+    const clock = this.clocks.get(toast.id);
+    if (clock?.handle) clearTimeout(clock.handle);
+    this.clocks.delete(toast.id);
+    this.toastsSignal.update((toasts) => [
+      ...toasts.filter((t) => t.id !== toast.id),
+      { ...toast, duration },
+    ]);
+    this.startClock(toast.id, duration);
+    return toast.id;
+  }
+
+  private startClock(id: string, duration: number): void {
+    if (duration <= 0) return;
+    this.clocks.set(id, { remaining: duration, since: null, handle: null });
+    this.sync(id);
   }
 
   private sync(id: string): void {

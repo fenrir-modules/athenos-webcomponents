@@ -119,4 +119,27 @@ describe('AthSelectComponent', () => {
       expect(select.options[0].textContent?.trim()).toBe('Atlas');
     });
   });
+
+  /** R-53: hint, error and required reached sighted users only. */
+  it('exposes error, hint and required to assistive tech', () => {
+    const fixture = TestBed.createComponent(AthSelectComponent);
+    fixture.componentRef.setInput('options', PROJECTS);
+    fixture.componentRef.setInput('selectId', 'proj');
+    fixture.componentRef.setInput('hint', 'Where new tickets land');
+    fixture.componentRef.setInput('required', true);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const select = root.querySelector('select')!;
+    expect(select.getAttribute('aria-required')).toBe('true');
+    expect(select.hasAttribute('aria-invalid')).toBe(false);
+    expect(root.querySelector('#' + select.getAttribute('aria-describedby'))?.textContent).toBe(
+      'Where new tickets land'
+    );
+
+    fixture.componentRef.setInput('error', 'Pick a project');
+    fixture.detectChanges();
+    expect(select.getAttribute('aria-invalid')).toBe('true');
+    expect(select.getAttribute('aria-describedby')).toBe('proj-error');
+    expect(root.querySelector('#proj-error')?.textContent).toContain('Pick a project');
+  });
 });
