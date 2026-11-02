@@ -49,6 +49,16 @@ describe('floatPanel', () => {
     expect(Math.round(p.left)).toBe(Math.round(a.left));
   });
 
+  it('hangs a side panel beside the anchor and flips it left at the right edge', () => {
+    const { anchor, panel } = setup('top:100px;right:10px', { w: 100, h: 20 });
+    stop = floatPanel(panel, anchor, { side: 'right', offset: 8 });
+    const a = anchor.getBoundingClientRect();
+    const p = panel.getBoundingClientRect();
+    expect(panel.dataset['placement']).toBe('left');
+    expect(Math.round(p.right)).toBe(Math.round(a.left - 8));
+    expect(Math.round(p.top + p.height / 2)).toBe(Math.round(a.top + a.height / 2));
+  });
+
   it('flips above the anchor at the bottom edge of the viewport', () => {
     const { anchor, panel } = setup('bottom:10px;left:20px', { w: 100, h: 80 });
     stop = floatPanel(panel, anchor, { offset: 4 });

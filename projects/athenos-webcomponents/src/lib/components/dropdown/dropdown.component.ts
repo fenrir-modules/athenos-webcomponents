@@ -13,6 +13,7 @@ import type { AthIconData } from '../floating/icon';
 import type { FloatingAlign } from '../floating/floating';
 import { AthMenuComponent } from '../menu/menu.component';
 import { AthMenuItemComponent, AthMenuSeparatorComponent } from '../menu/menu-item.component';
+import { AthPopoverContentDirective } from '../popover/popover.component';
 
 /** An action of the menu; choosing it emits its `id`. */
 export interface DropdownAction {
@@ -77,7 +78,12 @@ const CONTROL = 'button, a[href], input, select, textarea, [tabindex]:not([tabin
  */
 @Component({
   selector: 'ath-dropdown',
-  imports: [AthMenuComponent, AthMenuItemComponent, AthMenuSeparatorComponent],
+  imports: [
+    AthMenuComponent,
+    AthMenuItemComponent,
+    AthMenuSeparatorComponent,
+    AthPopoverContentDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dropdown.component.html',
   styleUrl: './dropdown.component.scss',

@@ -17,7 +17,11 @@ import { formatAthLabel, injectAthLabels } from '../../i18n/label-utils';
 import type { FloatingAlign } from '../floating/floating';
 import { resolveAnchor, type FloatingAnchor } from '../floating/floating.directive';
 import type { AthOverlayCloseReason } from '../floating/overlay-stack';
-import { AthPopoverComponent, type PopoverSize } from '../popover/popover.component';
+import {
+  AthPopoverComponent,
+  AthPopoverContentDirective,
+  type PopoverSize,
+} from '../popover/popover.component';
 import { AthPopoverTriggerDirective } from '../popover/popover-trigger.directive';
 import {
   AthListboxComponent,
@@ -43,7 +47,13 @@ let nextPickerId = 0;
  */
 @Component({
   selector: 'ath-option-picker',
-  imports: [AthPopoverComponent, AthPopoverTriggerDirective, AthListboxComponent, AthIconComponent],
+  imports: [
+    AthPopoverComponent,
+    AthPopoverContentDirective,
+    AthPopoverTriggerDirective,
+    AthListboxComponent,
+    AthIconComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './option-picker.component.html',
   styleUrl: './option-picker.component.scss',
@@ -104,7 +114,8 @@ export class AthOptionPickerComponent<T = string> {
 
   private readonly popover = viewChild.required(AthPopoverComponent);
   private readonly triggerButton = viewChild<ElementRef<HTMLElement>>('triggerBtn');
-  private readonly listbox = viewChild.required(AthListboxComponent);
+  /** Rendered only while the popup is open. */
+  private readonly listbox = viewChild(AthListboxComponent);
 
   protected readonly popupAnchor = computed<HTMLElement | null>(
     () =>
@@ -164,7 +175,7 @@ export class AthOptionPickerComponent<T = string> {
     this.opened.emit();
     // Once the panel (and with it the listbox) is rendered: the active option
     // is scrolled into view.
-    this.popover().whenPanelReady(() => this.listbox().resetActive());
+    this.popover().whenPanelReady(() => this.listbox()?.resetActive());
   }
 
   protected onPicked(option: ListboxOption<T>): void {

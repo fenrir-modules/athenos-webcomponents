@@ -41,8 +41,13 @@ export type FloatingSide = 'bottom' | 'top';
 
 export interface FloatingOptions {
   align?: FloatingAlign;
-  /** Preferred side; default `bottom`. */
-  side?: FloatingSide;
+  /**
+   * Preferred side; default `bottom`. `left` / `right` (tooltips) hang the
+   * panel beside the anchor, centred on it and flipped to the other side
+   * when that has more room; `align`, `matchWidth`, `maxHeight` and `arrow`
+   * do not apply there.
+   */
+  side?: FloatingSide | 'left' | 'right';
   /** Gap between anchor and panel, in px. Default 4. */
   offset?: number;
   /** At least as wide as the anchor. */
@@ -89,7 +94,8 @@ const ARROW_INSET = 12;
  * top layer, or, without Popover API support, made `position: fixed` with a
  * correction for transformed ancestors that would otherwise move a fixed box.
  *
- * Writes `data-placement="bottom|top"` on the panel for side-dependent styles.
+ * Writes `data-placement="bottom|top"` (`left|right` for a side panel) on the
+ * panel for side-dependent styles.
  */
 export function floatPanel(
   panel: HTMLElement,
@@ -114,6 +120,15 @@ export function floatPanel(
 
   const inTopLayer = (options.topLayer ?? true) && promote(panel);
 
+  const commit = (left: number, top: number, placement: string): void => {
+    const origin = inTopLayer ? { x: 0, y: 0 } : fixedOrigin(panel);
+    style.left = `${Math.round(left - origin.x)}px`;
+    style.top = `${Math.round(top - origin.y)}px`;
+    style.maxWidth = `${document.documentElement.clientWidth - MARGIN * 2}px`;
+    style.visibility = '';
+    panel.dataset['placement'] = placement;
+  };
+
   let frame = 0;
   const place = (): void => {
     if ((anchorEl && !anchorEl.isConnected) || !panel.isConnected) return;
@@ -129,6 +144,23 @@ export function floatPanel(
     style.overscrollBehaviorY = '';
     const width = Math.min(panel.offsetWidth, vw - MARGIN * 2);
     const natural = panel.offsetHeight;
+
+    if (options.side === 'left' || options.side === 'right') {
+      const right = vw - a.right - gap - MARGIN;
+      const leftRoom = a.left - gap - MARGIN;
+      const toRight =
+        options.side === 'right'
+          ? width <= right || right >= leftRoom
+          : !(width <= leftRoom || leftRoom >= right);
+      const x = toRight ? a.right + gap : a.left - gap - width;
+      const y = a.top + a.height / 2 - natural / 2;
+      commit(
+        Math.max(MARGIN, Math.min(x, vw - width - MARGIN)),
+        Math.max(MARGIN, Math.min(y, vh - natural - MARGIN)),
+        toRight ? 'right' : 'left'
+      );
+      return;
+    }
 
     const below = vh - a.bottom - gap - MARGIN;
     const above = a.top - gap - MARGIN;
@@ -164,13 +196,7 @@ export function floatPanel(
             : fromStart;
     left = Math.max(MARGIN, Math.min(left, vw - width - MARGIN));
     const top = Math.max(MARGIN, down ? a.bottom + gap : a.top - gap - height);
-
-    const origin = inTopLayer ? { x: 0, y: 0 } : fixedOrigin(panel);
-    style.left = `${Math.round(left - origin.x)}px`;
-    style.top = `${Math.round(top - origin.y)}px`;
-    style.maxWidth = `${vw - MARGIN * 2}px`;
-    style.visibility = '';
-    panel.dataset['placement'] = down ? 'bottom' : 'top';
+    commit(left, top, down ? 'bottom' : 'top');
 
     if (options.arrow) {
       const x = a.left + a.width / 2 - left;

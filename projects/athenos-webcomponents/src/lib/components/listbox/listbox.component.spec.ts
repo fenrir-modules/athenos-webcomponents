@@ -2,6 +2,7 @@ import {
   ApplicationRef,
   ChangeDetectionStrategy,
   Component,
+  Directive,
   signal,
   viewChild,
 } from '@angular/core';
@@ -441,6 +442,58 @@ describe('AthOptionPickerComponent', () => {
     );
     fixture.detectChanges();
     expect(q('[role=listbox]')).toBeNull();
+  });
+});
+
+let builtOptions = 0;
+
+/** Counts the option rows the picker built. */
+@Directive({ selector: '[athCountBuilt]' })
+class CountBuiltDirective {
+  constructor() {
+    builtOptions++;
+  }
+}
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthOptionPickerComponent, CountBuiltDirective],
+  template: `
+    <ng-template #opt let-option
+      ><span athCountBuilt>{{ option.label }}</span></ng-template
+    >
+    <ath-option-picker
+      [options]="options"
+      [(value)]="value"
+      [optionTemplate]="opt"
+      ariaLabel="Fruit"
+    />
+  `,
+})
+class LazyPickerHostComponent {
+  readonly options = FRUIT;
+  readonly value = signal<string | null>('cherry');
+}
+
+/** R-58: a closed picker (one per table cell) builds no listbox. */
+describe('AthOptionPickerComponent while closed', () => {
+  it('builds the option list only while open', async () => {
+    builtOptions = 0;
+    const fixture = TestBed.createComponent(LazyPickerHostComponent);
+    const root = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+    expect(builtOptions).toBe(0);
+    expect(root.querySelector('.ath-picker__trigger')!.textContent).toContain('Cherry');
+
+    root.querySelector<HTMLElement>('.ath-picker__trigger')!.click();
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    expect(builtOptions).toBe(FRUIT.length);
+    expect(root.querySelector('[role=option][aria-selected=true]')!.textContent).toContain(
+      'Cherry'
+    );
+    fixture.destroy();
   });
 });
 

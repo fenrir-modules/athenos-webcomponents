@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  contentChild,
   contentChildren,
   forwardRef,
   input,
@@ -9,7 +10,8 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { AthPopoverComponent } from '../popover/popover.component';
+import { NgTemplateOutlet } from '@angular/common';
+import { AthPopoverComponent, AthPopoverContentDirective } from '../popover/popover.component';
 import type { FloatingAlign, FloatingSide } from '../floating/floating';
 import { resolveAnchor, type FloatingAnchor } from '../floating/floating.directive';
 import type { AthOverlayCloseReason } from '../floating/overlay-stack';
@@ -31,6 +33,9 @@ let nextMenuId = 0;
  * Home/End, typeahead, Enter/Space activate, Escape closes and returns
  * focus to the trigger, Tab closes and moves on.
  *
+ * Items in `<ng-template athPopoverContent>` are built only while the menu
+ * is open (a menu per table row costs nothing until it is used).
+ *
  * @example
  * <ath-button variant="ghost" [athMenuTrigger]="rowMenu" ariaLabel="Actions">⋯</ath-button>
  * <ath-menu #rowMenu>
@@ -41,7 +46,7 @@ let nextMenuId = 0;
  */
 @Component({
   selector: 'ath-menu',
-  imports: [AthPopoverComponent],
+  imports: [AthPopoverComponent, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'athMenu',
   providers: [{ provide: ATH_MENU_PARENT, useExisting: forwardRef(() => AthMenuComponent) }],
@@ -64,7 +69,13 @@ let nextMenuId = 0;
       (opened)="onOpened()"
       (closed)="closed.emit($event)"
     >
-      <ng-content />
+      @if (lazyContent(); as lazy) {
+        @if (open()) {
+          <ng-container [ngTemplateOutlet]="lazy.template" />
+        }
+      } @else {
+        <ng-content />
+      }
     </ath-popover>
   `,
   styles: [':host { display: contents; }'],
@@ -91,6 +102,9 @@ export class AthMenuComponent implements AthMenuParent {
 
   protected readonly labelledBy = signal<string | null>(null);
   private readonly popover = viewChild.required(AthPopoverComponent);
+  protected readonly lazyContent = contentChild(AthPopoverContentDirective, {
+    descendants: false,
+  });
   private readonly items = contentChildren(AthMenuItemComponent, { descendants: true });
   private readonly typeahead = new Typeahead();
   private pendingFocus: MenuFocus = 'first';

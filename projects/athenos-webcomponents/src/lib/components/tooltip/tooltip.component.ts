@@ -1,14 +1,34 @@
-import { Directive, ElementRef, OnDestroy, Renderer2, inject, input } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  OnDestroy,
+  Renderer2,
+  effect,
+  inject,
+  input,
+  untracked,
+} from '@angular/core';
+import { floatPanel, type FloatingCleanup } from '../floating/floating';
 
 /**
  * Tooltip position variants
  */
 export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 
+/** Hover delay before the tooltip shows, and before it hides after leaving. */
+const SHOW_DELAY = 300;
+const HIDE_DELAY = 100;
+
+let nextTooltipId = 0;
+
 /**
  * Athenos Tooltip Directive
  *
- * Shows a tooltip on hover.
+ * Shows a tooltip on hover (after a short delay) and right away on keyboard
+ * focus; hides it on leave, blur and Escape. While shown it is a
+ * `role="tooltip"` element named in the host's `aria-describedby`, so screen
+ * readers read it with the host. Placed with `floatPanel` in the top layer:
+ * above dialogs and sheets, flipped and kept inside the viewport.
  *
  * @example
  * <button [athTooltip]="'Click to save'" tooltipPosition="bottom">Save</button>
@@ -25,109 +45,172 @@ export class AthTooltipDirective implements OnDestroy {
 
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly renderer = inject(Renderer2);
+  private readonly tooltipId = `ath-tooltip-${++nextTooltipId}`;
 
   private tooltipElement: HTMLElement | null = null;
+  private float: FloatingCleanup | null = null;
   private showTimeout: ReturnType<typeof setTimeout> | null = null;
   private hideTimeout: ReturnType<typeof setTimeout> | null = null;
+  private hovered = false;
+  private focused = false;
 
-  private mouseEnterListener: (() => void) | null = null;
-  private mouseLeaveListener: (() => void) | null = null;
+  private readonly listeners: (() => void)[] = [];
+  private unlistenEscape: (() => void) | null = null;
 
   constructor() {
-    this.mouseEnterListener = this.renderer.listen(this.el.nativeElement, 'mouseenter', () =>
-      this.show()
-    );
-    this.mouseLeaveListener = this.renderer.listen(this.el.nativeElement, 'mouseleave', () =>
-      this.hide()
-    );
+    const host = this.el.nativeElement;
+    const on = (type: string, fn: (event: Event) => void): void => {
+      this.listeners.push(this.renderer.listen(host, type, fn));
+    };
+    on('mouseenter', () => {
+      this.hovered = true;
+      this.show(SHOW_DELAY);
+    });
+    on('mouseleave', () => {
+      this.hovered = false;
+      this.hide();
+    });
+    on('focusin', (event) => {
+      // Keyboard focus only: a click already shows it through hover.
+      if (!isKeyboardFocus(event.target)) return;
+      this.focused = true;
+      this.show(0);
+    });
+    on('focusout', (event) => {
+      const next = (event as FocusEvent).relatedTarget;
+      if (next instanceof Node && host.contains(next)) return;
+      this.focused = false;
+      this.hide();
+    });
+
+    // A shown tooltip follows its text; an empty text hides it.
+    effect(() => {
+      const text = this.text();
+      untracked(() => {
+        if (!this.tooltipElement) return;
+        if (!text) {
+          this.removeTooltip();
+          return;
+        }
+        this.tooltipElement.textContent = text;
+        this.float?.update();
+      });
+    });
   }
 
   ngOnDestroy(): void {
+    this.clearTimers();
     this.removeTooltip();
-    if (this.mouseEnterListener) this.mouseEnterListener();
-    if (this.mouseLeaveListener) this.mouseLeaveListener();
+    for (const off of this.listeners.splice(0)) off();
   }
 
-  private show(): void {
+  private show(delay: number): void {
     if (!this.text()) return;
     if (this.hideTimeout) {
       clearTimeout(this.hideTimeout);
       this.hideTimeout = null;
     }
-
-    this.showTimeout = setTimeout(() => {
+    if (this.tooltipElement) return;
+    if (delay === 0) {
+      this.clearTimers();
       this.createTooltip();
-    }, 300);
+      return;
+    }
+    if (this.showTimeout) return;
+    this.showTimeout = setTimeout(() => {
+      this.showTimeout = null;
+      this.createTooltip();
+    }, delay);
   }
 
   private hide(): void {
+    // Still hovered or keyboard-focused: it stays.
+    if (this.hovered || this.focused) return;
     if (this.showTimeout) {
       clearTimeout(this.showTimeout);
       this.showTimeout = null;
     }
-
+    if (!this.tooltipElement || this.hideTimeout) return;
     this.hideTimeout = setTimeout(() => {
+      this.hideTimeout = null;
       this.removeTooltip();
-    }, 100);
+    }, HIDE_DELAY);
+  }
+
+  private clearTimers(): void {
+    if (this.showTimeout) clearTimeout(this.showTimeout);
+    if (this.hideTimeout) clearTimeout(this.hideTimeout);
+    this.showTimeout = null;
+    this.hideTimeout = null;
   }
 
   private createTooltip(): void {
-    if (this.tooltipElement) return;
+    const host = this.el.nativeElement;
+    // Removed (or destroyed) while the show delay ran: nothing to point at.
+    if (this.tooltipElement || !this.text() || !host.isConnected) return;
 
     const tooltip: HTMLElement = this.renderer.createElement('div') as HTMLElement;
     this.tooltipElement = tooltip;
     this.renderer.addClass(tooltip, 'ath-tooltip');
     this.renderer.addClass(tooltip, `ath-tooltip--${this.tooltipPosition()}`);
+    this.renderer.setAttribute(tooltip, 'role', 'tooltip');
+    this.renderer.setAttribute(tooltip, 'id', this.tooltipId);
     tooltip.textContent = this.text();
 
-    this.renderer.appendChild(document.body, tooltip);
-    this.positionTooltip();
+    // Inside an open modal dialog the rest of the page is inert; the tooltip
+    // stays in the dialog so it is read and shown with it.
+    const container = host.closest('dialog') ?? host.ownerDocument.body;
+    this.renderer.appendChild(container, tooltip);
+    const position = this.tooltipPosition();
+    this.float = floatPanel(tooltip, host, { side: position, align: 'center', offset: 8 });
+    // Without top-layer support: the tooltip layer, not the popover one.
+    tooltip.style.zIndex = '';
+    this.setDescribedBy(true);
+
+    this.unlistenEscape = this.renderer.listen(host.ownerDocument, 'keydown', (event) => {
+      if ((event as KeyboardEvent).key !== 'Escape') return;
+      this.clearTimers();
+      this.removeTooltip();
+    });
 
     // Next frame, so the CSS transition runs from the hidden state (not change detection).
     requestAnimationFrame(() => {
-      if (this.tooltipElement) {
-        this.renderer.addClass(this.tooltipElement, 'ath-tooltip--visible');
+      if (this.tooltipElement === tooltip) {
+        this.renderer.addClass(tooltip, 'ath-tooltip--visible');
       }
     });
   }
 
-  private positionTooltip(): void {
-    if (!this.tooltipElement) return;
-
-    const hostRect = this.el.nativeElement.getBoundingClientRect();
-    const tooltipRect = this.tooltipElement.getBoundingClientRect();
-    const gap = 8;
-
-    let top = 0;
-    let left = 0;
-
-    switch (this.tooltipPosition()) {
-      case 'top':
-        top = hostRect.top - tooltipRect.height - gap;
-        left = hostRect.left + (hostRect.width - tooltipRect.width) / 2;
-        break;
-      case 'bottom':
-        top = hostRect.bottom + gap;
-        left = hostRect.left + (hostRect.width - tooltipRect.width) / 2;
-        break;
-      case 'left':
-        top = hostRect.top + (hostRect.height - tooltipRect.height) / 2;
-        left = hostRect.left - tooltipRect.width - gap;
-        break;
-      case 'right':
-        top = hostRect.top + (hostRect.height - tooltipRect.height) / 2;
-        left = hostRect.right + gap;
-        break;
-    }
-
-    this.renderer.setStyle(this.tooltipElement, 'top', `${top}px`);
-    this.renderer.setStyle(this.tooltipElement, 'left', `${left}px`);
-  }
-
   private removeTooltip(): void {
+    this.unlistenEscape?.();
+    this.unlistenEscape = null;
+    this.float?.();
+    this.float = null;
     if (this.tooltipElement) {
       this.tooltipElement.remove();
       this.tooltipElement = null;
+      this.setDescribedBy(false);
     }
+  }
+
+  /** Adds or removes the tooltip's id, keeping ids the app set on the host. */
+  private setDescribedBy(on: boolean): void {
+    const host = this.el.nativeElement;
+    const ids = (host.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .filter((id) => id && id !== this.tooltipId);
+    if (on) ids.push(this.tooltipId);
+    if (ids.length) host.setAttribute('aria-describedby', ids.join(' '));
+    else host.removeAttribute('aria-describedby');
+  }
+}
+
+function isKeyboardFocus(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  try {
+    return target.matches(':focus-visible');
+  } catch {
+    // No `:focus-visible` support: treat focus as keyboard focus.
+    return true;
   }
 }

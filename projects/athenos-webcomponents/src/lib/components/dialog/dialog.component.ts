@@ -199,9 +199,19 @@ export class AthDialogComponent implements OnChanges, OnDestroy {
     this.requestClose();
   }
 
-  /** The browser closed it anyway (e.g. a forced close request). */
+  /**
+   * The browser closed it anyway: a second Escape without user activation
+   * skips `cancel`. Controlled, so it is shown again until `open` turns
+   * false (the parent may refuse), and it only asks to close when
+   * `closeOnEscape` allows it (a secret shown once must stay).
+   */
   protected onNativeClose(): void {
-    if (this.open() && this.dialogEl && !this.dialogEl.open) this.requestClose();
+    const el = this.dialogEl;
+    if (!this.open() || !el || el.open) return;
+    this.showNative(el);
+    this.stack.raiseTopLayer();
+    this.focusInitial(el);
+    if (this.closeOnEscape()) this.requestClose();
   }
 
   protected onPointerDown(event: PointerEvent): void {
@@ -242,6 +252,13 @@ export class AthDialogComponent implements OnChanges, OnDestroy {
     this.stack.open(this.entry);
     this.stack.lockScroll();
     this.locked = true;
+    this.showNative(el);
+    this.stack.raiseTopLayer();
+    this.focusInitial(el);
+    this.opened.emit();
+  }
+
+  private showNative(el: HTMLDialogElement): void {
     try {
       if (el.open) {
         // Already shown.
@@ -254,9 +271,6 @@ export class AthDialogComponent implements OnChanges, OnDestroy {
       // Not connected (yet): show it non-modally rather than not at all.
       el.setAttribute('open', '');
     }
-    this.stack.raiseTopLayer();
-    this.focusInitial(el);
-    this.opened.emit();
   }
 
   private focusInitial(el: HTMLDialogElement): void {

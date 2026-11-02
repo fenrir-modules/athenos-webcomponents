@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { AthButtonComponent } from '../button/button.component';
+import { AthMenuComponent } from '../menu/menu.component';
 import { AthDropdownComponent, DROPDOWN_SEPARATOR, DropdownItem } from './dropdown.component';
 
 const ITEMS: DropdownItem[] = [
@@ -59,6 +61,22 @@ describe('AthDropdownComponent', () => {
   });
 
   afterEach(() => fixture.destroy());
+
+  it('builds its items only while open (R-58)', async () => {
+    const menuOf = fixture.debugElement
+      .query(By.css('.with-button'))
+      .query(By.directive(AthMenuComponent)).componentInstance as unknown as {
+      items(): readonly unknown[];
+    };
+    expect(menuOf.items().length).toBe(0);
+    const button = q('.with-button button')!;
+    button.click();
+    await settle();
+    expect(menuOf.items().length).toBe(3);
+    button.click();
+    await settle();
+    expect(menuOf.items().length).toBe(0);
+  });
 
   it('makes the projected button the menu button (one tab stop, no role=button wrapper)', () => {
     const wrapper = q('.with-button .ath-dropdown__trigger')!;

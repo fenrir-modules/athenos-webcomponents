@@ -9,25 +9,28 @@
   [align]="menuAlign()"
   (openChange)="onOpenChange($event)"
 >
-  @for (entry of entries(); track entry.key) {
-    @if (entry.action; as item) {
-      <button
-        athMenuItem
-        role="menuitem"
-        class="ath-dropdown__item"
-        [class.ath-dropdown__item--danger]="item.variant === 'danger'"
-        [icon]="item.icon"
-        [variant]="item.variant ?? 'default'"
-        [disabled]="!!item.disabled"
-        [disabledReason]="item.title"
-        [tooltip]="item.title"
-        [shortcut]="item.shortcut ?? null"
-        (triggered)="itemClicked.emit(item.id)"
-      >
-        {{ item.label }}
-      </button>
-    } @else {
-      <ath-menu-separator />
+  <!-- Built only while open: a closed row menu holds no items. -->
+  <ng-template athPopoverContent>
+    @for (entry of entries(); track entry.key) {
+      @if (entry.action; as item) {
+        <button
+          athMenuItem
+          role="menuitem"
+          class="ath-dropdown__item"
+          [class.ath-dropdown__item--danger]="item.variant === 'danger'"
+          [icon]="item.icon"
+          [variant]="item.variant ?? 'default'"
+          [disabled]="!!item.disabled"
+          [disabledReason]="item.title"
+          [tooltip]="item.title"
+          [shortcut]="item.shortcut ?? null"
+          (triggered)="itemClicked.emit(item.id)"
+        >
+          {{ item.label }}
+        </button>
+      } @else {
+        <ath-menu-separator />
+      }
     }
-  }
+  </ng-template>
 </ath-menu>

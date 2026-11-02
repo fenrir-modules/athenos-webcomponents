@@ -1,7 +1,8 @@
-import { ApplicationRef, ChangeDetectionStrategy, Component } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, Directive } from '@angular/core';
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
 import { Pencil } from 'lucide';
 import { AthButtonComponent } from '../button/button.component';
+import { AthPopoverContentDirective } from '../popover/popover.component';
 import { AthMenuComponent } from './menu.component';
 import { AthMenuItemComponent, AthMenuSeparatorComponent } from './menu-item.component';
 import { AthMenuTriggerDirective } from './menu-trigger.directive';
@@ -248,5 +249,80 @@ describe('AthMenuComponent in a view checked by hand', () => {
     expect(document.activeElement).toBe(root.querySelector<HTMLElement>('[role=menuitem]'));
     fixture.destroy();
     root.remove();
+  });
+});
+
+let builtItems = 0;
+
+/** Counts how often the lazy content was built. */
+@Directive({ selector: '[athCountBuilt]' })
+class CountBuiltDirective {
+  constructor() {
+    builtItems++;
+  }
+}
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    AthMenuComponent,
+    AthMenuItemComponent,
+    AthMenuTriggerDirective,
+    AthPopoverContentDirective,
+    CountBuiltDirective,
+  ],
+  template: `
+    <button type="button" class="trigger" [athMenuTrigger]="menu">Row actions</button>
+    <ath-menu #menu>
+      <ng-template athPopoverContent>
+        <button athMenuItem athCountBuilt (triggered)="log.push('edit')">Edit</button>
+        <button athMenuItem athCountBuilt (triggered)="log.push('copy')">Copy</button>
+      </ng-template>
+    </ath-menu>
+  `,
+})
+class LazyMenuHostComponent {
+  readonly log: string[] = [];
+}
+
+/** R-58: a row menu builds its items only while open. */
+describe('AthMenuComponent with lazy content', () => {
+  let fixture: ComponentFixture<LazyMenuHostComponent>;
+  let root: HTMLElement;
+  const active = (): string =>
+    (document.activeElement?.querySelector('.ath-menu-item__label')?.textContent ?? '').trim();
+  const press = (key: string): void => {
+    document.activeElement!.dispatchEvent(
+      new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+    );
+    fixture.detectChanges();
+  };
+
+  beforeEach(() => {
+    builtItems = 0;
+    fixture = TestBed.createComponent(LazyMenuHostComponent);
+    root = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => fixture.destroy());
+
+  it('builds no items while closed; keyboard, activation and focus return still work', async () => {
+    expect(builtItems).toBe(0);
+    const trigger = root.querySelector<HTMLElement>('.trigger')!;
+    trigger.focus();
+    trigger.click();
+    fixture.detectChanges();
+    await wait();
+    fixture.detectChanges();
+    expect(builtItems).toBe(2);
+    expect(active()).toBe('Edit');
+    press('ArrowDown');
+    expect(active()).toBe('Copy');
+    (document.activeElement as HTMLElement).click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.log).toEqual(['copy']);
+    expect(root.querySelector('[role=menuitem]')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 });

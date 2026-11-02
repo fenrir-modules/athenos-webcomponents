@@ -50,23 +50,26 @@
   (opened)="onOpened()"
   (closed)="closed.emit($event)"
 >
-  <ath-listbox
-    [options]="options()"
-    [multiple]="multiple()"
-    [(value)]="value"
-    [(values)]="values"
-    [(query)]="query"
-    [searchable]="searchable()"
-    [localFilter]="localFilter()"
-    [creatable]="creatable()"
-    [loading]="loading()"
-    [searchPlaceholder]="searchPlaceholder()"
-    [emptyLabel]="emptyLabel()"
-    [optionTemplate]="optionTemplate()"
-    [compareWith]="compareWith()"
-    [maxHeight]="maxHeight()"
-    [ariaLabel]="ariaLabel() ?? placeholderText()"
-    (picked)="onPicked($event)"
-    (create)="create.emit($event)"
-  />
+  <!-- Built only while open: a closed picker per table cell holds no options. -->
+  <ng-template athPopoverContent>
+    <ath-listbox
+      [options]="options()"
+      [multiple]="multiple()"
+      [(value)]="value"
+      [(values)]="values"
+      [(query)]="query"
+      [searchable]="searchable()"
+      [localFilter]="localFilter()"
+      [creatable]="creatable()"
+      [loading]="loading()"
+      [searchPlaceholder]="searchPlaceholder()"
+      [emptyLabel]="emptyLabel()"
+      [optionTemplate]="optionTemplate()"
+      [compareWith]="compareWith()"
+      [maxHeight]="maxHeight()"
+      [ariaLabel]="ariaLabel() ?? placeholderText()"
+      (picked)="onPicked($event)"
+      (create)="create.emit($event)"
+    />
+  </ng-template>
 </ath-popover>

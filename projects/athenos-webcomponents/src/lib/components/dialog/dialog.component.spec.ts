@@ -35,6 +35,16 @@ class DialogHostComponent {
 
 const wait = (): Promise<void> => new Promise((r) => setTimeout(r));
 
+/**
+ * What the browser does on a second Escape without user activation: closes
+ * the dialog without a `cancel`. Resolves after its `close` event (a task).
+ */
+function forceClose(el: HTMLDialogElement): Promise<void> {
+  const fired = new Promise<void>((r) => el.addEventListener('close', () => r(), { once: true }));
+  el.close();
+  return fired;
+}
+
 describe('AthDialogComponent', () => {
   let fixture: ComponentFixture<DialogHostComponent>;
   let host: DialogHostComponent;
@@ -113,6 +123,34 @@ describe('AthDialogComponent', () => {
     cancel();
     expect(host.closedCount).toBe(1);
     expect(dialog()).toBeNull();
+  });
+
+  it('stays open after a forced native close when closeOnEscape is false (R-51)', async () => {
+    host.escape.set(false);
+    fixture.detectChanges();
+    const el = openDialog();
+    await forceClose(el);
+    fixture.detectChanges();
+    expect(host.closedCount).toBe(0);
+    expect(host.open()).toBe(true);
+    expect(dialog()).toBe(el);
+    expect(el.open).toBe(true);
+    expect(el.matches(':modal')).toBe(true);
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(el.contains(document.activeElement)).toBe(true);
+
+    host.open.set(false);
+    fixture.detectChanges();
+    expect(document.documentElement.style.overflow).toBe('');
+  });
+
+  it('a forced native close with closeOnEscape requests closing', async () => {
+    const el = openDialog();
+    await forceClose(el);
+    fixture.detectChanges();
+    expect(host.closedCount).toBe(1);
+    expect(dialog()).toBeNull();
+    expect(document.documentElement.style.overflow).toBe('');
   });
 
   it('closes on a backdrop click only when closeOnBackdrop', () => {
@@ -195,6 +233,35 @@ describe('AthDialogComponent', () => {
     await wait();
     cancel();
     expect(host.closedCount).toBe(1);
+  });
+});
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthDialogComponent],
+  template: `
+    <ath-dialog [open]="true" title="Unsaved changes" (closed)="closedCount = closedCount + 1">
+      <input class="field" aria-label="Name" />
+    </ath-dialog>
+  `,
+})
+class RefusingHostComponent {
+  closedCount = 0;
+}
+
+describe('AthDialogComponent (parent refuses to close)', () => {
+  it('shows the dialog again after a forced native close, scroll lock kept', async () => {
+    const fixture = TestBed.createComponent(RefusingHostComponent);
+    fixture.detectChanges();
+    const el = (fixture.nativeElement as HTMLElement).querySelector('dialog')!;
+    await forceClose(el);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.closedCount).toBe(1);
+    expect(el.open).toBe(true);
+    expect(el.matches(':modal')).toBe(true);
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    fixture.destroy();
+    expect(document.documentElement.style.overflow).toBe('');
   });
 });
 
