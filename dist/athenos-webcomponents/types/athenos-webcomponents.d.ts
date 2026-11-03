@@ -211,7 +211,7 @@ export type AthNavDot = 'ok' | 'warn' | 'error';
  * - `compact` (a collapsed rail): the label folds away and a CSS tooltip
  *   shows it to the right; an unread `badge` becomes a dot on the icon.
  * - Active: a tinted pill, the accent on the icon, and (with `indicator`)
- *   a 2-px bar at the left edge.
+ *   a 2-px bar at the left edge; matched from `route`, or `current`.
  * - `[athNavItemEnd]`: a projected marker at the row's end (a "Beta" pill),
  *   inside the link and its active pill; it folds away with the label.
  *
@@ -231,6 +231,12 @@ export declare class AthNavItemComponent {
   readonly route: import("@angular/core").InputSignal<string | readonly unknown[] | null>;
   /** Exact match for the active state (default: prefix match, like Angular). */
   readonly exact: import("@angular/core").InputSignal<boolean>;
+  /**
+   * The active state, set by the caller instead of matched from the URL:
+   * for a row whose route forwards elsewhere (Board → Tickets › Kanban)
+   * and a row sharing its page with it. `null` (default) matches `route`.
+   */
+  readonly current: import("@angular/core").InputSignal<boolean | null>;
   /** Either an icon or a chip. */
   readonly icon: import("@angular/core").InputSignal<AthIconData | null>;
   readonly chip: import("@angular/core").InputSignal<AthNavChip | null>;
@@ -265,6 +271,11 @@ export declare class AthNavItemComponent {
     };
     "exact": {
       "alias": "exact";
+      "required": false;
+      "isSignal": true;
+    };
+    "current": {
+      "alias": "current";
       "required": false;
       "isSignal": true;
     };
