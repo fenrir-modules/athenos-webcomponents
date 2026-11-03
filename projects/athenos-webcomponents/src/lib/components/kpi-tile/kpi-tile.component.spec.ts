@@ -56,6 +56,18 @@ describe('AthKpiTileComponent', () => {
     fixture.detectChanges();
   });
 
+  it('keeps the figures of a strip on one line when only one tile has a note', () => {
+    // My Work's shape: the note makes "Story points" taller; the other
+    // figures must not drop to the bottom of the stretched cells.
+    const tops = tiles().map((t) =>
+      Math.round(t.querySelector('.ath-kpi__value')!.getBoundingClientRect().top)
+    );
+    expect(new Set(tops).size, `value tops ${tops.join(', ')}`).toBe(1);
+    const label = tiles()[0].querySelector('.ath-kpi__label')!.getBoundingClientRect();
+    // Right under the label row: the row gap, not the cell's leftover height.
+    expect(tops[0] - label.bottom).toBeLessThanOrEqual(12);
+  });
+
   it('draws a trend only for two or more samples that are not all zero', () => {
     expect(hasKpiTrend(null)).toBe(false);
     expect(hasKpiTrend([3])).toBe(false);
@@ -196,5 +208,23 @@ describe('AthKpiTileComponent loading and notes (P04)', () => {
     expect(long.scrollWidth).toBeGreaterThan(long.clientWidth);
     // The full text stays reachable as the tooltip.
     expect(long.title).toBe('in the last 7 days, across all projects of this workspace together');
+  });
+
+  it('lines the figures up across tiles with and without a note, skeleton included', () => {
+    const fixture = TestBed.createComponent(NotesHostComponent);
+    fixture.detectChanges();
+    // 480px wide: two rows of two; within a row the figures share a line.
+    const byRow = new Map<number, number[]>();
+    for (const t of Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('ath-kpi-tile')
+    )) {
+      const row = Math.round(t.getBoundingClientRect().top);
+      const top = Math.round(t.querySelector('.ath-kpi__value')!.getBoundingClientRect().top);
+      byRow.set(row, [...(byRow.get(row) ?? []), top]);
+    }
+    expect(byRow.size).toBe(2);
+    for (const tops of byRow.values()) {
+      expect(new Set(tops).size, `value tops ${tops.join(', ')}`).toBe(1);
+    }
   });
 });

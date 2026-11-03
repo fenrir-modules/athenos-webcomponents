@@ -4,10 +4,13 @@
 // strip (kpi-strip.component.scss) owns those, the tiles are separated by
 // a hairline on their left edge.
 
+// The figure starts right under the label: a tile with a note (or a bar
+// under the figure) only grows below it, so the figures of a strip stay
+// on one line however the tiles differ in height.
 :host {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   min-width: 0;
   padding: 11px var(--space-4);
