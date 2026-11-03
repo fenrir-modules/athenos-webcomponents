@@ -24,7 +24,7 @@ export type AthNavDot = 'ok' | 'warn' | 'error';
  * - `compact` (a collapsed rail): the label folds away and a CSS tooltip
  *   shows it to the right; an unread `badge` becomes a dot on the icon.
  * - Active: a tinted pill, the accent on the icon, and (with `indicator`)
- *   a 2-px bar at the left edge.
+ *   a 2-px bar at the left edge; matched from `route`, or `current`.
  * - `[athNavItemEnd]`: a projected marker at the row's end (a "Beta" pill),
  *   inside the link and its active pill; it folds away with the label.
  *
@@ -51,6 +51,12 @@ export class AthNavItemComponent {
   readonly route = input<string | readonly unknown[] | null>(null);
   /** Exact match for the active state (default: prefix match, like Angular). */
   readonly exact = input(false);
+  /**
+   * The active state, set by the caller instead of matched from the URL:
+   * for a row whose route forwards elsewhere (Board → Tickets › Kanban)
+   * and a row sharing its page with it. `null` (default) matches `route`.
+   */
+  readonly current = input<boolean | null>(null);
   /** Either an icon or a chip. */
   readonly icon = input<AthIconData | null>(null);
   readonly chip = input<AthNavChip | null>(null);

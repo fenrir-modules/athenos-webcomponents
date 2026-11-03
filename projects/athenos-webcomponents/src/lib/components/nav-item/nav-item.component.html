@@ -3,8 +3,10 @@
   [class.ath-nav-item--compact]="compact()"
   [class.ath-nav-item--muted]="muted()"
   [routerLink]="target()"
-  routerLinkActive="ath-nav-item--active"
+  routerLinkActive
+  #matched="routerLinkActive"
   [routerLinkActiveOptions]="{ exact: exact() }"
+  [class.ath-nav-item--active]="current() ?? matched.isActive"
   [attr.aria-label]="compact() ? label() : null"
   (mouseenter)="active.set(true)"
   (mouseleave)="active.set(false)"

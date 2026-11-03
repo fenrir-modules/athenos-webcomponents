@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { Inbox } from 'lucide';
 import { AthNavItemComponent } from './nav-item.component';
 import { backdrop, contrast, inTheme, parseColour } from '../../testing/colour';
@@ -33,6 +33,30 @@ describe('AthNavItemComponent', () => {
     render({ route: ['/projects', 'p1'], chip: { text: 'ATL', color: 'var(--blue)' } });
     expect(q('a')?.getAttribute('href')).toBe('/projects/p1');
     expect(q('.ath-nav-item__chip')?.textContent).toBe('ATL');
+  });
+
+  it('current: the caller sets the active state, whatever the URL says', () => {
+    render({ route: '/elsewhere', current: true });
+    expect(q('a')?.classList).toContain('ath-nav-item--active');
+    // On its own URL, and told it is not the current row.
+    fixture.componentRef.setInput('route', '/');
+    fixture.componentRef.setInput('current', false);
+    fixture.detectChanges();
+    expect(q('a')?.classList).not.toContain('ath-nav-item--active');
+  });
+
+  it('current: drops the active state the route had matched', async () => {
+    render({ route: '/', exact: false });
+    await TestBed.inject(Router).navigateByUrl('/');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(q('a')?.classList).toContain('ath-nav-item--active');
+    fixture.componentRef.setInput('current', false);
+    fixture.detectChanges();
+    expect(q('a')?.classList).not.toContain('ath-nav-item--active');
+    fixture.componentRef.setInput('current', null);
+    fixture.detectChanges();
+    expect(q('a')?.classList).toContain('ath-nav-item--active');
   });
 
   it('shows no count below 1', () => {
