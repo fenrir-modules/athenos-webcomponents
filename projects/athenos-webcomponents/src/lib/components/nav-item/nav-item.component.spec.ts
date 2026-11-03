@@ -79,41 +79,44 @@ describe('AthNavItemComponent project chips (P04)', () => {
   // Every hue the app hashes a project into (PROJECT_PALETTE).
   const HUES = ['--accent', '--blue', '--green', '--amber', '--purple', '--red', '--pink'];
 
-  it('keeps the key text at 4.5:1 or more on the chrome in both themes, 10px/600 in an 18px chip', () => {
-    TestBed.configureTestingModule({
-      imports: [AthNavItemComponent],
-      providers: [provideRouter([])],
-    });
-    const nav = document.createElement('nav');
-    nav.style.background = 'var(--bg-1)';
-    document.body.append(nav);
-    try {
-      for (const hue of HUES) {
-        const fixture = TestBed.createComponent(AthNavItemComponent);
-        fixture.componentRef.setInput('label', hue);
-        fixture.componentRef.setInput('chip', { text: 'WEB', color: `var(${hue})` });
-        fixture.detectChanges();
-        nav.append(fixture.nativeElement as HTMLElement);
-        const chip = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
-          '.ath-nav-item__chip'
-        )!;
-        chip.style.transition = 'none';
-        for (const theme of ['light', 'dark'] as const) {
-          inTheme(theme, () => {
-            const style = getComputedStyle(chip);
-            const ratio = contrast(parseColour(style.color), backdrop(chip));
-            expect(ratio, `${hue} ${theme}`).toBeGreaterThanOrEqual(4.5);
-            expect(style.fontSize).toBe('10px');
-            expect(style.fontWeight).toBe('600');
-            expect(chip.getBoundingClientRect().height).toBe(18);
-          });
+  // The sidebar (--bg-1) and a page body on the canvas (--bg-0).
+  for (const surface of ['bg-1', 'bg-0']) {
+    it(`keeps the key text at 4.5:1 or more on --${surface} in both themes, 10px/600 in an 18px chip`, () => {
+      TestBed.configureTestingModule({
+        imports: [AthNavItemComponent],
+        providers: [provideRouter([])],
+      });
+      const nav = document.createElement('nav');
+      nav.style.background = `var(--${surface})`;
+      document.body.append(nav);
+      try {
+        for (const hue of HUES) {
+          const fixture = TestBed.createComponent(AthNavItemComponent);
+          fixture.componentRef.setInput('label', hue);
+          fixture.componentRef.setInput('chip', { text: 'WEB', color: `var(${hue})` });
+          fixture.detectChanges();
+          nav.append(fixture.nativeElement as HTMLElement);
+          const chip = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+            '.ath-nav-item__chip'
+          )!;
+          chip.style.transition = 'none';
+          for (const theme of ['light', 'dark'] as const) {
+            inTheme(theme, () => {
+              const style = getComputedStyle(chip);
+              const ratio = contrast(parseColour(style.color), backdrop(chip));
+              expect(ratio, `${hue} ${theme}`).toBeGreaterThanOrEqual(4.5);
+              expect(style.fontSize).toBe('10px');
+              expect(style.fontWeight).toBe('600');
+              expect(chip.getBoundingClientRect().height).toBe(18);
+            });
+          }
+          fixture.destroy();
         }
-        fixture.destroy();
+      } finally {
+        nav.remove();
       }
-    } finally {
-      nav.remove();
-    }
-  });
+    });
+  }
 
   it('draws 32px rows with 16px icons, and the unread dot in the accent', () => {
     TestBed.configureTestingModule({

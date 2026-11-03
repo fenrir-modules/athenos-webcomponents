@@ -113,9 +113,9 @@ $dur-fast: 120ms;
   border-radius: var(--r-xs);
   background: color-mix(in srgb, var(--chip-color) 10%, transparent);
   // The key is text: the hue mixed toward --fg (dark in light, light in
-  // dark) clears 4.5:1 in both themes. Mixing toward the background, as
+  // dark) clears 4.5:1 in both themes, on the chrome and on the canvas. Mixing toward the background, as
   // before, gave 2.0:1 (light) and 2.6:1 (dark).
-  color: color-mix(in srgb, var(--chip-color) 72%, var(--fg));
+  color: color-mix(in srgb, var(--chip-color) 68%, var(--fg));
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 10px;

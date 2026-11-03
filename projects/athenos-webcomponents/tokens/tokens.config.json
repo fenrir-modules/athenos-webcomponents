@@ -432,7 +432,7 @@
       "why": "WCAG 1.4.3 — menu and popover text"
     },
     {
-      "fg": "fg-4",
+      "fg": "fg-3",
       "bg": ["surface-raised"],
       "min": 4.5,
       "why": "WCAG 1.4.3 — disabled items and shortcut hints in menus"
@@ -442,6 +442,18 @@
       "bg": ["surface-raised"],
       "min": 4.5,
       "why": "WCAG 1.4.3 — danger items in menus"
+    },
+    {
+      "fg": "fg-4",
+      "bg": ["surface-raised"],
+      "min": 4.5,
+      "why": "WCAG 1.4.3 — disabled items and shortcut hints in menus"
+    },
+    {
+      "fg": "fg-label",
+      "bg": ["surface-raised"],
+      "min": 4.5,
+      "why": "WCAG 1.4.3 — group labels in pickers and menus"
     }
   ]
 }

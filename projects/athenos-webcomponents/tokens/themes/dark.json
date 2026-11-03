@@ -81,8 +81,8 @@
         "$description": "5.1:1 surface · 5.7 bg-0 · 4.8 bg-2"
       },
       "fg-label": {
-        "$value": "#85858f",
-        "$description": "Was #74747f (3.7:1 on surface); now 4.6:1 surface · 4.9 bg-0."
+        "$value": "#8c8c96",
+        "$description": "Was #74747f (3.7:1 on surface), then #85858f (4.2:1 on a raised menu); now 4.6:1 surface-raised · 5.1 surface · 5.7 bg-0."
       },
       "fg-disabled": {
         "$value": "#38383f"

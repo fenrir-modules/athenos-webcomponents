@@ -1,17 +1,8 @@
 {
   "reasons": {
-    "scrollable-region-focusable": "The sample content of these stories is plain text, so the scrolling dialog body / panel body has nothing focusable. Real dialogs and panels hold controls; Chromium (130+) and Firefox make such scrollers keyboard-focusable, Safari does not. Decide in the overlay work whether ath-dialog / ath-panel set tabindex=0 while they overflow.",
-    "color-contrast": "ath-nav-item project rows: the project key chip is decorative (aria-hidden; the label beside it names the row) and drawn at --deco-mix strength by design (app sidebar, ref 02 pastel keys), 2.3-2.6:1 at 9.5px. Moved as is from the app's nav item in quality step 2.3; a contrast-safe key colour is a token decision (U5), open for Joel."
+    "scrollable-region-focusable": "The sample content of these stories is plain text, so the scrolling dialog body / panel body has nothing focusable. Real dialogs and panels hold controls; Chromium (130+) and Firefox make such scrollers keyboard-focusable, Safari does not. Decide in the overlay work whether ath-dialog / ath-panel set tabindex=0 while they overflow."
   },
   "violations": {
-    "layout-nav-item--project-rows": {
-      "light": {
-        "color-contrast": 2
-      },
-      "dark": {
-        "color-contrast": 2
-      }
-    },
     "layout-page--fill": {
       "light": {
         "scrollable-region-focusable": 1
