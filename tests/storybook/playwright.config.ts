@@ -1,14 +1,15 @@
 import { defineConfig } from '@playwright/test';
 
 // Catalogue checks over the built Storybook (quality step 1.8b): axe on every
-// story and screenshot comparison in light and dark at three widths. Run with
+// story and screenshot comparison in light and dark at three widths, plus
+// pixel and geometry probes (paint.spec.ts). Run with
 // `npm run test:storybook` after `npm run build-storybook`.
 const port = Number(process.env['STORYBOOK_PORT'] ?? 6007);
 const ci = !!process.env['CI'];
 
 export default defineConfig({
   testDir: '.',
-  testMatch: 'catalogue.spec.ts',
+  testMatch: ['catalogue.spec.ts', 'paint.spec.ts'],
   globalTeardown: './global-teardown.ts',
   fullyParallel: true,
   forbidOnly: ci,
