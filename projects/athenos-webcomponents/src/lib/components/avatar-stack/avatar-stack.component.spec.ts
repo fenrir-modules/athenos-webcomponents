@@ -72,6 +72,20 @@ describe('AthAvatarStackComponent small stacks (P04)', () => {
     expect(getComputedStyle(stack('md').querySelectorAll('ath-avatar')[1]).marginLeft).toBe('-6px');
   });
 
+  it('paints each item as a unit, so the next ring covers the previous avatar', () => {
+    // The circle inside ath-avatar is positioned; without a stacking
+    // context per item it paints over the next host's ring (pixels in
+    // tests/storybook/paint.spec.ts).
+    const sm = stack('sm');
+    for (const el of Array.from(sm.querySelectorAll<HTMLElement>('ath-avatar, .ath-stack__more'))) {
+      const style = getComputedStyle(el);
+      expect([style.position, style.zIndex]).toEqual(['relative', '0']);
+    }
+    expect(getComputedStyle(sm.querySelector('.ath-stack__more')!).boxShadow).toMatch(
+      / 0px 0px 0px 2px$/
+    );
+  });
+
   it('draws "+N" on --bg-3 in --fg-2 at 4.5:1 or more in both themes', () => {
     const more = stack('sm').querySelector<HTMLElement>('.ath-stack__more')!;
     expect(more.textContent).toBe('+2');
