@@ -19,6 +19,8 @@
   --surface: #ffffff; // Cards / panels / modals
   --surface-2: #f9f9fb; // Recessed within cards — table heads
   --surface-3: #eaeaed; // Deep wells — inputs, kbd, inner fills
+  --bg-3: #d4d4d8; // A stronger neutral fill than bg-2 for small marks on a surface: the avatar stack's "+N" (fg-2 on it clears 4.5:1).
+  --surface-raised: #ffffff; // Floating panels (menus, dropdowns, popovers): a step lighter than --surface in dark, so a menu over a card, a dialog or the chrome reads as raised.
   --hover: #00000009; // 3.5% black overlay for hover
   --hover-strong: #00000013; // 7% black overlay for active
   --selected: #4f46e50e; // Subtle accent tint for selected rows
@@ -29,6 +31,7 @@
   --border-strong: #ccccd0;
   --border-faint: #ebebee;
   --rule: #e2e2e6;
+  --border-raised: var(--border); // Edge of a floating panel (--surface-raised).
 
   // color.text — Text hierarchy — no pure black. fg-3/fg-4/fg-label carry real small text, so they clear 4.5:1 on white, the canvas (bg-0) and surface-2 (checked by the contrast gate in tokens.config.json).
   --fg: #1a1a1e;
@@ -86,6 +89,7 @@
   --tab-active-indicator: var(--accent);
   --segment-track-bg: var(--bg-2);
   --segment-active-bg: var(--surface);
+  --segment-active-shadow: var(--shadow-1); // The active segment is raised off its track in both themes.
   --segment-active-fg: var(--fg);
   --segment-count-active-bg: var(--accent-faint);
   --segment-count-active-fg: var(--accent-text);
@@ -111,6 +115,9 @@
   // color.role.control
   --control-checked: var(--accent);
   --control-mark: var(--control-checked); // Marks that were ink before the accent presets reached light (a done task box, an editor checkbox, a pressed toggle's border, an ink focus outline): the checked-control colour in light, so ink under neutral; ink in dark, which keeps its look.
+  --control-off-bg: #85858e; // The track of an off switch: 3:1 against the surfaces it sits on (WCAG 1.4.11), with a white thumb.
+  --mark-on-color: #ffffff; // A mark on a coloured fill (the check on a colour swatch, an off switch's thumb): white in both themes, lifted by --mark-shadow.
+  --control-off-thumb: var(--mark-on-color); // The thumb of an off switch, white in both themes over --control-off-bg.
 
   // color.role.selection-bar
   --selection-bar-bg: var(--accent-faint);
@@ -130,15 +137,19 @@
   --action-create-fg: #ffffff;
 
   // color.role.notify
-  --notify-dot: #43946c;
+  --notify-dot: var(--accent); // Unread: the accent in both themes, as the sidebar's unread count (green means done or on track).
 
   // color.role.rail
   --rail-active-bg: var(--nav-active-bg); // The active nav item's pill (ath-nav-item, sidebar and settings nav): the accent tint, as in dark. Neutral keeps --bg-2.
   --rail-tile-bg: var(--bg-2);
 
+  // color.role.menu
+  --menu-item-hover: var(--hover-strong); // Hover and focus fill of a menu item on --surface-raised.
+
   // color.avatar — Person avatars — deterministic per person (avatarTone()), muted mid-tones with white initials (all >= 4.5:1).
   --avatar-neutral-bg: var(--surface-3);
   --avatar-neutral-fg: var(--fg-3);
+  --avatar-stack-ring: var(--surface); // The ring between stacked avatars: the colour behind the stack. A stack on the chrome or a tinted row re-sets it there.
   --avatar-1-bg: #a95c25;
   --avatar-1-fg: #ffffff; // clay
   --avatar-2-bg: #b8466f;
@@ -233,6 +244,9 @@
   --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 1px rgba(15, 23, 42, 0.03);
   --shadow-2: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
   --shadow-3: 0 16px 40px -12px rgba(15, 23, 42, 0.18), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  --shadow-raised: var(--shadow-3); // Floating panels on --surface-raised; dark adds a hairline top highlight.
+  --mark-shadow: 0 1px 1px rgba(0, 0, 0, 0.45); // drop-shadow() of a white mark on a colour (the swatch check).
+  --control-thumb-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); // A switch thumb over its track.
   --shadow-drawer: 6px 0 20px -6px rgba(15, 23, 42, 0.12);
   --toast-shadow: 0 0 0 0.5px rgba(15, 23, 42, 0.02), 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 20px -6px rgba(15, 23, 42, 0.1), 0 24px 44px -16px rgba(15, 23, 42, 0.18); // Toasts: a contact shadow, a near layer and a wide soft one.
 
@@ -282,6 +296,7 @@
   // density.control
   --control-h-xs: 26px; // topbar "+ New" (ref 25–26px)
   --control-h-sm: 28px;
+  --nav-row-h: 32px; // One row of ath-nav-item (sidebar, rail, settings nav); a drawer on a phone sets 44px.
   --control-h: 32px;
   --control-h-lg: 40px;
   --field-h-sm: 33px; // compact form field (settings rows)
@@ -378,6 +393,8 @@
   --surface: #1c1c21; // Cards, panels, modals
   --surface-2: #17171b; // Recessed within cards — table heads
   --surface-3: #26262e; // Inputs, kbd chips, inner wells
+  --bg-3: #3f3f46;
+  --surface-raised: #24242a; // A visible step above --surface (#1c1c21) and the chrome (#18181c).
   --hover: #ffffff0b; // 4% white overlay
   --hover-strong: #ffffff18; // 9% white overlay
   --selected: #ffffff0d; // Selected row tint
@@ -388,13 +405,14 @@
   --border-strong: #3c3c46;
   --border-faint: #232329;
   --rule: #2c2c34;
+  --border-raised: rgba(255, 255, 255, 0.1);
 
   // color.text
   --fg: #e6e6eb;
   --fg-2: #b0b0bc;
   --fg-3: #9a9aa6; // 6.1:1 surface · 6.8 bg-0 · 5.7 bg-2
   --fg-4: #8c8c98; // 5.1:1 surface · 5.7 bg-0 · 4.8 bg-2
-  --fg-label: #85858f; // Was #74747f (3.7:1 on surface); now 4.6:1 surface · 4.9 bg-0.
+  --fg-label: #8c8c96; // Was #74747f (3.7:1 on surface), then #85858f (4.2:1 on a raised menu); now 4.6:1 surface-raised · 5.1 surface · 5.7 bg-0.
   --fg-disabled: #38383f;
 
   // color.accent
@@ -427,11 +445,13 @@
   --nav-active-icon: var(--accent);
 
   // color.role.tab
-  --segment-active-bg: var(--bg-1);
+  --segment-active-bg: var(--surface-3); // Lighter than its bg-2 track, so the active item is raised as in light (was bg-1, which read as punched in).
+  --segment-active-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
   --progress-track: var(--bg-2);
 
   // color.role.control
   --control-mark: var(--ink);
+  --control-off-bg: #6b6b75;
 
   // color.role.brand-mark
   --brand-mark-bg: var(--fg);
@@ -445,7 +465,10 @@
   --action-create-fg: #111113;
 
   // color.role.notify
-  --notify-dot: var(--green);
+  --notify-dot: var(--accent);
+
+  // color.role.menu
+  --menu-item-hover: rgba(255, 255, 255, 0.06);
 
   // color.avatar
   --avatar-1-bg: #d0915e;
@@ -501,6 +524,7 @@
   --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-2: 0 4px 16px -2px rgba(0, 0, 0, 0.5), 0 2px 5px -1px rgba(0, 0, 0, 0.3);
   --shadow-3: 0 20px 52px -12px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+  --shadow-raised: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow-3);
   --shadow-drawer: 8px 0 24px -6px rgba(0, 0, 0, 0.55);
   --toast-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 24px -6px rgba(0, 0, 0, 0.55), 0 28px 56px -16px rgba(0, 0, 0, 0.7);
 
@@ -679,4 +703,15 @@
   --accent-3: #9898a4;
   --accent-faint: #ffffff0e;
   --accent-ring: #ffffff22;
+}
+
+// ---------------------------------------------------------------------
+// TOUCH — a phone width or a coarse pointer: larger small controls (sizes only)
+// ---------------------------------------------------------------------
+@media (pointer: coarse), (max-width: 639px) {
+:root,
+[data-theme] {
+  --control-h-sm: 36px; // Small controls (buttons, chips, compact segments) reach a thumb on a phone or a coarse pointer; was 28px everywhere.
+  --control-h: 36px; // Default controls match, so a small button is never taller than a default one.
+}
 }

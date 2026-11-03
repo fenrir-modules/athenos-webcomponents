@@ -109,7 +109,7 @@ export declare class AthPageHeaderComponent {
  * </ath-sidebar>
  */
 export declare class AthSidebarComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   /** Collapsed state. Two-way: `[(collapsed)]` (`collapsedChange`). */
   readonly collapsed: import("@angular/core").ModelSignal<boolean>;
   protected readonly collapseIcon: import("lucide").IconNode;
@@ -339,8 +339,13 @@ export declare function isVirtualAnchor(target: unknown): target is FloatingVirt
 export type FloatingSide = 'bottom' | 'top';
 export interface FloatingOptions {
   align?: FloatingAlign;
-  /** Preferred side; default `bottom`. */
-  side?: FloatingSide;
+  /**
+   * Preferred side; default `bottom`. `left` / `right` (tooltips) hang the
+   * panel beside the anchor, centred on it and flipped to the other side
+   * when that has more room; `align`, `matchWidth`, `maxHeight` and `arrow`
+   * do not apply there.
+   */
+  side?: FloatingSide | 'left' | 'right';
   /** Gap between anchor and panel, in px. Default 4. */
   offset?: number;
   /** At least as wide as the anchor. */
@@ -378,7 +383,8 @@ export interface FloatingCleanup {
  * top layer, or, without Popover API support, made `position: fixed` with a
  * correction for transformed ancestors that would otherwise move a fixed box.
  *
- * Writes `data-placement="bottom|top"` on the panel for side-dependent styles.
+ * Writes `data-placement="bottom|top"` (`left|right` for a side panel) on the
+ * panel for side-dependent styles.
  */
 export declare function floatPanel(panel: HTMLElement, anchor: FloatingTarget, options?: FloatingOptions): FloatingCleanup;
 /** Whether this browser has the Popover API (top layer for non-modal panels). */
@@ -550,6 +556,225 @@ export declare class AthOverlayStack {
   static ɵfac: i0.ɵɵFactoryDeclaration<AthOverlayStack, never>;
   static ɵprov: i0.ɵɵInjectableDeclaration<any>;
 }
+/** Panel width: `sm` 220px, `md` 280px (default), `lg` 360px, `auto` fits the content. */
+export type PopoverSize = 'sm' | 'md' | 'lg' | 'auto';
+/** Inner padding of the panel. */
+export type PopoverPadding = 'md' | 'sm' | 'none';
+/** Where focus goes when the panel opens. */
+export type PopoverAutoFocus = 'first' | 'panel' | 'none';
+/** ARIA role of the panel; `null` for a bare container (the content brings its own role). */
+export type PopoverRole = 'dialog' | 'menu' | 'listbox' | null;
+/**
+ * Lazy panel content: rendered only while the popover is open.
+ *
+ * @example
+ * <ath-popover>
+ *   <ng-template athPopoverContent>…</ng-template>
+ * </ath-popover>
+ */
+export declare class AthPopoverContentDirective {
+  readonly template: TemplateRef<any>;
+  static ɵfac: i0.ɵɵFactoryDeclaration<AthPopoverContentDirective, never>;
+  static ɵdir: i0.ɵɵDirectiveDeclaration<AthPopoverContentDirective, "ng-template[athPopoverContent]", never, {}, {}, never, never, true, never>;
+}
+/**
+ * Athenos Popover
+ *
+ * An anchored panel in the top layer: no container's overflow or z-index
+ * clips it. Opens from `athPopoverTrigger`, `show()` or `[(open)]`; closes on
+ * Escape (topmost overlay only), outside click and Tab-out, and returns focus
+ * to the trigger. `role="dialog"` by default; `trapFocus` keeps Tab inside.
+ *
+ * @example
+ * <ath-button [athPopoverTrigger]="info">Details</ath-button>
+ * <ath-popover #info ariaLabel="Details" arrow>
+ *   <p>Content</p>
+ * </ath-popover>
+ */
+export declare class AthPopoverComponent implements OnChanges, OnDestroy {
+  private readonly stack;
+  /** Whether the panel is shown. Two-way: `[(open)]`. */
+  readonly open: import("@angular/core").ModelSignal<boolean>;
+  /**
+   * The element the panel hangs from (a trigger directive sets it on its
+   * own), or a `FloatingVirtualAnchor` such as the spot the pointer rests on;
+   * its `contextElement` then counts as the trigger.
+   */
+  readonly anchor: import("@angular/core").InputSignal<FloatingAnchor>;
+  readonly size: import("@angular/core").InputSignal<PopoverSize>;
+  readonly padding: import("@angular/core").InputSignal<PopoverPadding>;
+  readonly align: import("@angular/core").InputSignal<FloatingAlign>;
+  readonly side: import("@angular/core").InputSignal<FloatingSide>;
+  /** Gap to the anchor in px. */
+  readonly offset: import("@angular/core").InputSignal<number>;
+  readonly matchWidth: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
+  /** Upper bound for the height in px (the viewport caps it anyway). */
+  readonly maxHeight: import("@angular/core").InputSignal<number | null>;
+  /** Show an arrow pointing at the anchor. */
+  readonly arrow: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
+  /** Keep Tab inside the panel (modal-like content); otherwise Tab out closes it. */
+  readonly trapFocus: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
+  readonly autoFocus: import("@angular/core").InputSignal<PopoverAutoFocus>;
+  /** Return focus to the trigger on Escape / selection / programmatic close. */
+  readonly restoreFocus: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
+  readonly closeOnEscape: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
+  readonly closeOnOutsideClick: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
+  readonly panelRole: import("@angular/core").InputSignal<PopoverRole>;
+  readonly ariaLabel: import("@angular/core").InputSignal<string | null>;
+  readonly ariaLabelledby: import("@angular/core").InputSignal<string | null>;
+  /** Extra classes on the panel (it lives in this component's view). */
+  readonly panelClass: import("@angular/core").InputSignal<string>;
+  readonly opened: import("@angular/core").OutputEmitterRef<void>;
+  readonly closed: import("@angular/core").OutputEmitterRef<AthOverlayCloseReason>;
+  /** Id of the panel, for `aria-controls`. */
+  readonly panelId: import("@angular/core").InputSignal<string>;
+  protected readonly lazyContent: Signal<AthPopoverContentDirective | undefined>;
+  private readonly panelRef;
+  private readonly triggerAnchor;
+  /** The element the panel currently hangs from. */
+  readonly anchorElement: Signal<HTMLElement | null>;
+  /** What the panel is placed against: the anchor input (element or virtual) or the trigger. */
+  protected readonly floatTarget: Signal<HTMLElement | FloatingVirtualAnchor | null>;
+  protected readonly panelClasses: Signal<string>;
+  private registered;
+  private returnFocus;
+  /** Work waiting for the open panel to render (see `whenPanelReady`). */
+  private panelJobs;
+  private readonly entry;
+  /** The panel element while open. */
+  get panel(): HTMLElement | null;
+  constructor();
+  /**
+   * Runs `fn` once the open panel is rendered and placed (`athFloating`
+   * places it when it is created); right away when it already is. Dropped
+   * when the popover closes first. For `ath-menu` and `ath-option-picker`.
+   */
+  whenPanelReady(fn: () => void): void;
+  ngOnChanges(changes: SimpleChanges): void;
+  ngOnDestroy(): void;
+  /** Opens the panel, optionally hanging it from `anchor`. */
+  show(anchor?: HTMLElement | null): void;
+  /**
+   * Closes the panel. `restore` overrides whether focus goes back to the
+   * trigger (default: yes when focus was inside or the user pressed Escape).
+   */
+  hide(reason?: AthOverlayCloseReason, restore?: boolean): void;
+  toggle(anchor?: HTMLElement | null): void;
+  /** Moves focus into the panel according to `autoFocus` (or `mode`). */
+  focusPanel(mode?: PopoverAutoFocus): void;
+  protected onKeydown(event: KeyboardEvent): void;
+  protected onFocusOut(event: FocusEvent): void;
+  private afterOpen;
+  private runPanelJobs;
+  private afterClose;
+  static ɵfac: i0.ɵɵFactoryDeclaration<AthPopoverComponent, never>;
+  static ɵcmp: i0.ɵɵComponentDeclaration<AthPopoverComponent, "ath-popover", ["athPopover"], {
+    "open": {
+      "alias": "open";
+      "required": false;
+      "isSignal": true;
+    };
+    "anchor": {
+      "alias": "anchor";
+      "required": false;
+      "isSignal": true;
+    };
+    "size": {
+      "alias": "size";
+      "required": false;
+      "isSignal": true;
+    };
+    "padding": {
+      "alias": "padding";
+      "required": false;
+      "isSignal": true;
+    };
+    "align": {
+      "alias": "align";
+      "required": false;
+      "isSignal": true;
+    };
+    "side": {
+      "alias": "side";
+      "required": false;
+      "isSignal": true;
+    };
+    "offset": {
+      "alias": "offset";
+      "required": false;
+      "isSignal": true;
+    };
+    "matchWidth": {
+      "alias": "matchWidth";
+      "required": false;
+      "isSignal": true;
+    };
+    "maxHeight": {
+      "alias": "maxHeight";
+      "required": false;
+      "isSignal": true;
+    };
+    "arrow": {
+      "alias": "arrow";
+      "required": false;
+      "isSignal": true;
+    };
+    "trapFocus": {
+      "alias": "trapFocus";
+      "required": false;
+      "isSignal": true;
+    };
+    "autoFocus": {
+      "alias": "autoFocus";
+      "required": false;
+      "isSignal": true;
+    };
+    "restoreFocus": {
+      "alias": "restoreFocus";
+      "required": false;
+      "isSignal": true;
+    };
+    "closeOnEscape": {
+      "alias": "closeOnEscape";
+      "required": false;
+      "isSignal": true;
+    };
+    "closeOnOutsideClick": {
+      "alias": "closeOnOutsideClick";
+      "required": false;
+      "isSignal": true;
+    };
+    "panelRole": {
+      "alias": "panelRole";
+      "required": false;
+      "isSignal": true;
+    };
+    "ariaLabel": {
+      "alias": "ariaLabel";
+      "required": false;
+      "isSignal": true;
+    };
+    "ariaLabelledby": {
+      "alias": "ariaLabelledby";
+      "required": false;
+      "isSignal": true;
+    };
+    "panelClass": {
+      "alias": "panelClass";
+      "required": false;
+      "isSignal": true;
+    };
+    "panelId": {
+      "alias": "panelId";
+      "required": false;
+      "isSignal": true;
+    };
+  }, {
+    "open": "openChange";
+    "opened": "opened";
+    "closed": "closed";
+  }, ["lazyContent"], ["*"], true, never>;
+}
 /** What a menu item needs from its menu (breaks the import cycle menu ↔ item). */
 interface AthMenuParent {
   itemActivated(item: {
@@ -558,7 +783,10 @@ interface AthMenuParent {
   isOpen(): boolean;
 }
 declare const ATH_MENU_PARENT: InjectionToken<AthMenuParent>;
-/** Which item gets focus when the menu opens. */
+/**
+ * Which item gets focus when the menu opens. `'first'` is the current item
+ * instead when the menu picks a value (an item with `[selected]="true"`).
+ */
 export type MenuFocus = 'first' | 'last' | 'none';
 /**
  * Athenos Menu: the WAI-ARIA menu button pattern for row actions, `⋯` menus
@@ -568,6 +796,9 @@ export type MenuFocus = 'first' | 'last' | 'none';
  * item, ArrowUp on the last. In the menu: ArrowDown/ArrowUp (wrapping),
  * Home/End, typeahead, Enter/Space activate, Escape closes and returns
  * focus to the trigger, Tab closes and moves on.
+ *
+ * Items in `<ng-template athPopoverContent>` are built only while the menu
+ * is open (a menu per table row costs nothing until it is used).
  *
  * @example
  * <ath-button variant="ghost" [athMenuTrigger]="rowMenu" ariaLabel="Actions">⋯</ath-button>
@@ -593,6 +824,7 @@ export declare class AthMenuComponent implements AthMenuParent {
   readonly panelId: string;
   protected readonly labelledBy: import("@angular/core").WritableSignal<string | null>;
   private readonly popover;
+  protected readonly lazyContent: import("@angular/core").Signal<AthPopoverContentDirective | undefined>;
   private readonly items;
   private readonly typeahead;
   private pendingFocus;
@@ -651,7 +883,7 @@ export declare class AthMenuComponent implements AthMenuParent {
     "open": "openChange";
     "opened": "opened";
     "closed": "closed";
-  }, ["items"], ["*"], true, never>;
+  }, ["lazyContent", "items"], ["*"], true, never>;
 }
 /** An action of the menu; choosing it emits its `id`. */
 export interface DropdownAction {
@@ -684,6 +916,22 @@ type Entry = {
   action: DropdownAction | null;
 };
 /**
+ * Static content at the top of the menu, above the first item (who is
+ * signed in: avatar, name, email). Built only while the menu is open, like
+ * the items. Not focusable and not an item: keep controls out of it.
+ *
+ * @example
+ * <ath-dropdown [items]="items">
+ *   <ath-button variant="ghost">Account</ath-button>
+ *   <ng-template athDropdownHeader><strong>Mira Mock</strong> mira@example.com</ng-template>
+ * </ath-dropdown>
+ */
+export declare class AthDropdownHeaderDirective {
+  readonly template: TemplateRef<unknown>;
+  static ɵfac: i0.ɵɵFactoryDeclaration<AthDropdownHeaderDirective, never>;
+  static ɵdir: i0.ɵɵDirectiveDeclaration<AthDropdownHeaderDirective, "ng-template[athDropdownHeader]", never, {}, {}, never, never, true, never>;
+}
+/**
  * Horizontal alignment hint.
  * `'auto'` picks left or right based on available viewport space.
  */
@@ -698,14 +946,30 @@ export type DropdownAlign = 'left' | 'right' | 'auto';
  * `aria-expanded` and `aria-controls` on it. Plain content (text, an icon)
  * gets a `role="button"` wrapper instead.
  *
+ * A menu that picks a value (a status, a priority) takes `activeId`: the
+ * items become `menuitemradio`s, the current one carries a trailing check
+ * and the menu opens on it.
+ *
  * @example
  * <ath-dropdown [items]="menuItems" (itemClicked)="onAction($event)">
  *   <ath-button variant="ghost">Actions</ath-button>
+ * </ath-dropdown>
+ * <ath-dropdown [items]="statuses" [activeId]="ticket.status" (itemClicked)="setStatus($event)">
+ *   <ath-status-pill [status]="ticket.status" />
  * </ath-dropdown>
  */
 export declare class AthDropdownComponent implements AfterViewInit {
   /** Menu entries: actions, and `DROPDOWN_SEPARATOR` between groups. */
   readonly items: import("@angular/core").InputSignal<readonly DropdownItem[]>;
+  /**
+   * The id of the current value when the menu picks one: that item gets a
+   * trailing check and focus on open. `null` (default): an action menu.
+   */
+  readonly activeId: import("@angular/core").InputSignal<string | null | undefined>;
+  /** `<ng-template athDropdownHeader>`: content above the first item. */
+  protected readonly header: import("@angular/core").Signal<AthDropdownHeaderDirective | undefined>;
+  /** `[selected]` of an item: `null` in an action menu. */
+  protected selectedOf(item: DropdownAction): boolean | null;
   /** Separators are keyed by position, actions by id. */
   protected readonly entries: import("@angular/core").Signal<Entry[]>;
   /**
@@ -746,6 +1010,11 @@ export declare class AthDropdownComponent implements AfterViewInit {
       "required": false;
       "isSignal": true;
     };
+    "activeId": {
+      "alias": "activeId";
+      "required": false;
+      "isSignal": true;
+    };
     "align": {
       "alias": "align";
       "required": false;
@@ -754,7 +1023,7 @@ export declare class AthDropdownComponent implements AfterViewInit {
   }, {
     "itemClicked": "itemClicked";
     "openChange": "openChange";
-  }, never, ["*"], true, never>;
+  }, ["header"], ["*"], true, never>;
 }
 /** One step of the trail. The last item is the current page. */
 export interface BreadcrumbItem {
@@ -870,7 +1139,9 @@ export interface TabItem {
 /**
  * Athenos Tabs Component
  *
- * Tab navigation for switching between content sections.
+ * Tab navigation for switching between content sections. More tabs than
+ * fit scroll sideways (no scrollbar): a fade marks each side that has more,
+ * and the active tab is scrolled into view when it changes.
  *
  * @example
  * <ath-tabs [tabs]="tabs" [activeTab]="activeTab" (tabChanged)="activeTab = $event" />
@@ -882,7 +1153,19 @@ export declare class AthTabsComponent {
   readonly activeTab: import("@angular/core").InputSignal<string>;
   /** Tab change event */
   readonly tabChanged: import("@angular/core").OutputEmitterRef<string>;
+  private readonly host;
+  private readonly list;
+  /** Which physical sides of the bar have tabs scrolled out of view. */
+  protected readonly fadeLeft: import("@angular/core").WritableSignal<boolean>;
+  protected readonly fadeRight: import("@angular/core").WritableSignal<boolean>;
+  constructor();
+  protected syncFade(): void;
+  /** Scrolls the bar (never the page) so the tab at `index` is in view. */
+  private reveal;
+  /** The one tab in the tab order; the arrow keys reach the others. */
+  protected readonly tabStop: import("@angular/core").Signal<number>;
   selectTab(tab: TabItem): void;
+  protected onKey(event: KeyboardEvent, index: number): void;
   getTabClasses(tab: TabItem): string;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthTabsComponent, never>;
   static ɵcmp: i0.ɵɵComponentDeclaration<AthTabsComponent, "ath-tabs", never, {
@@ -932,7 +1215,7 @@ export declare class AthTimelineComponent {
  * </ath-timeline-entry>
  */
 export declare class AthTimelineEntryComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   readonly author: import("@angular/core").InputSignal<string>;
   /** Defaults to `author` for initials/colors. Override if avatar should differ. */
   readonly avatarName: import("@angular/core").InputSignal<string | null>;
@@ -1778,7 +2061,9 @@ export declare function hasKpiTrend(spark: readonly number[] | null | undefined)
  * Projected content sits under the figure (a progress bar, a short line).
  */
 export declare class AthKpiTileComponent {
+  private readonly labels;
   readonly label: import("@angular/core").InputSignal<string>;
+  /** The figure; `null` (or `undefined`): still loading, drawn as a 48 × 22 skeleton. */
   readonly value: import("@angular/core").InputSignal<string | number | null | undefined>;
   /** Pre-formatted delta ("+1", "−2"); `null` hides the badge. */
   readonly delta: import("@angular/core").InputSignal<string | null | undefined>;
@@ -1791,7 +2076,11 @@ export declare class AthKpiTileComponent {
   readonly spark: import("@angular/core").InputSignal<readonly number[] | null | undefined>;
   /** Overrides the tone's trend colour. */
   readonly sparkColor: import("@angular/core").InputSignal<string | null>;
-  /** A small quiet note bottom-right ("3 done"), drawn instead of a trend. */
+  /**
+   * A small quiet note under the figure ("3 done"), drawn instead of a
+   * trend; one line, ending in an ellipsis when the tile is narrow (the
+   * full text is the tooltip unless `noteTitle` says more).
+   */
   readonly note: import("@angular/core").InputSignal<string | null | undefined>;
   readonly noteTitle: import("@angular/core").InputSignal<string | null | undefined>;
   /** The figure in red: something needs attention now. */
@@ -1810,6 +2099,8 @@ export declare class AthKpiTileComponent {
   readonly linkParams: import("@angular/core").InputSignal<Params | null>;
   /** Accessible name of the link; defaults to the label. */
   readonly linkLabel: import("@angular/core").InputSignal<string | null>;
+  protected readonly loading: import("@angular/core").Signal<boolean>;
+  protected readonly loadingLabel: import("@angular/core").Signal<string>;
   protected readonly samples: import("@angular/core").Signal<readonly number[] | null>;
   protected readonly showTrend: import("@angular/core").Signal<boolean>;
   protected readonly trendColor: import("@angular/core").Signal<string>;
@@ -2047,7 +2338,7 @@ export declare class AthProgressComponent {
  * <ath-code-block language="rust" [code]="snippet" [filename]="'main.rs'" />
  */
 export declare class AthCodeBlockComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   readonly code: import("@angular/core").InputSignal<string>;
   readonly language: import("@angular/core").InputSignal<string | null>;
   /** Optional filename to display next to the language label. */
@@ -2060,9 +2351,11 @@ export declare class AthCodeBlockComponent {
   protected readonly checkIcon: import("lucide").IconNode;
   protected readonly copied: import("@angular/core").WritableSignal<boolean>;
   private resetTimer;
+  private readonly host;
   protected readonly lines: import("@angular/core").Signal<string[]>;
   constructor();
   copy(): Promise<void>;
+  private selectCode;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthCodeBlockComponent, never>;
   static ɵcmp: i0.ɵɵComponentDeclaration<AthCodeBlockComponent, "ath-code-block", never, {
     "code": {
@@ -2180,8 +2473,8 @@ export type ButtonType = 'button' | 'submit' | 'reset';
  *
  * `[action]` makes the button track its own work: pass a function that
  * returns a Promise or an Observable and the button is busy until it
- * settles: disabled, a spinner, `aria-busy`, and a second click (or a
- * double click) does nothing. No hand-kept `saving` signal (QA-13).
+ * settles: `aria-disabled` (so it keeps focus), a spinner, `aria-busy`,
+ * and a second click (or a double click) does nothing. No hand-kept `saving` signal (QA-13).
  *
  * @example
  * <ath-button variant="primary" (clicked)="handleClick()">Click me</ath-button>
@@ -2339,6 +2632,10 @@ export declare class AthInputComponent implements ControlValueAccessor {
   readonly autocomplete: import("@angular/core").InputSignal<string>;
   /** Unique input ID */
   readonly inputId: import("@angular/core").InputSignal<string>;
+  /** Ids of the rendered error / hint, so the field can point aria-describedby at them. */
+  protected readonly errorId: import("@angular/core").Signal<string>;
+  protected readonly hintId: import("@angular/core").Signal<string>;
+  protected readonly describedBy: import("@angular/core").Signal<string | null>;
   protected readonly fieldValue: import("@angular/core").WritableSignal<string>;
   private readonly formDisabled;
   protected readonly isDisabled: import("@angular/core").Signal<boolean>;
@@ -2474,6 +2771,10 @@ export declare class AthSelectComponent implements ControlValueAccessor {
   readonly ariaLabel: import("@angular/core").InputSignal<string>;
   /** Unique select ID */
   readonly selectId: import("@angular/core").InputSignal<string>;
+  /** Ids of the rendered error / hint, so the field can point aria-describedby at them. */
+  protected readonly errorId: import("@angular/core").Signal<string>;
+  protected readonly hintId: import("@angular/core").Signal<string>;
+  protected readonly describedBy: import("@angular/core").Signal<string | null>;
   protected readonly fieldValue: import("@angular/core").WritableSignal<string>;
   private readonly formDisabled;
   protected readonly isDisabled: import("@angular/core").Signal<boolean>;
@@ -2572,6 +2873,10 @@ export declare class AthTextareaComponent implements ControlValueAccessor {
   readonly maxLength: import("@angular/core").InputSignal<number | null>;
   /** Unique textarea ID */
   readonly textareaId: import("@angular/core").InputSignal<string>;
+  /** Ids of the rendered error / hint, so the field can point aria-describedby at them. */
+  protected readonly errorId: import("@angular/core").Signal<string>;
+  protected readonly hintId: import("@angular/core").Signal<string>;
+  protected readonly describedBy: import("@angular/core").Signal<string | null>;
   protected readonly fieldValue: import("@angular/core").WritableSignal<string>;
   private readonly formDisabled;
   protected readonly isDisabled: import("@angular/core").Signal<boolean>;
@@ -2704,7 +3009,7 @@ export declare class AthToggleComponent {
  * <ath-search-input placeholder="Search flags..." (searched)="onSearch($event)" />
  */
 export declare class AthSearchInputComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   /** Placeholder text; left out, the app's `searchPlaceholder` label (`ATH_LABELS`). */
   readonly placeholder: import("@angular/core").InputSignal<string | undefined>;
   protected readonly placeholderText: import("@angular/core").Signal<string>;
@@ -2761,8 +3066,12 @@ export declare class AthSegmentComponent<T = string> {
   /** Optional aria-label for the group (for screen readers). */
   readonly ariaLabel: import("@angular/core").InputSignal<string | null>;
   readonly valueChange: import("@angular/core").OutputEmitterRef<T>;
+  private readonly host;
+  /** The one option in the tab order; the arrow keys reach the others. */
+  protected readonly tabStop: import("@angular/core").Signal<number>;
   trackByValue: (_: number, item: SegmentOption<T>) => unknown;
   select(option: SegmentOption<T>): void;
+  protected onKey(event: KeyboardEvent, index: number): void;
   isActive(option: SegmentOption<T>): boolean;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthSegmentComponent<any>, never>;
   static ɵcmp: i0.ɵɵComponentDeclaration<AthSegmentComponent<any>, "ath-segment", never, {
@@ -2801,7 +3110,7 @@ export declare class AthSegmentComponent<T = string> {
  *                  (clicked)="open()" (cleared)="reset()" />
  */
 export declare class AthFilterChipComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   readonly label: import("@angular/core").InputSignal<string>;
   readonly value: import("@angular/core").InputSignal<string>;
   /** Visually highlights the chip when a filter value is set. */
@@ -2916,7 +3225,7 @@ interface Section<T> {
  *              creatable (create)="addLabel($event)" ariaLabel="Labels" />
  */
 export declare class AthListboxComponent<T = string> {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   readonly options: import("@angular/core").InputSignal<readonly ListboxOption<T>[]>;
   readonly multiple: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
   /** The selected value (single-select). Two-way: `[(value)]`. */
@@ -3213,7 +3522,7 @@ export interface UserOption {
  *   placeholder="Unassigned" />
  */
 export declare class AthUserPickerComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   /** The people to choose from; `null`/`undefined` count as none. */
   readonly users: import("@angular/core").InputSignalWithTransform<UserOption[], UserOption[] | null | undefined>;
   /** The chosen user's id. Two-way: `[(value)]`. */
@@ -3289,7 +3598,7 @@ export declare class AthUserPickerComponent {
  * </ath-file-drop>
  */
 export declare class AthFileDropComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   /** Filter for the file picker (e.g., `image/*,.pdf`). */
   readonly accept: import("@angular/core").InputSignal<string | null>;
   readonly multiple: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
@@ -3347,6 +3656,12 @@ export declare class AthFileDropComponent {
   }, never, ["*"], true, never>;
 }
 /**
+ * How the swatches paint their colour: `muted` the deco marks (role badges,
+ * avatar rings) as they appear elsewhere; `solid` the full colour, for a
+ * choice shown solid next to the picker (a workspace tile).
+ */
+export type AthColorSwatchTone = 'muted' | 'solid';
+/**
  * A colour from the decorative palette, as a radio group (WAI-ARIA radio
  * pattern): one tab stop, the arrow keys move and pick, Home/End jump.
  * Each swatch is named for screen readers ("Blue"), the selected one also
@@ -3354,6 +3669,7 @@ export declare class AthFileDropComponent {
  *
  * @example
  * <ath-color-swatch [(value)]="role.color" label="Rollenfarbe" />
+ * <ath-color-swatch [(value)]="workspace.color" tone="solid" />
  */
 export declare class AthColorSwatchComponent {
   private readonly labels;
@@ -3363,6 +3679,8 @@ export declare class AthColorSwatchComponent {
   /** The group's accessible name; defaults to the "Colour" label. */
   readonly label: import("@angular/core").InputSignal<string | null>;
   readonly disabled: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
+  /** `muted` (default) or `solid`: draw the swatches as the colour is used. */
+  readonly tone: import("@angular/core").InputSignal<AthColorSwatchTone>;
   /** The tokens offered, in order (default: the whole palette). */
   readonly colors: import("@angular/core").InputSignal<readonly AthDecoColor[]>;
   protected readonly checkIcon: import("lucide").IconNode;
@@ -3390,6 +3708,11 @@ export declare class AthColorSwatchComponent {
     };
     "disabled": {
       "alias": "disabled";
+      "required": false;
+      "isSignal": true;
+    };
+    "tone": {
+      "alias": "tone";
       "required": false;
       "isSignal": true;
     };
@@ -3890,7 +4213,12 @@ export declare class AthDialogComponent implements OnChanges, OnDestroy {
   protected onKeydown(event: KeyboardEvent): void;
   /** Escape: the browser's close request. Always prevented; the parent decides. */
   protected onCancel(event: Event): void;
-  /** The browser closed it anyway (e.g. a forced close request). */
+  /**
+   * The browser closed it anyway: a second Escape without user activation
+   * skips `cancel`. Controlled, so it is shown again until `open` turns
+   * false (the parent may refuse), and it only asks to close when
+   * `closeOnEscape` allows it (a secret shown once must stay).
+   */
   protected onNativeClose(): void;
   protected onPointerDown(event: PointerEvent): void;
   protected onClick(event: MouseEvent): void;
@@ -3902,6 +4230,7 @@ export declare class AthDialogComponent implements OnChanges, OnDestroy {
    */
   private isBackdropEvent;
   private present;
+  private showNative;
   private focusInitial;
   private teardown;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthDialogComponent, never>;
@@ -4086,7 +4415,7 @@ export type SpinnerSize = 'sm' | 'md' | 'lg';
  * <ath-spinner size="lg" />
  */
 export declare class AthSpinnerComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   /** Spinner size */
   readonly size: import("@angular/core").InputSignal<SpinnerSize>;
   protected readonly spinnerClasses: import("@angular/core").Signal<string>;
@@ -4246,7 +4575,11 @@ export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 /**
  * Athenos Tooltip Directive
  *
- * Shows a tooltip on hover.
+ * Shows a tooltip on hover (after a short delay) and right away on keyboard
+ * focus; hides it on leave, blur and Escape. While shown it is a
+ * `role="tooltip"` element named in the host's `aria-describedby`, so screen
+ * readers read it with the host. Placed with `floatPanel` in the top layer:
+ * above dialogs and sheets, flipped and kept inside the viewport.
  *
  * @example
  * <button [athTooltip]="'Click to save'" tooltipPosition="bottom">Save</button>
@@ -4258,18 +4591,24 @@ export declare class AthTooltipDirective implements OnDestroy {
   readonly tooltipPosition: import("@angular/core").InputSignal<TooltipPosition>;
   private readonly el;
   private readonly renderer;
+  private readonly tooltipId;
   private tooltipElement;
+  private float;
   private showTimeout;
   private hideTimeout;
-  private mouseEnterListener;
-  private mouseLeaveListener;
+  private hovered;
+  private focused;
+  private readonly listeners;
+  private unlistenEscape;
   constructor();
   ngOnDestroy(): void;
   private show;
   private hide;
+  private clearTimers;
   private createTooltip;
-  private positionTooltip;
   private removeTooltip;
+  /** Adds or removes the tooltip's id, keeping ids the app set on the host. */
+  private setDescribedBy;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthTooltipDirective, never>;
   static ɵdir: i0.ɵɵDirectiveDeclaration<AthTooltipDirective, "[athTooltip]", never, {
     "text": {
@@ -4329,7 +4668,7 @@ export declare class AthKbdComponent {
  * <ath-copy-button [value]="secretToken" label="Copy token" />
  */
 export declare class AthCopyButtonComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   /** Value to copy to clipboard */
   readonly value: import("@angular/core").InputSignal<string>;
   /** Optional tooltip/label */
@@ -4424,7 +4763,7 @@ export type PaginationMode = 'numbered' | 'cursor';
  *   summary="Showing 1–30 of 412" (previous)="loadPrev()" (next)="loadNext()" />
  */
 export declare class AthPaginationComponent {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   protected pageLabel(page: number | string): string;
   readonly mode: import("@angular/core").InputSignal<PaginationMode>;
   /** Current page (1-based); values below 1 count as 1. */
@@ -4598,6 +4937,7 @@ export declare class AthDueLabelComponent {
   private readonly labels;
   private readonly localeId;
   private readonly dateContext;
+  private readonly today;
   /** ISO date or timestamp; empty shows `placeholder` (or nothing). */
   readonly date: import("@angular/core").InputSignal<string | null | undefined>;
   /** Finished work: muted, never "overdue". */
@@ -4610,13 +4950,15 @@ export declare class AthDueLabelComponent {
   readonly placeholder: import("@angular/core").InputSignal<string | null>;
   /** Narrow columns: the sprint icon only, "Sprint end" moves to the tooltip. */
   readonly compact: import("@angular/core").InputSignal<boolean>;
-  /** Reference time, for stories and tests. */
+  /** Reference time, for stories and tests; default the current day (`AthToday`). */
   readonly now: import("@angular/core").InputSignal<Date | null>;
   protected readonly ic: {
     readonly sprint: import("lucide").IconNode;
     readonly warn: import("lucide").IconNode;
   };
   private readonly ctx;
+  /** The time now, read fresh; the tick only makes `view` re-run around midnight. */
+  private currentTime;
   protected readonly view: import("@angular/core").Signal<import("@athenos/webcomponents").DueView | null>;
   protected readonly isSprint: import("@angular/core").Signal<boolean>;
   protected readonly sprintEndText: import("@angular/core").Signal<string>;
@@ -4868,225 +5210,6 @@ export declare class AthPanelGridComponent {
     };
   }, {}, never, ["*"], true, never>;
 }
-/** Panel width: `sm` 220px, `md` 280px (default), `lg` 360px, `auto` fits the content. */
-export type PopoverSize = 'sm' | 'md' | 'lg' | 'auto';
-/** Inner padding of the panel. */
-export type PopoverPadding = 'md' | 'sm' | 'none';
-/** Where focus goes when the panel opens. */
-export type PopoverAutoFocus = 'first' | 'panel' | 'none';
-/** ARIA role of the panel; `null` for a bare container (the content brings its own role). */
-export type PopoverRole = 'dialog' | 'menu' | 'listbox' | null;
-/**
- * Lazy panel content: rendered only while the popover is open.
- *
- * @example
- * <ath-popover>
- *   <ng-template athPopoverContent>…</ng-template>
- * </ath-popover>
- */
-export declare class AthPopoverContentDirective {
-  readonly template: TemplateRef<any>;
-  static ɵfac: i0.ɵɵFactoryDeclaration<AthPopoverContentDirective, never>;
-  static ɵdir: i0.ɵɵDirectiveDeclaration<AthPopoverContentDirective, "ng-template[athPopoverContent]", never, {}, {}, never, never, true, never>;
-}
-/**
- * Athenos Popover
- *
- * An anchored panel in the top layer: no container's overflow or z-index
- * clips it. Opens from `athPopoverTrigger`, `show()` or `[(open)]`; closes on
- * Escape (topmost overlay only), outside click and Tab-out, and returns focus
- * to the trigger. `role="dialog"` by default; `trapFocus` keeps Tab inside.
- *
- * @example
- * <ath-button [athPopoverTrigger]="info">Details</ath-button>
- * <ath-popover #info ariaLabel="Details" arrow>
- *   <p>Content</p>
- * </ath-popover>
- */
-export declare class AthPopoverComponent implements OnChanges, OnDestroy {
-  private readonly stack;
-  /** Whether the panel is shown. Two-way: `[(open)]`. */
-  readonly open: import("@angular/core").ModelSignal<boolean>;
-  /**
-   * The element the panel hangs from (a trigger directive sets it on its
-   * own), or a `FloatingVirtualAnchor` such as the spot the pointer rests on;
-   * its `contextElement` then counts as the trigger.
-   */
-  readonly anchor: import("@angular/core").InputSignal<FloatingAnchor>;
-  readonly size: import("@angular/core").InputSignal<PopoverSize>;
-  readonly padding: import("@angular/core").InputSignal<PopoverPadding>;
-  readonly align: import("@angular/core").InputSignal<FloatingAlign>;
-  readonly side: import("@angular/core").InputSignal<FloatingSide>;
-  /** Gap to the anchor in px. */
-  readonly offset: import("@angular/core").InputSignal<number>;
-  readonly matchWidth: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
-  /** Upper bound for the height in px (the viewport caps it anyway). */
-  readonly maxHeight: import("@angular/core").InputSignal<number | null>;
-  /** Show an arrow pointing at the anchor. */
-  readonly arrow: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
-  /** Keep Tab inside the panel (modal-like content); otherwise Tab out closes it. */
-  readonly trapFocus: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
-  readonly autoFocus: import("@angular/core").InputSignal<PopoverAutoFocus>;
-  /** Return focus to the trigger on Escape / selection / programmatic close. */
-  readonly restoreFocus: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
-  readonly closeOnEscape: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
-  readonly closeOnOutsideClick: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
-  readonly panelRole: import("@angular/core").InputSignal<PopoverRole>;
-  readonly ariaLabel: import("@angular/core").InputSignal<string | null>;
-  readonly ariaLabelledby: import("@angular/core").InputSignal<string | null>;
-  /** Extra classes on the panel (it lives in this component's view). */
-  readonly panelClass: import("@angular/core").InputSignal<string>;
-  readonly opened: import("@angular/core").OutputEmitterRef<void>;
-  readonly closed: import("@angular/core").OutputEmitterRef<AthOverlayCloseReason>;
-  /** Id of the panel, for `aria-controls`. */
-  readonly panelId: import("@angular/core").InputSignal<string>;
-  protected readonly lazyContent: Signal<AthPopoverContentDirective | undefined>;
-  private readonly panelRef;
-  private readonly triggerAnchor;
-  /** The element the panel currently hangs from. */
-  readonly anchorElement: Signal<HTMLElement | null>;
-  /** What the panel is placed against: the anchor input (element or virtual) or the trigger. */
-  protected readonly floatTarget: Signal<HTMLElement | FloatingVirtualAnchor | null>;
-  protected readonly panelClasses: Signal<string>;
-  private registered;
-  private returnFocus;
-  /** Work waiting for the open panel to render (see `whenPanelReady`). */
-  private panelJobs;
-  private readonly entry;
-  /** The panel element while open. */
-  get panel(): HTMLElement | null;
-  constructor();
-  /**
-   * Runs `fn` once the open panel is rendered and placed (`athFloating`
-   * places it when it is created); right away when it already is. Dropped
-   * when the popover closes first. For `ath-menu` and `ath-option-picker`.
-   */
-  whenPanelReady(fn: () => void): void;
-  ngOnChanges(changes: SimpleChanges): void;
-  ngOnDestroy(): void;
-  /** Opens the panel, optionally hanging it from `anchor`. */
-  show(anchor?: HTMLElement | null): void;
-  /**
-   * Closes the panel. `restore` overrides whether focus goes back to the
-   * trigger (default: yes when focus was inside or the user pressed Escape).
-   */
-  hide(reason?: AthOverlayCloseReason, restore?: boolean): void;
-  toggle(anchor?: HTMLElement | null): void;
-  /** Moves focus into the panel according to `autoFocus` (or `mode`). */
-  focusPanel(mode?: PopoverAutoFocus): void;
-  protected onKeydown(event: KeyboardEvent): void;
-  protected onFocusOut(event: FocusEvent): void;
-  private afterOpen;
-  private runPanelJobs;
-  private afterClose;
-  static ɵfac: i0.ɵɵFactoryDeclaration<AthPopoverComponent, never>;
-  static ɵcmp: i0.ɵɵComponentDeclaration<AthPopoverComponent, "ath-popover", ["athPopover"], {
-    "open": {
-      "alias": "open";
-      "required": false;
-      "isSignal": true;
-    };
-    "anchor": {
-      "alias": "anchor";
-      "required": false;
-      "isSignal": true;
-    };
-    "size": {
-      "alias": "size";
-      "required": false;
-      "isSignal": true;
-    };
-    "padding": {
-      "alias": "padding";
-      "required": false;
-      "isSignal": true;
-    };
-    "align": {
-      "alias": "align";
-      "required": false;
-      "isSignal": true;
-    };
-    "side": {
-      "alias": "side";
-      "required": false;
-      "isSignal": true;
-    };
-    "offset": {
-      "alias": "offset";
-      "required": false;
-      "isSignal": true;
-    };
-    "matchWidth": {
-      "alias": "matchWidth";
-      "required": false;
-      "isSignal": true;
-    };
-    "maxHeight": {
-      "alias": "maxHeight";
-      "required": false;
-      "isSignal": true;
-    };
-    "arrow": {
-      "alias": "arrow";
-      "required": false;
-      "isSignal": true;
-    };
-    "trapFocus": {
-      "alias": "trapFocus";
-      "required": false;
-      "isSignal": true;
-    };
-    "autoFocus": {
-      "alias": "autoFocus";
-      "required": false;
-      "isSignal": true;
-    };
-    "restoreFocus": {
-      "alias": "restoreFocus";
-      "required": false;
-      "isSignal": true;
-    };
-    "closeOnEscape": {
-      "alias": "closeOnEscape";
-      "required": false;
-      "isSignal": true;
-    };
-    "closeOnOutsideClick": {
-      "alias": "closeOnOutsideClick";
-      "required": false;
-      "isSignal": true;
-    };
-    "panelRole": {
-      "alias": "panelRole";
-      "required": false;
-      "isSignal": true;
-    };
-    "ariaLabel": {
-      "alias": "ariaLabel";
-      "required": false;
-      "isSignal": true;
-    };
-    "ariaLabelledby": {
-      "alias": "ariaLabelledby";
-      "required": false;
-      "isSignal": true;
-    };
-    "panelClass": {
-      "alias": "panelClass";
-      "required": false;
-      "isSignal": true;
-    };
-    "panelId": {
-      "alias": "panelId";
-      "required": false;
-      "isSignal": true;
-    };
-  }, {
-    "open": "openChange";
-    "opened": "opened";
-    "closed": "closed";
-  }, ["lazyContent"], ["*"], true, never>;
-}
 /**
  * Shared part of `athPopoverTrigger` and `athMenuTrigger`: keeps
  * `aria-haspopup`, `aria-expanded` and `aria-controls` on the real control.
@@ -5177,10 +5300,17 @@ export declare class AthMenuItemComponent {
   readonly tooltip: import("@angular/core").InputSignal<string | null | undefined>;
   /** `true`/`false` makes it a `menuitemcheckbox` with a check mark. */
   readonly checked: import("@angular/core").InputSignal<boolean | null>;
+  /**
+   * `true`/`false` makes it a `menuitemradio`, one of a menu that picks a
+   * value: the current one carries a trailing check (`ath-dropdown
+   * [activeId]`), and the menu opens on it.
+   */
+  readonly selected: import("@angular/core").InputSignal<boolean | null>;
   /** Leave the menu open after activation. */
   readonly keepOpen: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
   /** The item was chosen (click, Enter or Space) and is not disabled. */
   readonly triggered: import("@angular/core").OutputEmitterRef<void>;
+  protected readonly role: import("@angular/core").Signal<"menuitemcheckbox" | "menuitemradio" | "menuitem">;
   /** The visible label, for typeahead. */
   label(): string;
   focus(): void;
@@ -5226,6 +5356,11 @@ export declare class AthMenuItemComponent {
     };
     "checked": {
       "alias": "checked";
+      "required": false;
+      "isSignal": true;
+    };
+    "selected": {
+      "alias": "selected";
       "required": false;
       "isSignal": true;
     };
@@ -5283,7 +5418,7 @@ export type OptionPickerTrigger = 'button' | 'none';
  *                    creatable (create)="addLabel($event)" ariaLabel="Labels" />
  */
 export declare class AthOptionPickerComponent<T = string> {
-  protected readonly labels: import("@athenos/webcomponents").AthLabels;
+  protected readonly labels: Readonly<import("@athenos/webcomponents").AthLabels>;
   private readonly host;
   readonly options: import("@angular/core").InputSignal<readonly ListboxOption<T>[]>;
   readonly multiple: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
@@ -5328,6 +5463,7 @@ export declare class AthOptionPickerComponent<T = string> {
   protected readonly valueId: string;
   private readonly popover;
   private readonly triggerButton;
+  /** Rendered only while the popup is open. */
   private readonly listbox;
   protected readonly popupAnchor: import("@angular/core").Signal<HTMLElement | null>;
   protected readonly placeholderText: import("@angular/core").Signal<string>;
@@ -5622,8 +5758,11 @@ export declare class AthSheetComponent implements OnChanges, OnDestroy {
  * one, the English default otherwise. Call in an injection context; the
  * members stay functions, so a provider that reads a signal (the current
  * language) keeps a `computed` that calls them current.
+ *
+ * The result is shared by every component under the same provider (a board
+ * built hundreds of 40-key copies): read it, never write to it.
  */
-export declare function injectAthLabels(): AthLabels$1;
+export declare function injectAthLabels(): Readonly<AthLabels$1>;
 /** Fills `{name}` placeholders of a label; unknown ones stay as written. */
 export declare function formatAthLabel(template: string, params: Readonly<Record<string, string | number>>): string;
 export { ATH_DATE_CONTEXT, ATH_DEFAULT_LABELS, ATH_LABELS, ATH_MARKDOWN_PARSER, ATH_PRIORITY_LABELS, ATH_STATUS_LABELS, ATH_STATUS_TONES, type AthDateContext, type AthLabels, type AthMarkdownParser, type AthOverlayCloseReason as PopoverCloseReason, AthToastService, type DueDateFormat, type PriorityLabelResolver, type StatusLabelResolver, type StatusToneResolver, type TicketPriority, type TicketStatus, type ToastAction, type ToastMessage, type ToastOptions, type ToastVariant };

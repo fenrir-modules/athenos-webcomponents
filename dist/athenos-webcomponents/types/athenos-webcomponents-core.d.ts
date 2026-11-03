@@ -189,6 +189,11 @@ export interface ToastOptions {
  * one toast's clock, so a toast collapsed behind the visible ones does not
  * run out unseen. A stopped toast keeps the time it had left.
  *
+ * The same words again (a retry loop, a double click) are one toast: it
+ * moves to the newest place with a fresh clock instead of stacking. A toast
+ * with an action is never merged, its action may differ. At most
+ * `maxQueued` toasts are kept; past that the oldest goes.
+ *
  * @example
  * constructor(private toast: AthToastService) {}
  * this.toast.success('Item created');
@@ -201,6 +206,8 @@ export declare class AthToastService {
   private readonly pausedSignal;
   /** True while at least one `pause(reason)` is in effect. */
   readonly paused: import("@angular/core").Signal<boolean>;
+  /** Most toasts kept at once; a new one past it closes the oldest. */
+  maxQueued: number;
   private readonly clocks;
   private readonly pauses;
   private readonly holds;
@@ -228,6 +235,9 @@ export declare class AthToastService {
   /** Milliseconds left on a toast's clock; null for a toast that stays (duration 0) or is gone. */
   remaining(id: string): number | null;
   private add;
+  /** An identical toast again: the existing one moves to the newest place, its clock restarted. */
+  private repeat;
+  private startClock;
   private sync;
   private start;
   private stop;

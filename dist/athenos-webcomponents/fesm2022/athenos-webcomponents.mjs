@@ -1,10 +1,10 @@
 import * as i0 from "@angular/core";
-import { ChangeDetectionStrategy, Component, DOCUMENT, DestroyRef, Directive, ElementRef, ErrorHandler, Injectable, InjectionToken, Injector, LOCALE_ID, Renderer2, SecurityContext, TemplateRef, ViewEncapsulation, afterNextRender, booleanAttribute, computed, contentChild, contentChildren, effect, forwardRef, inject, input, model, numberAttribute, output, signal, untracked, viewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, DOCUMENT, DestroyRef, Directive, ElementRef, ErrorHandler, Injectable, InjectionToken, Injector, LOCALE_ID, PLATFORM_ID, Renderer2, SecurityContext, TemplateRef, ViewEncapsulation, afterNextRender, booleanAttribute, computed, contentChild, contentChildren, effect, forwardRef, inject, input, model, numberAttribute, output, signal, untracked, viewChild } from "@angular/core";
 import { LucideDynamicIcon } from "@lucide/angular";
 import { AlertCircle, AlertOctagon, AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ChevronsLeft, ChevronsRight, Copy, Eye, EyeOff, Info, Loader2, Lock, MoreHorizontal, PanelLeft, PanelLeftClose, Plus, Search, Slash, Upload, User, X, Zap } from "lucide";
 import { ATH_DATE_CONTEXT, ATH_DEFAULT_LABELS, ATH_DEFAULT_LABELS as ATH_DEFAULT_LABELS$1, ATH_LABELS, ATH_LABELS as ATH_LABELS$1, ATH_MARKDOWN_PARSER, ATH_MARKDOWN_PARSER as ATH_MARKDOWN_PARSER$1, ATH_PRIORITY_LABELS, ATH_PRIORITY_LABELS as ATH_PRIORITY_LABELS$1, ATH_STATUS_LABELS, ATH_STATUS_LABELS as ATH_STATUS_LABELS$1, ATH_STATUS_TONES, ATH_STATUS_TONES as ATH_STATUS_TONES$1, AthToastService, AthToastService as AthToastService$1 } from "@athenos/webcomponents/core";
 import { Router, RouterLink, RouterLinkActive } from "@angular/router";
-import { NgTemplateOutlet } from "@angular/common";
+import { NgTemplateOutlet, isPlatformBrowser } from "@angular/common";
 import { Subject, debounce, distinctUntilChanged, firstValueFrom, isObservable, timer } from "rxjs";
 import { DomSanitizer } from "@angular/platform-browser";
 import * as i1 from "@angular/forms";
@@ -338,12 +338,19 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}
 });
+const merged = /* @__PURE__ */ new WeakMap();
 function injectAthLabels() {
-	const provided = inject(ATH_LABELS$1, { optional: true }) ?? {};
-	return {
-		...ATH_DEFAULT_LABELS$1,
-		...provided
-	};
+	const provided = inject(ATH_LABELS$1, { optional: true });
+	if (!provided) return ATH_DEFAULT_LABELS$1;
+	let labels = merged.get(provided);
+	if (!labels) {
+		labels = {
+			...ATH_DEFAULT_LABELS$1,
+			...provided
+		};
+		merged.set(provided, labels);
+	}
+	return labels;
 }
 function formatAthLabel(template, params) {
 	return template.replace(/\{(\w+)\}/g, (whole, key) => key in params ? String(params[key]) : whole);
@@ -557,8 +564,8 @@ var AthNavItemComponent = class AthNavItemComponent {
 				}
 			},
 			ngImport: i0,
-			template: "<a\n  class=\"ath-nav-item\"\n  [class.ath-nav-item--compact]=\"compact()\"\n  [class.ath-nav-item--muted]=\"muted()\"\n  [routerLink]=\"target()\"\n  routerLinkActive=\"ath-nav-item--active\"\n  [routerLinkActiveOptions]=\"{ exact: exact() }\"\n  [attr.aria-label]=\"compact() ? label() : null\"\n  (mouseenter)=\"active.set(true)\"\n  (mouseleave)=\"active.set(false)\"\n  (focus)=\"active.set(true)\"\n  (blur)=\"active.set(false)\"\n>\n  @if (indicator()) {\n    <span class=\"ath-nav-item__indicator\" aria-hidden=\"true\"></span>\n  }\n\n  <span class=\"ath-nav-item__icon-cell\">\n    @if (icon(); as img) {\n      <ath-icon [img]=\"img\" [size]=\"14\" />\n    }\n    <!-- Decorative: the label beside it names the row. -->\n    @if (chip(); as c) {\n      <span class=\"ath-nav-item__chip\" [style.--chip-color]=\"c.color\" aria-hidden=\"true\">{{\n        c.text\n      }}</span>\n    }\n    <!-- The rail has no room for a count: an unread item gets a dot on its\n         icon instead. The count returns with the label. -->\n    @if (compact() && count() !== null) {\n      <span class=\"ath-nav-item__icon-dot\" aria-hidden=\"true\"></span>\n    }\n  </span>\n\n  <span class=\"ath-nav-item__tail\">\n    <span class=\"ath-nav-item__label\">{{ label() }}</span>\n    @if (count(); as n) {\n      <span class=\"ath-nav-item__badge\">{{ n }}</span>\n    }\n    @if (dot(); as tone) {\n      <span class=\"ath-nav-item__dot\" [attr.data-tone]=\"tone\" aria-hidden=\"true\"></span>\n    }\n    <!-- A marker at the row's end (\"Beta\"): inside the link, so the active\n         pill covers it and the link's name includes it. -->\n    <span class=\"ath-nav-item__end\"><ng-content select=\"[athNavItemEnd]\" /></span>\n  </span>\n\n  @if (tooltipText(); as text) {\n    <span\n      class=\"ath-nav-item__tooltip\"\n      role=\"tooltip\"\n      [class.ath-nav-item__tooltip--visible]=\"active()\"\n    >\n      {{ text }}\n    </span>\n  }\n</a>\n",
-			styles: [".ath-nav-item{position:relative;display:flex;align-items:center;width:auto;height:30px;margin:0 2px;padding:0;border-radius:var(--r-sm);color:var(--fg-2);text-decoration:none;font-family:var(--font-sans);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;outline:none;overflow:hidden;transition:background .12s ease,color .12s ease}.ath-nav-item:hover{background:var(--hover);color:var(--fg)}.ath-nav-item:focus-visible{box-shadow:0 0 0 2px var(--focus-ring-color)}.ath-nav-item__indicator{position:absolute;left:0;top:50%;width:2px;height:16px;border-radius:0 2px 2px 0;background:transparent;transform:translateY(-50%);transition:background .12s ease}.ath-nav-item--active{background:var(--rail-active-bg);color:var(--nav-active-fg)}.ath-nav-item--active .ath-nav-item__indicator{background:var(--nav-active-indicator)}.ath-nav-item--active .ath-nav-item__icon-cell{color:var(--nav-active-icon)}.ath-nav-item__icon-cell{position:relative;flex:0 0 40px;display:flex;align-items:center;justify-content:center;color:var(--fg-4);transition:color .12s ease}.ath-nav-item:hover .ath-nav-item__icon-cell{color:var(--fg)}.ath-nav-item__chip{--chip-color: var(--fg-3);display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;padding:0 4px;border:1px solid color-mix(in srgb,var(--chip-color) 22%,transparent);border-radius:var(--r-xs);background:transparent;color:color-mix(in srgb,var(--chip-color) var(--deco-mix),var(--bg-1));font-family:var(--font-mono);font-weight:500;font-size:9.5px;letter-spacing:.02em}.ath-nav-item__icon-dot{position:absolute;top:6px;left:calc(50% + 4px);width:6px;height:6px;border-radius:var(--r-full);background:var(--notify-dot);box-shadow:0 0 0 1.5px var(--bg-1)}.ath-nav-item--active .ath-nav-item__icon-dot{display:none}.ath-nav-item--muted:not(.ath-nav-item--active){color:var(--fg-3)}.ath-nav-item__tail{flex:1 1 auto;min-width:0;max-width:220px;display:flex;align-items:center;gap:6px;margin-left:2px;padding-right:10px;overflow:hidden;transition:max-width .18s cubic-bezier(.2,.9,.3,1),margin .18s cubic-bezier(.2,.9,.3,1),padding .18s cubic-bezier(.2,.9,.3,1),opacity .12s ease 40ms}.ath-nav-item__label{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.ath-nav-item__end{display:inline-flex;flex-shrink:0;align-items:center}.ath-nav-item__end:empty{display:none}.ath-nav-item__badge{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 5px;font-family:var(--font-mono);font-feature-settings:\"tnum\";font-size:11px;font-weight:500;color:var(--nav-badge-fg);background:var(--bg-1);border:1px solid var(--border);border-radius:var(--r-xs)}.ath-nav-item__dot{flex-shrink:0;width:6px;height:6px;border-radius:var(--r-full);background:var(--fg-4)}.ath-nav-item__dot[data-tone=ok]{background:var(--green)}.ath-nav-item__dot[data-tone=warn]{background:var(--amber)}.ath-nav-item__dot[data-tone=error]{background:var(--red)}.ath-nav-item--compact .ath-nav-item__tail{max-width:0;margin-left:0;padding-right:0;opacity:0;pointer-events:none}.ath-nav-item--compact .ath-nav-item__indicator{display:none}.ath-nav-item--compact.ath-nav-item--active{background:var(--rail-active-bg)}.ath-nav-item__tooltip{position:absolute;left:100%;top:50%;margin-left:10px;transform:translateY(-50%) translate(-4px);padding:5px 10px;background:var(--fg);color:var(--bg-1);font-size:11.5px;font-weight:500;letter-spacing:.005em;border-radius:var(--r-sm);white-space:nowrap;opacity:0;pointer-events:none;box-shadow:var(--shadow-2);transition:opacity .1s ease 60ms,transform .12s cubic-bezier(.2,.9,.3,1) 60ms;z-index:var(--z-tooltip)}.ath-nav-item__tooltip:before{content:\"\";position:absolute;left:-3px;top:50%;transform:translateY(-50%) rotate(45deg);width:6px;height:6px;background:inherit;border-radius:1px}.ath-nav-item__tooltip--visible{opacity:1;transform:translateY(-50%) translate(0)}@media(prefers-reduced-motion:reduce){.ath-nav-item,.ath-nav-item__icon-cell,.ath-nav-item__indicator,.ath-nav-item__tail,.ath-nav-item__tooltip{transition:none}}\n"],
+			template: "<a\n  class=\"ath-nav-item\"\n  [class.ath-nav-item--compact]=\"compact()\"\n  [class.ath-nav-item--muted]=\"muted()\"\n  [routerLink]=\"target()\"\n  routerLinkActive=\"ath-nav-item--active\"\n  [routerLinkActiveOptions]=\"{ exact: exact() }\"\n  [attr.aria-label]=\"compact() ? label() : null\"\n  (mouseenter)=\"active.set(true)\"\n  (mouseleave)=\"active.set(false)\"\n  (focus)=\"active.set(true)\"\n  (blur)=\"active.set(false)\"\n>\n  @if (indicator()) {\n    <span class=\"ath-nav-item__indicator\" aria-hidden=\"true\"></span>\n  }\n\n  <span class=\"ath-nav-item__icon-cell\">\n    @if (icon(); as img) {\n      <ath-icon [img]=\"img\" [size]=\"16\" />\n    }\n    <!-- Decorative: the label beside it names the row. -->\n    @if (chip(); as c) {\n      <span class=\"ath-nav-item__chip\" [style.--chip-color]=\"c.color\" aria-hidden=\"true\">{{\n        c.text\n      }}</span>\n    }\n    <!-- The rail has no room for a count: an unread item gets a dot on its\n         icon instead. The count returns with the label. -->\n    @if (compact() && count() !== null) {\n      <span class=\"ath-nav-item__icon-dot\" aria-hidden=\"true\"></span>\n    }\n  </span>\n\n  <span class=\"ath-nav-item__tail\">\n    <span class=\"ath-nav-item__label\">{{ label() }}</span>\n    @if (count(); as n) {\n      <span class=\"ath-nav-item__badge\">{{ n }}</span>\n    }\n    @if (dot(); as tone) {\n      <span class=\"ath-nav-item__dot\" [attr.data-tone]=\"tone\" aria-hidden=\"true\"></span>\n    }\n    <!-- A marker at the row's end (\"Beta\"): inside the link, so the active\n         pill covers it and the link's name includes it. -->\n    <span class=\"ath-nav-item__end\"><ng-content select=\"[athNavItemEnd]\" /></span>\n  </span>\n\n  @if (tooltipText(); as text) {\n    <span\n      class=\"ath-nav-item__tooltip\"\n      role=\"tooltip\"\n      [class.ath-nav-item__tooltip--visible]=\"active()\"\n    >\n      {{ text }}\n    </span>\n  }\n</a>\n",
+			styles: [".ath-nav-item{position:relative;display:flex;align-items:center;width:auto;height:var(--nav-row-h);margin:0 2px;padding:0;border-radius:var(--r-sm);color:var(--fg-2);text-decoration:none;font-family:var(--font-sans);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;outline:none;overflow:hidden;transition:background .12s ease,color .12s ease}.ath-nav-item:hover{background:var(--hover);color:var(--fg)}.ath-nav-item:focus-visible{box-shadow:0 0 0 2px var(--focus-ring-color)}.ath-nav-item__indicator{position:absolute;left:0;top:50%;width:2px;height:16px;border-radius:0 2px 2px 0;background:transparent;transform:translateY(-50%);transition:background .12s ease}.ath-nav-item--active{background:var(--rail-active-bg);color:var(--nav-active-fg)}.ath-nav-item--active .ath-nav-item__indicator{background:var(--nav-active-indicator)}.ath-nav-item--active .ath-nav-item__icon-cell{color:var(--nav-active-icon)}.ath-nav-item__icon-cell{position:relative;flex:0 0 40px;display:flex;align-items:center;justify-content:center;color:var(--fg-4);transition:color .12s ease}.ath-nav-item:hover .ath-nav-item__icon-cell{color:var(--fg)}.ath-nav-item__chip{--chip-color: var(--fg-3);display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:18px;padding:0 4px;border:1px solid color-mix(in srgb,var(--chip-color) 28%,transparent);border-radius:var(--r-xs);background:color-mix(in srgb,var(--chip-color) 10%,transparent);color:color-mix(in srgb,var(--chip-color) 68%,var(--fg));font-family:var(--font-mono);font-weight:600;font-size:10px;letter-spacing:.02em}.ath-nav-item__icon-dot{position:absolute;top:6px;left:calc(50% + 4px);width:6px;height:6px;border-radius:var(--r-full);background:var(--notify-dot);box-shadow:0 0 0 1.5px var(--bg-1)}.ath-nav-item--active .ath-nav-item__icon-dot{display:none}.ath-nav-item--muted:not(.ath-nav-item--active){color:var(--fg-3)}.ath-nav-item__tail{flex:1 1 auto;min-width:0;max-width:220px;display:flex;align-items:center;gap:6px;margin-left:2px;padding-right:10px;overflow:hidden;transition:max-width .18s cubic-bezier(.2,.9,.3,1),margin .18s cubic-bezier(.2,.9,.3,1),padding .18s cubic-bezier(.2,.9,.3,1),opacity .12s ease 40ms}.ath-nav-item__label{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.ath-nav-item__end{display:inline-flex;flex-shrink:0;align-items:center}.ath-nav-item__end:empty{display:none}.ath-nav-item__badge{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 5px;font-family:var(--font-mono);font-feature-settings:\"tnum\";font-size:11px;font-weight:500;color:var(--nav-badge-fg);background:var(--bg-1);border:1px solid var(--border);border-radius:var(--r-xs)}.ath-nav-item__dot{flex-shrink:0;width:6px;height:6px;border-radius:var(--r-full);background:var(--fg-4)}.ath-nav-item__dot[data-tone=ok]{background:var(--green)}.ath-nav-item__dot[data-tone=warn]{background:var(--amber)}.ath-nav-item__dot[data-tone=error]{background:var(--red)}.ath-nav-item--compact .ath-nav-item__tail{max-width:0;margin-left:0;padding-right:0;opacity:0;pointer-events:none}.ath-nav-item--compact .ath-nav-item__indicator{display:none}.ath-nav-item--compact.ath-nav-item--active{background:var(--rail-active-bg)}.ath-nav-item__tooltip{position:absolute;left:100%;top:50%;margin-left:10px;transform:translateY(-50%) translate(-4px);padding:5px 10px;background:var(--fg);color:var(--bg-1);font-size:11.5px;font-weight:500;letter-spacing:.005em;border-radius:var(--r-sm);white-space:nowrap;opacity:0;pointer-events:none;box-shadow:var(--shadow-2);transition:opacity .1s ease 60ms,transform .12s cubic-bezier(.2,.9,.3,1) 60ms;z-index:var(--z-tooltip)}.ath-nav-item__tooltip:before{content:\"\";position:absolute;left:-3px;top:50%;transform:translateY(-50%) rotate(45deg);width:6px;height:6px;background:inherit;border-radius:1px}.ath-nav-item__tooltip--visible{opacity:1;transform:translateY(-50%) translate(0)}@media(prefers-reduced-motion:reduce){.ath-nav-item,.ath-nav-item__icon-cell,.ath-nav-item__indicator,.ath-nav-item__tail,.ath-nav-item__tooltip{transition:none}}\n"],
 			dependencies: [
 				{
 					kind: "directive",
@@ -624,8 +631,8 @@ i0.ɵɵngDeclareClassMetadata({
 				AthIconComponent
 			],
 			changeDetection: ChangeDetectionStrategy.OnPush,
-			template: "<a\n  class=\"ath-nav-item\"\n  [class.ath-nav-item--compact]=\"compact()\"\n  [class.ath-nav-item--muted]=\"muted()\"\n  [routerLink]=\"target()\"\n  routerLinkActive=\"ath-nav-item--active\"\n  [routerLinkActiveOptions]=\"{ exact: exact() }\"\n  [attr.aria-label]=\"compact() ? label() : null\"\n  (mouseenter)=\"active.set(true)\"\n  (mouseleave)=\"active.set(false)\"\n  (focus)=\"active.set(true)\"\n  (blur)=\"active.set(false)\"\n>\n  @if (indicator()) {\n    <span class=\"ath-nav-item__indicator\" aria-hidden=\"true\"></span>\n  }\n\n  <span class=\"ath-nav-item__icon-cell\">\n    @if (icon(); as img) {\n      <ath-icon [img]=\"img\" [size]=\"14\" />\n    }\n    <!-- Decorative: the label beside it names the row. -->\n    @if (chip(); as c) {\n      <span class=\"ath-nav-item__chip\" [style.--chip-color]=\"c.color\" aria-hidden=\"true\">{{\n        c.text\n      }}</span>\n    }\n    <!-- The rail has no room for a count: an unread item gets a dot on its\n         icon instead. The count returns with the label. -->\n    @if (compact() && count() !== null) {\n      <span class=\"ath-nav-item__icon-dot\" aria-hidden=\"true\"></span>\n    }\n  </span>\n\n  <span class=\"ath-nav-item__tail\">\n    <span class=\"ath-nav-item__label\">{{ label() }}</span>\n    @if (count(); as n) {\n      <span class=\"ath-nav-item__badge\">{{ n }}</span>\n    }\n    @if (dot(); as tone) {\n      <span class=\"ath-nav-item__dot\" [attr.data-tone]=\"tone\" aria-hidden=\"true\"></span>\n    }\n    <!-- A marker at the row's end (\"Beta\"): inside the link, so the active\n         pill covers it and the link's name includes it. -->\n    <span class=\"ath-nav-item__end\"><ng-content select=\"[athNavItemEnd]\" /></span>\n  </span>\n\n  @if (tooltipText(); as text) {\n    <span\n      class=\"ath-nav-item__tooltip\"\n      role=\"tooltip\"\n      [class.ath-nav-item__tooltip--visible]=\"active()\"\n    >\n      {{ text }}\n    </span>\n  }\n</a>\n",
-			styles: [".ath-nav-item{position:relative;display:flex;align-items:center;width:auto;height:30px;margin:0 2px;padding:0;border-radius:var(--r-sm);color:var(--fg-2);text-decoration:none;font-family:var(--font-sans);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;outline:none;overflow:hidden;transition:background .12s ease,color .12s ease}.ath-nav-item:hover{background:var(--hover);color:var(--fg)}.ath-nav-item:focus-visible{box-shadow:0 0 0 2px var(--focus-ring-color)}.ath-nav-item__indicator{position:absolute;left:0;top:50%;width:2px;height:16px;border-radius:0 2px 2px 0;background:transparent;transform:translateY(-50%);transition:background .12s ease}.ath-nav-item--active{background:var(--rail-active-bg);color:var(--nav-active-fg)}.ath-nav-item--active .ath-nav-item__indicator{background:var(--nav-active-indicator)}.ath-nav-item--active .ath-nav-item__icon-cell{color:var(--nav-active-icon)}.ath-nav-item__icon-cell{position:relative;flex:0 0 40px;display:flex;align-items:center;justify-content:center;color:var(--fg-4);transition:color .12s ease}.ath-nav-item:hover .ath-nav-item__icon-cell{color:var(--fg)}.ath-nav-item__chip{--chip-color: var(--fg-3);display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;padding:0 4px;border:1px solid color-mix(in srgb,var(--chip-color) 22%,transparent);border-radius:var(--r-xs);background:transparent;color:color-mix(in srgb,var(--chip-color) var(--deco-mix),var(--bg-1));font-family:var(--font-mono);font-weight:500;font-size:9.5px;letter-spacing:.02em}.ath-nav-item__icon-dot{position:absolute;top:6px;left:calc(50% + 4px);width:6px;height:6px;border-radius:var(--r-full);background:var(--notify-dot);box-shadow:0 0 0 1.5px var(--bg-1)}.ath-nav-item--active .ath-nav-item__icon-dot{display:none}.ath-nav-item--muted:not(.ath-nav-item--active){color:var(--fg-3)}.ath-nav-item__tail{flex:1 1 auto;min-width:0;max-width:220px;display:flex;align-items:center;gap:6px;margin-left:2px;padding-right:10px;overflow:hidden;transition:max-width .18s cubic-bezier(.2,.9,.3,1),margin .18s cubic-bezier(.2,.9,.3,1),padding .18s cubic-bezier(.2,.9,.3,1),opacity .12s ease 40ms}.ath-nav-item__label{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.ath-nav-item__end{display:inline-flex;flex-shrink:0;align-items:center}.ath-nav-item__end:empty{display:none}.ath-nav-item__badge{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 5px;font-family:var(--font-mono);font-feature-settings:\"tnum\";font-size:11px;font-weight:500;color:var(--nav-badge-fg);background:var(--bg-1);border:1px solid var(--border);border-radius:var(--r-xs)}.ath-nav-item__dot{flex-shrink:0;width:6px;height:6px;border-radius:var(--r-full);background:var(--fg-4)}.ath-nav-item__dot[data-tone=ok]{background:var(--green)}.ath-nav-item__dot[data-tone=warn]{background:var(--amber)}.ath-nav-item__dot[data-tone=error]{background:var(--red)}.ath-nav-item--compact .ath-nav-item__tail{max-width:0;margin-left:0;padding-right:0;opacity:0;pointer-events:none}.ath-nav-item--compact .ath-nav-item__indicator{display:none}.ath-nav-item--compact.ath-nav-item--active{background:var(--rail-active-bg)}.ath-nav-item__tooltip{position:absolute;left:100%;top:50%;margin-left:10px;transform:translateY(-50%) translate(-4px);padding:5px 10px;background:var(--fg);color:var(--bg-1);font-size:11.5px;font-weight:500;letter-spacing:.005em;border-radius:var(--r-sm);white-space:nowrap;opacity:0;pointer-events:none;box-shadow:var(--shadow-2);transition:opacity .1s ease 60ms,transform .12s cubic-bezier(.2,.9,.3,1) 60ms;z-index:var(--z-tooltip)}.ath-nav-item__tooltip:before{content:\"\";position:absolute;left:-3px;top:50%;transform:translateY(-50%) rotate(45deg);width:6px;height:6px;background:inherit;border-radius:1px}.ath-nav-item__tooltip--visible{opacity:1;transform:translateY(-50%) translate(0)}@media(prefers-reduced-motion:reduce){.ath-nav-item,.ath-nav-item__icon-cell,.ath-nav-item__indicator,.ath-nav-item__tail,.ath-nav-item__tooltip{transition:none}}\n"]
+			template: "<a\n  class=\"ath-nav-item\"\n  [class.ath-nav-item--compact]=\"compact()\"\n  [class.ath-nav-item--muted]=\"muted()\"\n  [routerLink]=\"target()\"\n  routerLinkActive=\"ath-nav-item--active\"\n  [routerLinkActiveOptions]=\"{ exact: exact() }\"\n  [attr.aria-label]=\"compact() ? label() : null\"\n  (mouseenter)=\"active.set(true)\"\n  (mouseleave)=\"active.set(false)\"\n  (focus)=\"active.set(true)\"\n  (blur)=\"active.set(false)\"\n>\n  @if (indicator()) {\n    <span class=\"ath-nav-item__indicator\" aria-hidden=\"true\"></span>\n  }\n\n  <span class=\"ath-nav-item__icon-cell\">\n    @if (icon(); as img) {\n      <ath-icon [img]=\"img\" [size]=\"16\" />\n    }\n    <!-- Decorative: the label beside it names the row. -->\n    @if (chip(); as c) {\n      <span class=\"ath-nav-item__chip\" [style.--chip-color]=\"c.color\" aria-hidden=\"true\">{{\n        c.text\n      }}</span>\n    }\n    <!-- The rail has no room for a count: an unread item gets a dot on its\n         icon instead. The count returns with the label. -->\n    @if (compact() && count() !== null) {\n      <span class=\"ath-nav-item__icon-dot\" aria-hidden=\"true\"></span>\n    }\n  </span>\n\n  <span class=\"ath-nav-item__tail\">\n    <span class=\"ath-nav-item__label\">{{ label() }}</span>\n    @if (count(); as n) {\n      <span class=\"ath-nav-item__badge\">{{ n }}</span>\n    }\n    @if (dot(); as tone) {\n      <span class=\"ath-nav-item__dot\" [attr.data-tone]=\"tone\" aria-hidden=\"true\"></span>\n    }\n    <!-- A marker at the row's end (\"Beta\"): inside the link, so the active\n         pill covers it and the link's name includes it. -->\n    <span class=\"ath-nav-item__end\"><ng-content select=\"[athNavItemEnd]\" /></span>\n  </span>\n\n  @if (tooltipText(); as text) {\n    <span\n      class=\"ath-nav-item__tooltip\"\n      role=\"tooltip\"\n      [class.ath-nav-item__tooltip--visible]=\"active()\"\n    >\n      {{ text }}\n    </span>\n  }\n</a>\n",
+			styles: [".ath-nav-item{position:relative;display:flex;align-items:center;width:auto;height:var(--nav-row-h);margin:0 2px;padding:0;border-radius:var(--r-sm);color:var(--fg-2);text-decoration:none;font-family:var(--font-sans);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;outline:none;overflow:hidden;transition:background .12s ease,color .12s ease}.ath-nav-item:hover{background:var(--hover);color:var(--fg)}.ath-nav-item:focus-visible{box-shadow:0 0 0 2px var(--focus-ring-color)}.ath-nav-item__indicator{position:absolute;left:0;top:50%;width:2px;height:16px;border-radius:0 2px 2px 0;background:transparent;transform:translateY(-50%);transition:background .12s ease}.ath-nav-item--active{background:var(--rail-active-bg);color:var(--nav-active-fg)}.ath-nav-item--active .ath-nav-item__indicator{background:var(--nav-active-indicator)}.ath-nav-item--active .ath-nav-item__icon-cell{color:var(--nav-active-icon)}.ath-nav-item__icon-cell{position:relative;flex:0 0 40px;display:flex;align-items:center;justify-content:center;color:var(--fg-4);transition:color .12s ease}.ath-nav-item:hover .ath-nav-item__icon-cell{color:var(--fg)}.ath-nav-item__chip{--chip-color: var(--fg-3);display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:18px;padding:0 4px;border:1px solid color-mix(in srgb,var(--chip-color) 28%,transparent);border-radius:var(--r-xs);background:color-mix(in srgb,var(--chip-color) 10%,transparent);color:color-mix(in srgb,var(--chip-color) 68%,var(--fg));font-family:var(--font-mono);font-weight:600;font-size:10px;letter-spacing:.02em}.ath-nav-item__icon-dot{position:absolute;top:6px;left:calc(50% + 4px);width:6px;height:6px;border-radius:var(--r-full);background:var(--notify-dot);box-shadow:0 0 0 1.5px var(--bg-1)}.ath-nav-item--active .ath-nav-item__icon-dot{display:none}.ath-nav-item--muted:not(.ath-nav-item--active){color:var(--fg-3)}.ath-nav-item__tail{flex:1 1 auto;min-width:0;max-width:220px;display:flex;align-items:center;gap:6px;margin-left:2px;padding-right:10px;overflow:hidden;transition:max-width .18s cubic-bezier(.2,.9,.3,1),margin .18s cubic-bezier(.2,.9,.3,1),padding .18s cubic-bezier(.2,.9,.3,1),opacity .12s ease 40ms}.ath-nav-item__label{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.ath-nav-item__end{display:inline-flex;flex-shrink:0;align-items:center}.ath-nav-item__end:empty{display:none}.ath-nav-item__badge{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 5px;font-family:var(--font-mono);font-feature-settings:\"tnum\";font-size:11px;font-weight:500;color:var(--nav-badge-fg);background:var(--bg-1);border:1px solid var(--border);border-radius:var(--r-xs)}.ath-nav-item__dot{flex-shrink:0;width:6px;height:6px;border-radius:var(--r-full);background:var(--fg-4)}.ath-nav-item__dot[data-tone=ok]{background:var(--green)}.ath-nav-item__dot[data-tone=warn]{background:var(--amber)}.ath-nav-item__dot[data-tone=error]{background:var(--red)}.ath-nav-item--compact .ath-nav-item__tail{max-width:0;margin-left:0;padding-right:0;opacity:0;pointer-events:none}.ath-nav-item--compact .ath-nav-item__indicator{display:none}.ath-nav-item--compact.ath-nav-item--active{background:var(--rail-active-bg)}.ath-nav-item__tooltip{position:absolute;left:100%;top:50%;margin-left:10px;transform:translateY(-50%) translate(-4px);padding:5px 10px;background:var(--fg);color:var(--bg-1);font-size:11.5px;font-weight:500;letter-spacing:.005em;border-radius:var(--r-sm);white-space:nowrap;opacity:0;pointer-events:none;box-shadow:var(--shadow-2);transition:opacity .1s ease 60ms,transform .12s cubic-bezier(.2,.9,.3,1) 60ms;z-index:var(--z-tooltip)}.ath-nav-item__tooltip:before{content:\"\";position:absolute;left:-3px;top:50%;transform:translateY(-50%) rotate(45deg);width:6px;height:6px;background:inherit;border-radius:1px}.ath-nav-item__tooltip--visible{opacity:1;transform:translateY(-50%) translate(0)}@media(prefers-reduced-motion:reduce){.ath-nav-item,.ath-nav-item__icon-cell,.ath-nav-item__indicator,.ath-nav-item__tail,.ath-nav-item__tooltip{transition:none}}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -784,6 +791,17 @@ function floatPanel(panel, anchor, options = {}) {
 	style.visibility = "hidden";
 	panel.setAttribute("data-ath-floating", "");
 	const inTopLayer = (options.topLayer ?? true) && promote(panel);
+	const commit = (left, top, placement) => {
+		const origin = inTopLayer ? {
+			x: 0,
+			y: 0
+		} : fixedOrigin(panel);
+		style.left = `${Math.round(left - origin.x)}px`;
+		style.top = `${Math.round(top - origin.y)}px`;
+		style.maxWidth = `${document.documentElement.clientWidth - 16}px`;
+		style.visibility = "";
+		panel.dataset["placement"] = placement;
+	};
 	let frame = 0;
 	const place = () => {
 		if (anchorEl && !anchorEl.isConnected || !panel.isConnected) return;
@@ -797,6 +815,15 @@ function floatPanel(panel, anchor, options = {}) {
 		style.overscrollBehaviorY = "";
 		const width = Math.min(panel.offsetWidth, vw - 16);
 		const natural = panel.offsetHeight;
+		if (options.side === "left" || options.side === "right") {
+			const right = vw - a.right - gap - MARGIN;
+			const leftRoom = a.left - gap - MARGIN;
+			const toRight = options.side === "right" ? width <= right || right >= leftRoom : !(width <= leftRoom || leftRoom >= right);
+			const x = toRight ? a.right + gap : a.left - gap - width;
+			const y = a.top + a.height / 2 - natural / 2;
+			commit(Math.max(MARGIN, Math.min(x, vw - width - MARGIN)), Math.max(MARGIN, Math.min(y, vh - natural - MARGIN)), toRight ? "right" : "left");
+			return;
+		}
 		const below = vh - a.bottom - gap - MARGIN;
 		const above = a.top - gap - MARGIN;
 		const down = options.side === "top" ? !(natural <= above || above >= below) : natural <= below || below >= above;
@@ -818,15 +845,7 @@ function floatPanel(panel, anchor, options = {}) {
 		let left = align === "center" ? a.left + a.width / 2 - width / 2 : align === "end" ? fromEnd : align === "auto" && !fits(fromStart) ? fromEnd : fromStart;
 		left = Math.max(MARGIN, Math.min(left, vw - width - MARGIN));
 		const top = Math.max(MARGIN, down ? a.bottom + gap : a.top - gap - height);
-		const origin = inTopLayer ? {
-			x: 0,
-			y: 0
-		} : fixedOrigin(panel);
-		style.left = `${Math.round(left - origin.x)}px`;
-		style.top = `${Math.round(top - origin.y)}px`;
-		style.maxWidth = `${vw - 16}px`;
-		style.visibility = "";
-		panel.dataset["placement"] = down ? "bottom" : "top";
+		commit(left, top, down ? "bottom" : "top");
 		if (options.arrow) {
 			const x = a.left + a.width / 2 - left;
 			const clamped = Math.max(ARROW_INSET, Math.min(x, width - ARROW_INSET));
@@ -1676,7 +1695,7 @@ var AthPopoverComponent = class AthPopoverComponent {
 			usesOnChanges: true,
 			ngImport: i0,
 			template: "@if (open()) {\n  <div\n    #panel\n    class=\"ath-popover__panel\"\n    [class]=\"panelClasses()\"\n    [id]=\"panelId()\"\n    [attr.role]=\"panelRole()\"\n    [attr.aria-label]=\"ariaLabel()\"\n    [attr.aria-labelledby]=\"ariaLabelledby()\"\n    [attr.aria-modal]=\"trapFocus() && panelRole() === 'dialog' ? 'true' : null\"\n    tabindex=\"-1\"\n    [athFloating]=\"floatTarget()\"\n    [align]=\"align()\"\n    [side]=\"side()\"\n    [offset]=\"offset()\"\n    [matchWidth]=\"matchWidth()\"\n    [maxHeight]=\"maxHeight()\"\n    [arrow]=\"arrow() ? arrowEl : null\"\n    (keydown)=\"onKeydown($event)\"\n    (focusout)=\"onFocusOut($event)\"\n  >\n    <span #arrowEl class=\"ath-popover__arrow\" [hidden]=\"!arrow()\" aria-hidden=\"true\"></span>\n    @if (lazyContent(); as lazy) {\n      <ng-container [ngTemplateOutlet]=\"lazy.template\" />\n    } @else {\n      <ng-content />\n    }\n  </div>\n}\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:contents}.ath-popover__panel{box-sizing:border-box;max-width:calc(100vw - var(--space-4));font-family:var(--font-sans);font-size:var(--text-base);font-style:normal;font-weight:var(--weight-normal);text-align:start;text-transform:none;white-space:normal;color:var(--fg);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-3);animation:ath-popover-in var(--t-base)}.ath-popover__panel:focus{outline:none}.ath-popover__panel:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-popover__panel--sm{width:220px}.ath-popover__panel--md{width:280px}.ath-popover__panel--lg{width:360px}.ath-popover__panel--auto{width:max-content;min-width:180px}.ath-popover__panel--pad-md{padding:var(--space-3)}.ath-popover__panel--pad-sm{padding:var(--space-1)}.ath-popover__panel--pad-none{padding:0}.ath-popover__panel[data-placement=top]{animation-name:ath-popover-in-up}.ath-popover__arrow{position:absolute;top:-6px;width:10px;height:10px;background:var(--surface);border-top:1px solid var(--border);border-left:1px solid var(--border);transform:translate(-50%) rotate(45deg);pointer-events:none}[data-placement=top]>.ath-popover__arrow{top:auto;bottom:-6px;transform:translate(-50%) rotate(225deg)}@keyframes ath-popover-in{0%{opacity:0;transform:translateY(-4px)}}@keyframes ath-popover-in-up{0%{opacity:0;transform:translateY(4px)}}\n"],
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:contents}.ath-popover__panel{box-sizing:border-box;max-width:calc(100vw - var(--space-4));font-family:var(--font-sans);font-size:var(--text-base);font-style:normal;font-weight:var(--weight-normal);text-align:start;text-transform:none;white-space:normal;color:var(--fg);background:var(--surface-raised);border:1px solid var(--border-raised);border-radius:var(--r-lg);box-shadow:var(--shadow-raised);animation:ath-popover-in var(--t-base)}.ath-popover__panel:focus{outline:none}.ath-popover__panel:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-popover__panel--sm{width:220px}.ath-popover__panel--md{width:280px}.ath-popover__panel--lg{width:360px}.ath-popover__panel--auto{width:max-content;min-width:180px}.ath-popover__panel--pad-md{padding:var(--space-3)}.ath-popover__panel--pad-sm{padding:var(--space-1)}.ath-popover__panel--pad-none{padding:0}.ath-popover__panel[data-placement=top]{animation-name:ath-popover-in-up}.ath-popover__arrow{position:absolute;top:-6px;width:10px;height:10px;background:var(--surface-raised);border-top:1px solid var(--border-raised);border-left:1px solid var(--border-raised);transform:translate(-50%) rotate(45deg);pointer-events:none}[data-placement=top]>.ath-popover__arrow{top:auto;bottom:-6px;transform:translate(-50%) rotate(225deg)}@keyframes ath-popover-in{0%{opacity:0;transform:translateY(-4px)}}@keyframes ath-popover-in-up{0%{opacity:0;transform:translateY(4px)}}\n"],
 			dependencies: [{
 				kind: "directive",
 				type: AthFloatingDirective,
@@ -1719,7 +1738,7 @@ i0.ɵɵngDeclareClassMetadata({
 			changeDetection: ChangeDetectionStrategy.OnPush,
 			exportAs: "athPopover",
 			template: "@if (open()) {\n  <div\n    #panel\n    class=\"ath-popover__panel\"\n    [class]=\"panelClasses()\"\n    [id]=\"panelId()\"\n    [attr.role]=\"panelRole()\"\n    [attr.aria-label]=\"ariaLabel()\"\n    [attr.aria-labelledby]=\"ariaLabelledby()\"\n    [attr.aria-modal]=\"trapFocus() && panelRole() === 'dialog' ? 'true' : null\"\n    tabindex=\"-1\"\n    [athFloating]=\"floatTarget()\"\n    [align]=\"align()\"\n    [side]=\"side()\"\n    [offset]=\"offset()\"\n    [matchWidth]=\"matchWidth()\"\n    [maxHeight]=\"maxHeight()\"\n    [arrow]=\"arrow() ? arrowEl : null\"\n    (keydown)=\"onKeydown($event)\"\n    (focusout)=\"onFocusOut($event)\"\n  >\n    <span #arrowEl class=\"ath-popover__arrow\" [hidden]=\"!arrow()\" aria-hidden=\"true\"></span>\n    @if (lazyContent(); as lazy) {\n      <ng-container [ngTemplateOutlet]=\"lazy.template\" />\n    } @else {\n      <ng-content />\n    }\n  </div>\n}\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:contents}.ath-popover__panel{box-sizing:border-box;max-width:calc(100vw - var(--space-4));font-family:var(--font-sans);font-size:var(--text-base);font-style:normal;font-weight:var(--weight-normal);text-align:start;text-transform:none;white-space:normal;color:var(--fg);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-3);animation:ath-popover-in var(--t-base)}.ath-popover__panel:focus{outline:none}.ath-popover__panel:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-popover__panel--sm{width:220px}.ath-popover__panel--md{width:280px}.ath-popover__panel--lg{width:360px}.ath-popover__panel--auto{width:max-content;min-width:180px}.ath-popover__panel--pad-md{padding:var(--space-3)}.ath-popover__panel--pad-sm{padding:var(--space-1)}.ath-popover__panel--pad-none{padding:0}.ath-popover__panel[data-placement=top]{animation-name:ath-popover-in-up}.ath-popover__arrow{position:absolute;top:-6px;width:10px;height:10px;background:var(--surface);border-top:1px solid var(--border);border-left:1px solid var(--border);transform:translate(-50%) rotate(45deg);pointer-events:none}[data-placement=top]>.ath-popover__arrow{top:auto;bottom:-6px;transform:translate(-50%) rotate(225deg)}@keyframes ath-popover-in{0%{opacity:0;transform:translateY(-4px)}}@keyframes ath-popover-in-up{0%{opacity:0;transform:translateY(4px)}}\n"]
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:contents}.ath-popover__panel{box-sizing:border-box;max-width:calc(100vw - var(--space-4));font-family:var(--font-sans);font-size:var(--text-base);font-style:normal;font-weight:var(--weight-normal);text-align:start;text-transform:none;white-space:normal;color:var(--fg);background:var(--surface-raised);border:1px solid var(--border-raised);border-radius:var(--r-lg);box-shadow:var(--shadow-raised);animation:ath-popover-in var(--t-base)}.ath-popover__panel:focus{outline:none}.ath-popover__panel:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-popover__panel--sm{width:220px}.ath-popover__panel--md{width:280px}.ath-popover__panel--lg{width:360px}.ath-popover__panel--auto{width:max-content;min-width:180px}.ath-popover__panel--pad-md{padding:var(--space-3)}.ath-popover__panel--pad-sm{padding:var(--space-1)}.ath-popover__panel--pad-none{padding:0}.ath-popover__panel[data-placement=top]{animation-name:ath-popover-in-up}.ath-popover__arrow{position:absolute;top:-6px;width:10px;height:10px;background:var(--surface-raised);border-top:1px solid var(--border-raised);border-left:1px solid var(--border-raised);transform:translate(-50%) rotate(45deg);pointer-events:none}[data-placement=top]>.ath-popover__arrow{top:auto;bottom:-6px;transform:translate(-50%) rotate(225deg)}@keyframes ath-popover-in{0%{opacity:0;transform:translateY(-4px)}}@keyframes ath-popover-in-up{0%{opacity:0;transform:translateY(4px)}}\n"]
 		}]
 	}],
 	ctorParameters: () => [],
@@ -1973,11 +1992,13 @@ var AthMenuItemComponent = class AthMenuItemComponent {
 		this.disabledReason = input(null, ...ngDevMode ? [{ debugName: "disabledReason" }] : /* istanbul ignore next */ []);
 		this.tooltip = input(null, ...ngDevMode ? [{ debugName: "tooltip" }] : /* istanbul ignore next */ []);
 		this.checked = input(null, ...ngDevMode ? [{ debugName: "checked" }] : /* istanbul ignore next */ []);
+		this.selected = input(null, ...ngDevMode ? [{ debugName: "selected" }] : /* istanbul ignore next */ []);
 		this.keepOpen = input(false, {
 			...ngDevMode ? { debugName: "keepOpen" } : /* istanbul ignore next */ {},
 			transform: booleanAttribute
 		});
 		this.triggered = output();
+		this.role = computed(() => this.checked() !== null ? "menuitemcheckbox" : this.selected() !== null ? "menuitemradio" : "menuitem", ...ngDevMode ? [{ debugName: "role" }] : /* istanbul ignore next */ []);
 	}
 	label() {
 		return (this.element.querySelector(".ath-menu-item__label")?.textContent ?? "").trim();
@@ -2077,6 +2098,13 @@ var AthMenuItemComponent = class AthMenuItemComponent {
 					isRequired: false,
 					transformFunction: null
 				},
+				selected: {
+					classPropertyName: "selected",
+					publicName: "selected",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
 				keepOpen: {
 					classPropertyName: "keepOpen",
 					publicName: "keepOpen",
@@ -2096,8 +2124,8 @@ var AthMenuItemComponent = class AthMenuItemComponent {
 				properties: {
 					"attr.disabled": "null",
 					"attr.type": "isButton ? 'button' : null",
-					"attr.role": "checked() === null ? 'menuitem' : 'menuitemcheckbox'",
-					"attr.aria-checked": "checked() === null ? null : checked()",
+					"attr.role": "role()",
+					"attr.aria-checked": "checked() ?? selected()",
 					"attr.aria-disabled": "disabled() || null",
 					"attr.aria-describedby": "disabled() && disabledReason() ? reasonId : null",
 					"attr.aria-keyshortcuts": "keyshortcuts()",
@@ -2120,6 +2148,9 @@ var AthMenuItemComponent = class AthMenuItemComponent {
       </span>
     }
     <span class="ath-menu-item__label"><ng-content /></span>
+    @if (selected()) {
+      <ath-icon class="ath-menu-item__current" [img]="checkIcon" [size]="16" aria-hidden="true" />
+    }
     @if (shortcut()) {
       <kbd class="ath-menu-item__shortcut" aria-hidden="true">{{ shortcut() }}</kbd>
     }
@@ -2130,7 +2161,7 @@ var AthMenuItemComponent = class AthMenuItemComponent {
     }
   `,
 			isInline: true,
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--hover-strong);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-faint)}\n"],
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--menu-item-hover);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__current{flex-shrink:0;margin-inline-start:var(--space-3);color:var(--accent-text)}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-raised)}\n"],
 			dependencies: [{
 				kind: "component",
 				type: AthIconComponent,
@@ -2171,6 +2202,9 @@ i0.ɵɵngDeclareClassMetadata({
       </span>
     }
     <span class="ath-menu-item__label"><ng-content /></span>
+    @if (selected()) {
+      <ath-icon class="ath-menu-item__current" [img]="checkIcon" [size]="16" aria-hidden="true" />
+    }
     @if (shortcut()) {
       <kbd class="ath-menu-item__shortcut" aria-hidden="true">{{ shortcut() }}</kbd>
     }
@@ -2185,8 +2219,8 @@ i0.ɵɵngDeclareClassMetadata({
 				tabindex: "-1",
 				"[attr.disabled]": "null",
 				"[attr.type]": "isButton ? 'button' : null",
-				"[attr.role]": "checked() === null ? 'menuitem' : 'menuitemcheckbox'",
-				"[attr.aria-checked]": "checked() === null ? null : checked()",
+				"[attr.role]": "role()",
+				"[attr.aria-checked]": "checked() ?? selected()",
 				"[attr.aria-disabled]": "disabled() || null",
 				"[attr.aria-describedby]": "disabled() && disabledReason() ? reasonId : null",
 				"[attr.aria-keyshortcuts]": "keyshortcuts()",
@@ -2197,7 +2231,7 @@ i0.ɵɵngDeclareClassMetadata({
 				"(keydown)": "onKeydown($event)",
 				"(mouseenter)": "onHover()"
 			},
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--hover-strong);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-faint)}\n"]
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--menu-item-hover);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__current{flex-shrink:0;margin-inline-start:var(--space-3);color:var(--accent-text)}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-raised)}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -2265,6 +2299,14 @@ i0.ɵɵngDeclareClassMetadata({
 				required: false
 			}]
 		}],
+		selected: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "selected",
+				required: false
+			}]
+		}],
 		keepOpen: [{
 			type: i0.Input,
 			args: [{
@@ -2304,7 +2346,7 @@ var AthMenuSeparatorComponent = class AthMenuSeparatorComponent {
 			ngImport: i0,
 			template: "",
 			isInline: true,
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--hover-strong);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-faint)}\n"],
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--menu-item-hover);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__current{flex-shrink:0;margin-inline-start:var(--space-3);color:var(--accent-text)}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-raised)}\n"],
 			changeDetection: i0.ChangeDetectionStrategy.OnPush
 		});
 	}
@@ -2324,7 +2366,7 @@ i0.ɵɵngDeclareClassMetadata({
 				class: "ath-menu-separator",
 				role: "separator"
 			},
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--hover-strong);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-faint)}\n"]
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host(.ath-menu-item){box-sizing:border-box;display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:var(--space-8);margin:0;padding:var(--space-1) var(--space-2);font:inherit;font-size:var(--text-base);color:var(--fg-2);text-align:start;text-decoration:none;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color var(--t-fast)}:host(.ath-menu-item:hover),:host(.ath-menu-item:focus){color:var(--fg);background:var(--menu-item-hover);outline:none}:host(.ath-menu-item:focus-visible){outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}:host(.ath-menu-item--danger){color:var(--red-text)}:host(.ath-menu-item--danger:hover),:host(.ath-menu-item--danger:focus){color:var(--red-text);background:var(--red-tint)}:host(.ath-menu-item--disabled){color:var(--fg-4);cursor:not-allowed}:host(.ath-menu-item--disabled:hover),:host(.ath-menu-item--disabled:focus){color:var(--fg-4);background:var(--hover)}.ath-menu-item__icon{display:inline-flex;flex-shrink:0;width:16px;color:inherit}.ath-menu-item__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ath-menu-item__current{flex-shrink:0;margin-inline-start:var(--space-3);color:var(--accent-text)}.ath-menu-item__shortcut{flex-shrink:0;margin-inline-start:var(--space-4);font-family:var(--font-sans);font-size:var(--text-xs);color:var(--fg-4)}.ath-menu-item__reason{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}:host(.ath-menu-separator){display:block;height:1px;margin:var(--space-1) calc(var(--space-1) * -1);background:var(--border-raised)}\n"]
 		}]
 	}]
 });
@@ -2343,6 +2385,10 @@ var AthMenuComponent = class AthMenuComponent {
 		this.panelId = `ath-menu-${++nextMenuId}`;
 		this.labelledBy = signal(null, ...ngDevMode ? [{ debugName: "labelledBy" }] : /* istanbul ignore next */ []);
 		this.popover = viewChild.required(AthPopoverComponent, ...ngDevMode ? [{ debugName: "popover" }] : /* istanbul ignore next */ []);
+		this.lazyContent = contentChild(AthPopoverContentDirective, {
+			...ngDevMode ? { debugName: "lazyContent" } : /* istanbul ignore next */ {},
+			descendants: false
+		});
 		this.items = contentChildren(AthMenuItemComponent, {
 			...ngDevMode ? { debugName: "items" } : /* istanbul ignore next */ {},
 			descendants: true
@@ -2419,7 +2465,8 @@ var AthMenuComponent = class AthMenuComponent {
 		if (focus === "none" || !this.open()) return;
 		const items = this.items();
 		const enabled = (i) => !items[i].disabled();
-		let index = edgeIndex(items.length, enabled, focus === "last");
+		const current = items.findIndex((item, i) => item.selected() === true && enabled(i));
+		let index = focus === "first" && current >= 0 ? current : edgeIndex(items.length, enabled, focus === "last");
 		if (index < 0) index = focus === "last" ? items.length - 1 : 0;
 		if (items[index]) items[index].focus();
 		else this.popover().focusPanel("panel");
@@ -2436,7 +2483,7 @@ var AthMenuComponent = class AthMenuComponent {
 	}
 	static {
 		this.ɵcmp = i0.ɵɵngDeclareComponent({
-			minVersion: "17.2.0",
+			minVersion: "17.0.0",
 			version: "22.2.2",
 			type: AthMenuComponent,
 			isStandalone: true,
@@ -2503,6 +2550,11 @@ var AthMenuComponent = class AthMenuComponent {
 				useExisting: forwardRef(() => AthMenuComponent)
 			}],
 			queries: [{
+				propertyName: "lazyContent",
+				first: true,
+				predicate: AthPopoverContentDirective,
+				isSignal: true
+			}, {
 				propertyName: "items",
 				predicate: AthMenuItemComponent,
 				descendants: true,
@@ -2536,7 +2588,13 @@ var AthMenuComponent = class AthMenuComponent {
       (opened)="onOpened()"
       (closed)="closed.emit($event)"
     >
-      <ng-content />
+      @if (lazyContent(); as lazy) {
+        @if (open()) {
+          <ng-container [ngTemplateOutlet]="lazy.template" />
+        }
+      } @else {
+        <ng-content />
+      }
     </ath-popover>
   `,
 			isInline: true,
@@ -2573,6 +2631,15 @@ var AthMenuComponent = class AthMenuComponent {
 					"closed"
 				],
 				exportAs: ["athPopover"]
+			}, {
+				kind: "directive",
+				type: NgTemplateOutlet,
+				selector: "[ngTemplateOutlet]",
+				inputs: [
+					"ngTemplateOutletContext",
+					"ngTemplateOutlet",
+					"ngTemplateOutletInjector"
+				]
 			}],
 			changeDetection: i0.ChangeDetectionStrategy.OnPush
 		});
@@ -2587,7 +2654,7 @@ i0.ɵɵngDeclareClassMetadata({
 		type: Component,
 		args: [{
 			selector: "ath-menu",
-			imports: [AthPopoverComponent],
+			imports: [AthPopoverComponent, NgTemplateOutlet],
 			changeDetection: ChangeDetectionStrategy.OnPush,
 			exportAs: "athMenu",
 			providers: [{
@@ -2613,7 +2680,13 @@ i0.ɵɵngDeclareClassMetadata({
       (opened)="onOpened()"
       (closed)="closed.emit($event)"
     >
-      <ng-content />
+      @if (lazyContent(); as lazy) {
+        @if (open()) {
+          <ng-container [ngTemplateOutlet]="lazy.template" />
+        }
+      } @else {
+        <ng-content />
+      }
     </ath-popover>
   `,
 			host: { "(keydown)": "onKeydown($event)" },
@@ -2692,6 +2765,13 @@ i0.ɵɵngDeclareClassMetadata({
 			type: i0.ViewChild,
 			args: [i0.forwardRef(() => AthPopoverComponent), { isSignal: true }]
 		}],
+		lazyContent: [{
+			type: i0.ContentChild,
+			args: [i0.forwardRef(() => AthPopoverContentDirective), {
+				descendants: false,
+				isSignal: true
+			}]
+		}],
 		items: [{
 			type: i0.ContentChildren,
 			args: [i0.forwardRef(() => AthMenuItemComponent), {
@@ -2705,6 +2785,41 @@ const DROPDOWN_SEPARATOR = Object.freeze({ separator: true });
 function isDropdownSeparator(item) {
 	return "separator" in item && item.separator === true;
 }
+var AthDropdownHeaderDirective = class AthDropdownHeaderDirective {
+	constructor() {
+		this.template = inject(TemplateRef);
+	}
+	static {
+		this.ɵfac = i0.ɵɵngDeclareFactory({
+			minVersion: "12.0.0",
+			version: "22.2.2",
+			ngImport: i0,
+			type: AthDropdownHeaderDirective,
+			deps: [],
+			target: i0.ɵɵFactoryTarget.Directive
+		});
+	}
+	static {
+		this.ɵdir = i0.ɵɵngDeclareDirective({
+			minVersion: "14.0.0",
+			version: "22.2.2",
+			type: AthDropdownHeaderDirective,
+			isStandalone: true,
+			selector: "ng-template[athDropdownHeader]",
+			ngImport: i0
+		});
+	}
+};
+i0.ɵɵngDeclareClassMetadata({
+	minVersion: "12.0.0",
+	version: "22.2.2",
+	ngImport: i0,
+	type: AthDropdownHeaderDirective,
+	decorators: [{
+		type: Directive,
+		args: [{ selector: "ng-template[athDropdownHeader]" }]
+	}]
+});
 const ALIGN = {
 	left: "start",
 	right: "end",
@@ -2712,8 +2827,14 @@ const ALIGN = {
 };
 const CONTROL = "button, a[href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])";
 var AthDropdownComponent = class AthDropdownComponent {
+	selectedOf(item) {
+		const active = this.activeId();
+		return active === null || active === void 0 ? null : item.id === active;
+	}
 	constructor() {
 		this.items = input([], ...ngDevMode ? [{ debugName: "items" }] : /* istanbul ignore next */ []);
+		this.activeId = input(null, ...ngDevMode ? [{ debugName: "activeId" }] : /* istanbul ignore next */ []);
+		this.header = contentChild(AthDropdownHeaderDirective, ...ngDevMode ? [{ debugName: "header" }] : /* istanbul ignore next */ []);
 		this.entries = computed(() => this.items().map((item, i) => isDropdownSeparator(item) ? {
 			key: `separator-${i}`,
 			action: null
@@ -2811,6 +2932,13 @@ var AthDropdownComponent = class AthDropdownComponent {
 					isRequired: false,
 					transformFunction: null
 				},
+				activeId: {
+					classPropertyName: "activeId",
+					publicName: "activeId",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
 				align: {
 					classPropertyName: "align",
 					publicName: "align",
@@ -2827,6 +2955,13 @@ var AthDropdownComponent = class AthDropdownComponent {
 				"click": "onHostClick($event)",
 				"keydown": "onHostKeydown($event)"
 			} },
+			queries: [{
+				propertyName: "header",
+				first: true,
+				predicate: AthDropdownHeaderDirective,
+				descendants: true,
+				isSignal: true
+			}],
 			viewQueries: [
 				{
 					propertyName: "menu",
@@ -2851,9 +2986,19 @@ var AthDropdownComponent = class AthDropdownComponent {
 				}
 			],
 			ngImport: i0,
-			template: "<span #trigger class=\"ath-dropdown__trigger\">\n  <ng-content />\n</span>\n\n<!-- ath-dropdown__menu: app code checks for an open dropdown by this class. -->\n<ath-menu\n  panelClass=\"ath-dropdown__menu\"\n  [anchor]=\"trigger\"\n  [align]=\"menuAlign()\"\n  (openChange)=\"onOpenChange($event)\"\n>\n  @for (entry of entries(); track entry.key) {\n    @if (entry.action; as item) {\n      <button\n        athMenuItem\n        role=\"menuitem\"\n        class=\"ath-dropdown__item\"\n        [class.ath-dropdown__item--danger]=\"item.variant === 'danger'\"\n        [icon]=\"item.icon\"\n        [variant]=\"item.variant ?? 'default'\"\n        [disabled]=\"!!item.disabled\"\n        [disabledReason]=\"item.title\"\n        [tooltip]=\"item.title\"\n        [shortcut]=\"item.shortcut ?? null\"\n        (triggered)=\"itemClicked.emit(item.id)\"\n      >\n        {{ item.label }}\n      </button>\n    } @else {\n      <ath-menu-separator />\n    }\n  }\n</ath-menu>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-dropdown__trigger{display:inline-flex;cursor:pointer}.ath-dropdown__trigger[role=button]:focus-visible{border-radius:var(--r-sm);outline:none;box-shadow:var(--focus-ring-shadow)}\n"],
+			template: "<span #trigger class=\"ath-dropdown__trigger\">\n  <ng-content />\n</span>\n\n<!-- ath-dropdown__menu: app code checks for an open dropdown by this class. -->\n<ath-menu\n  panelClass=\"ath-dropdown__menu\"\n  [anchor]=\"trigger\"\n  [align]=\"menuAlign()\"\n  (openChange)=\"onOpenChange($event)\"\n>\n  <!-- Built only while open: a closed row menu holds no items. -->\n  <ng-template athPopoverContent>\n    @if (header(); as h) {\n      <div class=\"ath-dropdown__header\" role=\"none\">\n        <ng-container [ngTemplateOutlet]=\"h.template\" />\n      </div>\n      <ath-menu-separator />\n    }\n    @for (entry of entries(); track entry.key) {\n      @if (entry.action; as item) {\n        <button\n          athMenuItem\n          role=\"menuitem\"\n          class=\"ath-dropdown__item\"\n          [class.ath-dropdown__item--danger]=\"item.variant === 'danger'\"\n          [icon]=\"item.icon\"\n          [variant]=\"item.variant ?? 'default'\"\n          [disabled]=\"!!item.disabled\"\n          [disabledReason]=\"item.title\"\n          [tooltip]=\"item.title\"\n          [shortcut]=\"item.shortcut ?? null\"\n          [selected]=\"selectedOf(item)\"\n          (triggered)=\"itemClicked.emit(item.id)\"\n        >\n          {{ item.label }}\n        </button>\n      } @else {\n        <ath-menu-separator />\n      }\n    }\n  </ng-template>\n</ath-menu>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-dropdown__trigger{display:inline-flex;cursor:pointer}.ath-dropdown__trigger[role=button]:focus-visible{border-radius:var(--r-sm);outline:none;box-shadow:var(--focus-ring-shadow)}.ath-dropdown__header{padding:var(--space-2) var(--space-2) var(--space-1);color:var(--fg);font-size:var(--text-sm)}\n"],
 			dependencies: [
+				{
+					kind: "directive",
+					type: NgTemplateOutlet,
+					selector: "[ngTemplateOutlet]",
+					inputs: [
+						"ngTemplateOutletContext",
+						"ngTemplateOutlet",
+						"ngTemplateOutletInjector"
+					]
+				},
 				{
 					kind: "component",
 					type: AthMenuComponent,
@@ -2887,6 +3032,7 @@ var AthDropdownComponent = class AthDropdownComponent {
 						"disabledReason",
 						"tooltip",
 						"checked",
+						"selected",
 						"keepOpen"
 					],
 					outputs: ["triggered"],
@@ -2896,6 +3042,11 @@ var AthDropdownComponent = class AthDropdownComponent {
 					kind: "component",
 					type: AthMenuSeparatorComponent,
 					selector: "ath-menu-separator"
+				},
+				{
+					kind: "directive",
+					type: AthPopoverContentDirective,
+					selector: "ng-template[athPopoverContent]"
 				}
 			],
 			changeDetection: i0.ChangeDetectionStrategy.OnPush
@@ -2912,17 +3063,19 @@ i0.ɵɵngDeclareClassMetadata({
 		args: [{
 			selector: "ath-dropdown",
 			imports: [
+				NgTemplateOutlet,
 				AthMenuComponent,
 				AthMenuItemComponent,
-				AthMenuSeparatorComponent
+				AthMenuSeparatorComponent,
+				AthPopoverContentDirective
 			],
 			changeDetection: ChangeDetectionStrategy.OnPush,
 			host: {
 				"(click)": "onHostClick($event)",
 				"(keydown)": "onHostKeydown($event)"
 			},
-			template: "<span #trigger class=\"ath-dropdown__trigger\">\n  <ng-content />\n</span>\n\n<!-- ath-dropdown__menu: app code checks for an open dropdown by this class. -->\n<ath-menu\n  panelClass=\"ath-dropdown__menu\"\n  [anchor]=\"trigger\"\n  [align]=\"menuAlign()\"\n  (openChange)=\"onOpenChange($event)\"\n>\n  @for (entry of entries(); track entry.key) {\n    @if (entry.action; as item) {\n      <button\n        athMenuItem\n        role=\"menuitem\"\n        class=\"ath-dropdown__item\"\n        [class.ath-dropdown__item--danger]=\"item.variant === 'danger'\"\n        [icon]=\"item.icon\"\n        [variant]=\"item.variant ?? 'default'\"\n        [disabled]=\"!!item.disabled\"\n        [disabledReason]=\"item.title\"\n        [tooltip]=\"item.title\"\n        [shortcut]=\"item.shortcut ?? null\"\n        (triggered)=\"itemClicked.emit(item.id)\"\n      >\n        {{ item.label }}\n      </button>\n    } @else {\n      <ath-menu-separator />\n    }\n  }\n</ath-menu>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-dropdown__trigger{display:inline-flex;cursor:pointer}.ath-dropdown__trigger[role=button]:focus-visible{border-radius:var(--r-sm);outline:none;box-shadow:var(--focus-ring-shadow)}\n"]
+			template: "<span #trigger class=\"ath-dropdown__trigger\">\n  <ng-content />\n</span>\n\n<!-- ath-dropdown__menu: app code checks for an open dropdown by this class. -->\n<ath-menu\n  panelClass=\"ath-dropdown__menu\"\n  [anchor]=\"trigger\"\n  [align]=\"menuAlign()\"\n  (openChange)=\"onOpenChange($event)\"\n>\n  <!-- Built only while open: a closed row menu holds no items. -->\n  <ng-template athPopoverContent>\n    @if (header(); as h) {\n      <div class=\"ath-dropdown__header\" role=\"none\">\n        <ng-container [ngTemplateOutlet]=\"h.template\" />\n      </div>\n      <ath-menu-separator />\n    }\n    @for (entry of entries(); track entry.key) {\n      @if (entry.action; as item) {\n        <button\n          athMenuItem\n          role=\"menuitem\"\n          class=\"ath-dropdown__item\"\n          [class.ath-dropdown__item--danger]=\"item.variant === 'danger'\"\n          [icon]=\"item.icon\"\n          [variant]=\"item.variant ?? 'default'\"\n          [disabled]=\"!!item.disabled\"\n          [disabledReason]=\"item.title\"\n          [tooltip]=\"item.title\"\n          [shortcut]=\"item.shortcut ?? null\"\n          [selected]=\"selectedOf(item)\"\n          (triggered)=\"itemClicked.emit(item.id)\"\n        >\n          {{ item.label }}\n        </button>\n      } @else {\n        <ath-menu-separator />\n      }\n    }\n  </ng-template>\n</ath-menu>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-dropdown__trigger{display:inline-flex;cursor:pointer}.ath-dropdown__trigger[role=button]:focus-visible{border-radius:var(--r-sm);outline:none;box-shadow:var(--focus-ring-shadow)}.ath-dropdown__header{padding:var(--space-2) var(--space-2) var(--space-1);color:var(--fg);font-size:var(--text-sm)}\n"]
 		}]
 	}],
 	ctorParameters: () => [],
@@ -2934,6 +3087,18 @@ i0.ɵɵngDeclareClassMetadata({
 				alias: "items",
 				required: false
 			}]
+		}],
+		activeId: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "activeId",
+				required: false
+			}]
+		}],
+		header: [{
+			type: i0.ContentChild,
+			args: [i0.forwardRef(() => AthDropdownHeaderDirective), { isSignal: true }]
 		}],
 		align: [{
 			type: i0.Input,
@@ -3097,7 +3262,11 @@ var AthBreadcrumbComponent = class AthBreadcrumbComponent {
 					kind: "component",
 					type: AthDropdownComponent,
 					selector: "ath-dropdown",
-					inputs: ["items", "align"],
+					inputs: [
+						"items",
+						"activeId",
+						"align"
+					],
 					outputs: ["itemClicked", "openChange"]
 				}
 			],
@@ -3235,14 +3404,96 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}
 });
+function tabStopIndex(activeIndex, disabled) {
+	return activeIndex >= 0 && !disabled[activeIndex] ? activeIndex : disabled.indexOf(false);
+}
+function nextTabIndex(event, index, disabled, host) {
+	const count = disabled.length;
+	let start = index;
+	let step;
+	switch (event.key) {
+		case "ArrowRight":
+		case "ArrowLeft": {
+			const rtl = getComputedStyle(host).direction === "rtl";
+			step = event.key === "ArrowRight" !== rtl ? 1 : -1;
+			break;
+		}
+		case "Home":
+			start = -1;
+			step = 1;
+			break;
+		case "End":
+			start = count;
+			step = -1;
+			break;
+		default: return null;
+	}
+	for (let i = 1; i <= count; i++) {
+		const next = ((start + step * i) % count + count) % count;
+		if (!disabled[next]) return next;
+	}
+	return null;
+}
+const EDGE = 24;
 var AthTabsComponent = class AthTabsComponent {
 	constructor() {
 		this.tabs = input([], ...ngDevMode ? [{ debugName: "tabs" }] : /* istanbul ignore next */ []);
 		this.activeTab = input("", ...ngDevMode ? [{ debugName: "activeTab" }] : /* istanbul ignore next */ []);
 		this.tabChanged = output();
+		this.host = inject(ElementRef);
+		this.list = viewChild("list", ...ngDevMode ? [{ debugName: "list" }] : /* istanbul ignore next */ []);
+		this.fadeLeft = signal(false, ...ngDevMode ? [{ debugName: "fadeLeft" }] : /* istanbul ignore next */ []);
+		this.fadeRight = signal(false, ...ngDevMode ? [{ debugName: "fadeRight" }] : /* istanbul ignore next */ []);
+		this.tabStop = computed(() => {
+			const tabs = this.tabs();
+			return tabStopIndex(tabs.findIndex((tab) => tab.id === this.activeTab()), tabs.map((tab) => !!tab.disabled));
+		}, ...ngDevMode ? [{ debugName: "tabStop" }] : /* istanbul ignore next */ []);
+		effect((onCleanup) => {
+			const el = this.list()?.nativeElement;
+			if (!el || typeof ResizeObserver === "undefined") return;
+			const observer = untracked(() => new ResizeObserver(() => this.syncFade()));
+			observer.observe(el);
+			onCleanup(() => observer.disconnect());
+		});
+		effect((onCleanup) => {
+			const el = this.list()?.nativeElement;
+			const index = this.tabs().findIndex((tab) => tab.id === this.activeTab());
+			if (!el || index < 0 || typeof requestAnimationFrame === "undefined") return;
+			const frame = requestAnimationFrame(() => this.reveal(el, index));
+			onCleanup(() => cancelAnimationFrame(frame));
+		});
+	}
+	syncFade() {
+		const el = this.list()?.nativeElement;
+		if (!el) return;
+		const max = el.scrollWidth - el.clientWidth;
+		const x = Math.abs(el.scrollLeft);
+		const rtl = el.scrollLeft < 0 || getComputedStyle(el).direction === "rtl";
+		const startHidden = max > 1 && x > 1;
+		const endHidden = max > 1 && x < max - 1;
+		this.fadeLeft.set(rtl ? endHidden : startHidden);
+		this.fadeRight.set(rtl ? startHidden : endHidden);
+	}
+	reveal(el, index) {
+		const tab = el.querySelectorAll("[role=\"tab\"]")[index];
+		if (tab && el.scrollWidth > el.clientWidth) {
+			const bar = el.getBoundingClientRect();
+			const r = tab.getBoundingClientRect();
+			if (r.left < bar.left + EDGE) el.scrollLeft += r.left - bar.left - EDGE;
+			else if (r.right > bar.right - EDGE) el.scrollLeft += r.right - bar.right + EDGE;
+		}
+		this.syncFade();
 	}
 	selectTab(tab) {
 		if (!tab.disabled && tab.id !== this.activeTab()) this.tabChanged.emit(tab.id);
+	}
+	onKey(event, index) {
+		const tabs = this.tabs();
+		const next = nextTabIndex(event, index, tabs.map((tab) => !!tab.disabled), this.host.nativeElement);
+		if (next === null) return;
+		event.preventDefault();
+		this.selectTab(tabs[next]);
+		this.host.nativeElement.querySelectorAll("[role=\"tab\"]")[next]?.focus();
 	}
 	getTabClasses(tab) {
 		return [
@@ -3285,9 +3536,16 @@ var AthTabsComponent = class AthTabsComponent {
 				}
 			},
 			outputs: { tabChanged: "tabChanged" },
+			viewQueries: [{
+				propertyName: "list",
+				first: true,
+				predicate: ["list"],
+				descendants: true,
+				isSignal: true
+			}],
 			ngImport: i0,
-			template: "<div class=\"ath-tabs\" role=\"tablist\">\n  @for (tab of tabs(); track tab.id) {\n    <button\n      type=\"button\"\n      role=\"tab\"\n      [class]=\"getTabClasses(tab)\"\n      [attr.aria-selected]=\"tab.id === activeTab()\"\n      [disabled]=\"tab.disabled\"\n      (click)=\"selectTab(tab)\"\n    >\n      <span class=\"ath-tabs__label\">{{ tab.label }}</span>\n      @if (tab.count != null && tab.count !== 0 && tab.count !== '') {\n        <span class=\"ath-tabs__count\">{{ tab.count }}</span>\n      }\n    </button>\n  }\n</div>\n",
-			styles: [".ath-tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}.ath-tabs__tab{position:relative;display:inline-flex;align-items:center;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg-3);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;transition:all var(--t-fast);white-space:nowrap}.ath-tabs__tab:hover:not(:disabled){color:var(--fg)}.ath-tabs__tab--active{color:var(--tab-active-fg);border-bottom-color:var(--tab-active-indicator)}.ath-tabs__tab--active:hover:not(:disabled){color:var(--tab-active-fg)}.ath-tabs__tab--disabled{opacity:.4;cursor:not-allowed}.ath-tabs__tab:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent);border-radius:var(--r-sm) var(--r-sm) 0 0}.ath-tabs__label{display:inline-flex;align-items:center}.ath-tabs__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:16px;margin-left:6px;padding:0 5px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;line-height:1;color:var(--fg-3);background:var(--bg-2);border-radius:999px;transition:color var(--t-fast),background var(--t-fast)}.ath-tabs__tab--active .ath-tabs__count{color:var(--segment-count-active-fg);background:var(--segment-count-active-bg)}\n"],
+			template: "<div\n  #list\n  class=\"ath-tabs\"\n  role=\"tablist\"\n  [class.ath-tabs--fade-left]=\"fadeLeft()\"\n  [class.ath-tabs--fade-right]=\"fadeRight()\"\n  (scroll)=\"syncFade()\"\n>\n  @for (tab of tabs(); track tab.id; let i = $index) {\n    <button\n      type=\"button\"\n      role=\"tab\"\n      [class]=\"getTabClasses(tab)\"\n      [attr.aria-selected]=\"tab.id === activeTab()\"\n      [attr.tabindex]=\"i === tabStop() ? 0 : -1\"\n      [disabled]=\"tab.disabled\"\n      (click)=\"selectTab(tab)\"\n      (keydown)=\"onKey($event, i)\"\n    >\n      <span class=\"ath-tabs__label\">{{ tab.label }}</span>\n      @if (tab.count != null && tab.count !== 0 && tab.count !== '') {\n        <span class=\"ath-tabs__count\">{{ tab.count }}</span>\n      }\n    </button>\n  }\n</div>\n",
+			styles: [":host{display:block;min-width:0;box-shadow:inset 0 -1px 0 var(--border)}.ath-tabs{--_fade-l: 0px;--_fade-r: 0px;display:flex;gap:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}.ath-tabs::-webkit-scrollbar{display:none}.ath-tabs--fade-left,.ath-tabs--fade-right{-webkit-mask-image:linear-gradient(to right,transparent,var(--fg) var(--_fade-l),var(--fg) calc(100% - var(--_fade-r)),transparent);mask-image:linear-gradient(to right,transparent,var(--fg) var(--_fade-l),var(--fg) calc(100% - var(--_fade-r)),transparent)}.ath-tabs--fade-left{--_fade-l: 24px}.ath-tabs--fade-right{--_fade-r: 32px}.ath-tabs__tab{position:relative;display:inline-flex;align-items:center;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all var(--t-fast);white-space:nowrap}.ath-tabs__tab:hover:not(:disabled){color:var(--fg)}.ath-tabs__tab--active{color:var(--tab-active-fg);border-bottom-color:var(--tab-active-indicator)}.ath-tabs__tab--active:hover:not(:disabled){color:var(--tab-active-fg)}.ath-tabs__tab--disabled{opacity:.4;cursor:not-allowed}.ath-tabs__tab:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent);border-radius:var(--r-sm) var(--r-sm) 0 0}.ath-tabs__label{display:inline-flex;align-items:center}.ath-tabs__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:16px;margin-left:6px;padding:0 5px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;line-height:1;color:var(--fg-3);background:var(--bg-2);border-radius:999px;transition:color var(--t-fast),background var(--t-fast)}.ath-tabs__tab--active .ath-tabs__count{color:var(--segment-count-active-fg);background:var(--segment-count-active-bg)}\n"],
 			changeDetection: i0.ChangeDetectionStrategy.OnPush
 		});
 	}
@@ -3302,10 +3560,11 @@ i0.ɵɵngDeclareClassMetadata({
 		args: [{
 			selector: "ath-tabs",
 			changeDetection: ChangeDetectionStrategy.OnPush,
-			template: "<div class=\"ath-tabs\" role=\"tablist\">\n  @for (tab of tabs(); track tab.id) {\n    <button\n      type=\"button\"\n      role=\"tab\"\n      [class]=\"getTabClasses(tab)\"\n      [attr.aria-selected]=\"tab.id === activeTab()\"\n      [disabled]=\"tab.disabled\"\n      (click)=\"selectTab(tab)\"\n    >\n      <span class=\"ath-tabs__label\">{{ tab.label }}</span>\n      @if (tab.count != null && tab.count !== 0 && tab.count !== '') {\n        <span class=\"ath-tabs__count\">{{ tab.count }}</span>\n      }\n    </button>\n  }\n</div>\n",
-			styles: [".ath-tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}.ath-tabs__tab{position:relative;display:inline-flex;align-items:center;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg-3);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;transition:all var(--t-fast);white-space:nowrap}.ath-tabs__tab:hover:not(:disabled){color:var(--fg)}.ath-tabs__tab--active{color:var(--tab-active-fg);border-bottom-color:var(--tab-active-indicator)}.ath-tabs__tab--active:hover:not(:disabled){color:var(--tab-active-fg)}.ath-tabs__tab--disabled{opacity:.4;cursor:not-allowed}.ath-tabs__tab:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent);border-radius:var(--r-sm) var(--r-sm) 0 0}.ath-tabs__label{display:inline-flex;align-items:center}.ath-tabs__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:16px;margin-left:6px;padding:0 5px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;line-height:1;color:var(--fg-3);background:var(--bg-2);border-radius:999px;transition:color var(--t-fast),background var(--t-fast)}.ath-tabs__tab--active .ath-tabs__count{color:var(--segment-count-active-fg);background:var(--segment-count-active-bg)}\n"]
+			template: "<div\n  #list\n  class=\"ath-tabs\"\n  role=\"tablist\"\n  [class.ath-tabs--fade-left]=\"fadeLeft()\"\n  [class.ath-tabs--fade-right]=\"fadeRight()\"\n  (scroll)=\"syncFade()\"\n>\n  @for (tab of tabs(); track tab.id; let i = $index) {\n    <button\n      type=\"button\"\n      role=\"tab\"\n      [class]=\"getTabClasses(tab)\"\n      [attr.aria-selected]=\"tab.id === activeTab()\"\n      [attr.tabindex]=\"i === tabStop() ? 0 : -1\"\n      [disabled]=\"tab.disabled\"\n      (click)=\"selectTab(tab)\"\n      (keydown)=\"onKey($event, i)\"\n    >\n      <span class=\"ath-tabs__label\">{{ tab.label }}</span>\n      @if (tab.count != null && tab.count !== 0 && tab.count !== '') {\n        <span class=\"ath-tabs__count\">{{ tab.count }}</span>\n      }\n    </button>\n  }\n</div>\n",
+			styles: [":host{display:block;min-width:0;box-shadow:inset 0 -1px 0 var(--border)}.ath-tabs{--_fade-l: 0px;--_fade-r: 0px;display:flex;gap:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}.ath-tabs::-webkit-scrollbar{display:none}.ath-tabs--fade-left,.ath-tabs--fade-right{-webkit-mask-image:linear-gradient(to right,transparent,var(--fg) var(--_fade-l),var(--fg) calc(100% - var(--_fade-r)),transparent);mask-image:linear-gradient(to right,transparent,var(--fg) var(--_fade-l),var(--fg) calc(100% - var(--_fade-r)),transparent)}.ath-tabs--fade-left{--_fade-l: 24px}.ath-tabs--fade-right{--_fade-r: 32px}.ath-tabs__tab{position:relative;display:inline-flex;align-items:center;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg-3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all var(--t-fast);white-space:nowrap}.ath-tabs__tab:hover:not(:disabled){color:var(--fg)}.ath-tabs__tab--active{color:var(--tab-active-fg);border-bottom-color:var(--tab-active-indicator)}.ath-tabs__tab--active:hover:not(:disabled){color:var(--tab-active-fg)}.ath-tabs__tab--disabled{opacity:.4;cursor:not-allowed}.ath-tabs__tab:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent);border-radius:var(--r-sm) var(--r-sm) 0 0}.ath-tabs__label{display:inline-flex;align-items:center}.ath-tabs__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:16px;margin-left:6px;padding:0 5px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;line-height:1;color:var(--fg-3);background:var(--bg-2);border-radius:999px;transition:color var(--t-fast),background var(--t-fast)}.ath-tabs__tab--active .ath-tabs__count{color:var(--segment-count-active-fg);background:var(--segment-count-active-bg)}\n"]
 		}]
 	}],
+	ctorParameters: () => [],
 	propDecorators: {
 		tabs: [{
 			type: i0.Input,
@@ -3326,6 +3585,10 @@ i0.ɵɵngDeclareClassMetadata({
 		tabChanged: [{
 			type: i0.Output,
 			args: ["tabChanged"]
+		}],
+		list: [{
+			type: i0.ViewChild,
+			args: ["list", { isSignal: true }]
 		}]
 	}
 });
@@ -4147,6 +4410,9 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}
 });
+const SHOW_DELAY = 300;
+const HIDE_DELAY = 100;
+let nextTooltipId = 0;
 var AthTooltipDirective = class AthTooltipDirective {
 	constructor() {
 		this.text = input("", {
@@ -4156,83 +4422,138 @@ var AthTooltipDirective = class AthTooltipDirective {
 		this.tooltipPosition = input("top", ...ngDevMode ? [{ debugName: "tooltipPosition" }] : /* istanbul ignore next */ []);
 		this.el = inject(ElementRef);
 		this.renderer = inject(Renderer2);
+		this.tooltipId = `ath-tooltip-${++nextTooltipId}`;
 		this.tooltipElement = null;
+		this.float = null;
 		this.showTimeout = null;
 		this.hideTimeout = null;
-		this.mouseEnterListener = null;
-		this.mouseLeaveListener = null;
-		this.mouseEnterListener = this.renderer.listen(this.el.nativeElement, "mouseenter", () => this.show());
-		this.mouseLeaveListener = this.renderer.listen(this.el.nativeElement, "mouseleave", () => this.hide());
+		this.hovered = false;
+		this.focused = false;
+		this.listeners = [];
+		this.unlistenEscape = null;
+		const host = this.el.nativeElement;
+		const on = (type, fn) => {
+			this.listeners.push(this.renderer.listen(host, type, fn));
+		};
+		on("mouseenter", () => {
+			this.hovered = true;
+			this.show(SHOW_DELAY);
+		});
+		on("mouseleave", () => {
+			this.hovered = false;
+			this.hide();
+		});
+		on("focusin", (event) => {
+			if (!isKeyboardFocus(event.target)) return;
+			this.focused = true;
+			this.show(0);
+		});
+		on("focusout", (event) => {
+			const next = event.relatedTarget;
+			if (next instanceof Node && host.contains(next)) return;
+			this.focused = false;
+			this.hide();
+		});
+		effect(() => {
+			const text = this.text();
+			untracked(() => {
+				if (!this.tooltipElement) return;
+				if (!text) {
+					this.removeTooltip();
+					return;
+				}
+				this.tooltipElement.textContent = text;
+				this.float?.update();
+			});
+		});
 	}
 	ngOnDestroy() {
+		this.clearTimers();
 		this.removeTooltip();
-		if (this.mouseEnterListener) this.mouseEnterListener();
-		if (this.mouseLeaveListener) this.mouseLeaveListener();
+		for (const off of this.listeners.splice(0)) off();
 	}
-	show() {
+	show(delay) {
 		if (!this.text()) return;
 		if (this.hideTimeout) {
 			clearTimeout(this.hideTimeout);
 			this.hideTimeout = null;
 		}
-		this.showTimeout = setTimeout(() => {
+		if (this.tooltipElement) return;
+		if (delay === 0) {
+			this.clearTimers();
 			this.createTooltip();
-		}, 300);
+			return;
+		}
+		if (this.showTimeout) return;
+		this.showTimeout = setTimeout(() => {
+			this.showTimeout = null;
+			this.createTooltip();
+		}, delay);
 	}
 	hide() {
+		if (this.hovered || this.focused) return;
 		if (this.showTimeout) {
 			clearTimeout(this.showTimeout);
 			this.showTimeout = null;
 		}
+		if (!this.tooltipElement || this.hideTimeout) return;
 		this.hideTimeout = setTimeout(() => {
+			this.hideTimeout = null;
 			this.removeTooltip();
-		}, 100);
+		}, HIDE_DELAY);
+	}
+	clearTimers() {
+		if (this.showTimeout) clearTimeout(this.showTimeout);
+		if (this.hideTimeout) clearTimeout(this.hideTimeout);
+		this.showTimeout = null;
+		this.hideTimeout = null;
 	}
 	createTooltip() {
-		if (this.tooltipElement) return;
+		const host = this.el.nativeElement;
+		if (this.tooltipElement || !this.text() || !host.isConnected) return;
 		const tooltip = this.renderer.createElement("div");
 		this.tooltipElement = tooltip;
 		this.renderer.addClass(tooltip, "ath-tooltip");
 		this.renderer.addClass(tooltip, `ath-tooltip--${this.tooltipPosition()}`);
+		this.renderer.setAttribute(tooltip, "role", "tooltip");
+		this.renderer.setAttribute(tooltip, "id", this.tooltipId);
 		tooltip.textContent = this.text();
-		this.renderer.appendChild(document.body, tooltip);
-		this.positionTooltip();
+		const container = host.closest("dialog") ?? host.ownerDocument.body;
+		this.renderer.appendChild(container, tooltip);
+		const position = this.tooltipPosition();
+		this.float = floatPanel(tooltip, host, {
+			side: position,
+			align: "center",
+			offset: 8
+		});
+		tooltip.style.zIndex = "";
+		this.setDescribedBy(true);
+		this.unlistenEscape = this.renderer.listen(host.ownerDocument, "keydown", (event) => {
+			if (event.key !== "Escape") return;
+			this.clearTimers();
+			this.removeTooltip();
+		});
 		requestAnimationFrame(() => {
-			if (this.tooltipElement) this.renderer.addClass(this.tooltipElement, "ath-tooltip--visible");
+			if (this.tooltipElement === tooltip) this.renderer.addClass(tooltip, "ath-tooltip--visible");
 		});
 	}
-	positionTooltip() {
-		if (!this.tooltipElement) return;
-		const hostRect = this.el.nativeElement.getBoundingClientRect();
-		const tooltipRect = this.tooltipElement.getBoundingClientRect();
-		const gap = 8;
-		let top = 0;
-		let left = 0;
-		switch (this.tooltipPosition()) {
-			case "top":
-				top = hostRect.top - tooltipRect.height - gap;
-				left = hostRect.left + (hostRect.width - tooltipRect.width) / 2;
-				break;
-			case "bottom":
-				top = hostRect.bottom + gap;
-				left = hostRect.left + (hostRect.width - tooltipRect.width) / 2;
-				break;
-			case "left":
-				top = hostRect.top + (hostRect.height - tooltipRect.height) / 2;
-				left = hostRect.left - tooltipRect.width - gap;
-				break;
-			case "right":
-				top = hostRect.top + (hostRect.height - tooltipRect.height) / 2;
-				left = hostRect.right + gap;
-		}
-		this.renderer.setStyle(this.tooltipElement, "top", `${top}px`);
-		this.renderer.setStyle(this.tooltipElement, "left", `${left}px`);
-	}
 	removeTooltip() {
+		this.unlistenEscape?.();
+		this.unlistenEscape = null;
+		this.float?.();
+		this.float = null;
 		if (this.tooltipElement) {
 			this.tooltipElement.remove();
 			this.tooltipElement = null;
+			this.setDescribedBy(false);
 		}
+	}
+	setDescribedBy(on) {
+		const host = this.el.nativeElement;
+		const ids = (host.getAttribute("aria-describedby") ?? "").split(/\s+/).filter((id) => id && id !== this.tooltipId);
+		if (on) ids.push(this.tooltipId);
+		if (ids.length) host.setAttribute("aria-describedby", ids.join(" "));
+		else host.removeAttribute("aria-describedby");
 	}
 	static {
 		this.ɵfac = i0.ɵɵngDeclareFactory({
@@ -4300,6 +4621,14 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}
 });
+function isKeyboardFocus(target) {
+	if (!(target instanceof Element)) return false;
+	try {
+		return target.matches(":focus-visible");
+	} catch {
+		return true;
+	}
+}
 var AthChipComponent = class AthChipComponent {
 	constructor() {
 		this.labels = injectAthLabels();
@@ -4627,7 +4956,7 @@ var AthAvatarStackComponent = class AthAvatarStackComponent {
 			host: { properties: { "attr.data-size": "size()" } },
 			ngImport: i0,
 			template: "@for (user of visible(); track trackById($index, user)) {\n  <ath-avatar\n    [id]=\"user.id\"\n    [name]=\"user.name\"\n    [src]=\"user.src ?? ''\"\n    [size]=\"size()\"\n    class=\"ath-stack__item\"\n  />\n}\n@if (overflowCount() > 0) {\n  <span class=\"ath-stack__more\">+{{ overflowCount() }}</span>\n}\n",
-			styles: [":host{display:inline-flex;align-items:center}.ath-stack__item{display:inline-flex}.ath-stack__item+.ath-stack__item,.ath-stack__item+.ath-stack__more{margin-left:-6px}:host ath-avatar{border-radius:999px;box-shadow:0 0 0 1.5px var(--bg-1)}.ath-stack__more{display:inline-flex;align-items:center;justify-content:center;margin-left:-6px;border-radius:999px;background:var(--bg-2);color:var(--fg-3);font-family:var(--font-sans);font-weight:600;border:1.5px solid var(--bg-1);letter-spacing:0}:host([data-size=sm]) .ath-stack__more{width:20px;height:20px;font-size:9px}:host([data-size=md]) .ath-stack__more{width:24px;height:24px;font-size:10px}:host([data-size=lg]) .ath-stack__more{width:36px;height:36px;font-size:12px}:host([data-size=xl]) .ath-stack__more{width:48px;height:48px;font-size:14px}\n"],
+			styles: [":host{display:inline-flex;align-items:center;--_overlap: -6px}:host([data-size=xs]),:host([data-size=sm]){--_overlap: -4px}.ath-stack__item{display:inline-flex}.ath-stack__item+.ath-stack__item,.ath-stack__item+.ath-stack__more{margin-inline-start:var(--_overlap)}:host ath-avatar,.ath-stack__more{position:relative;z-index:0}:host ath-avatar{border-radius:999px;box-shadow:0 0 0 2px var(--avatar-stack-ring)}.ath-stack__more{display:inline-flex;align-items:center;justify-content:center;margin-inline-start:var(--_overlap);border-radius:999px;background:var(--bg-3);color:var(--fg-2);font-family:var(--font-sans);font-weight:600;box-shadow:0 0 0 2px var(--avatar-stack-ring);letter-spacing:0}:host([data-size=sm]) .ath-stack__more{width:20px;height:20px;font-size:9px}:host([data-size=md]) .ath-stack__more{width:24px;height:24px;font-size:10px}:host([data-size=lg]) .ath-stack__more{width:36px;height:36px;font-size:12px}:host([data-size=xl]) .ath-stack__more{width:48px;height:48px;font-size:14px}\n"],
 			dependencies: [{
 				kind: "component",
 				type: AthAvatarComponent,
@@ -4660,7 +4989,7 @@ i0.ɵɵngDeclareClassMetadata({
 			changeDetection: ChangeDetectionStrategy.OnPush,
 			host: { "[attr.data-size]": "size()" },
 			template: "@for (user of visible(); track trackById($index, user)) {\n  <ath-avatar\n    [id]=\"user.id\"\n    [name]=\"user.name\"\n    [src]=\"user.src ?? ''\"\n    [size]=\"size()\"\n    class=\"ath-stack__item\"\n  />\n}\n@if (overflowCount() > 0) {\n  <span class=\"ath-stack__more\">+{{ overflowCount() }}</span>\n}\n",
-			styles: [":host{display:inline-flex;align-items:center}.ath-stack__item{display:inline-flex}.ath-stack__item+.ath-stack__item,.ath-stack__item+.ath-stack__more{margin-left:-6px}:host ath-avatar{border-radius:999px;box-shadow:0 0 0 1.5px var(--bg-1)}.ath-stack__more{display:inline-flex;align-items:center;justify-content:center;margin-left:-6px;border-radius:999px;background:var(--bg-2);color:var(--fg-3);font-family:var(--font-sans);font-weight:600;border:1.5px solid var(--bg-1);letter-spacing:0}:host([data-size=sm]) .ath-stack__more{width:20px;height:20px;font-size:9px}:host([data-size=md]) .ath-stack__more{width:24px;height:24px;font-size:10px}:host([data-size=lg]) .ath-stack__more{width:36px;height:36px;font-size:12px}:host([data-size=xl]) .ath-stack__more{width:48px;height:48px;font-size:14px}\n"]
+			styles: [":host{display:inline-flex;align-items:center;--_overlap: -6px}:host([data-size=xs]),:host([data-size=sm]){--_overlap: -4px}.ath-stack__item{display:inline-flex}.ath-stack__item+.ath-stack__item,.ath-stack__item+.ath-stack__more{margin-inline-start:var(--_overlap)}:host ath-avatar,.ath-stack__more{position:relative;z-index:0}:host ath-avatar{border-radius:999px;box-shadow:0 0 0 2px var(--avatar-stack-ring)}.ath-stack__more{display:inline-flex;align-items:center;justify-content:center;margin-inline-start:var(--_overlap);border-radius:999px;background:var(--bg-3);color:var(--fg-2);font-family:var(--font-sans);font-weight:600;box-shadow:0 0 0 2px var(--avatar-stack-ring);letter-spacing:0}:host([data-size=sm]) .ath-stack__more{width:20px;height:20px;font-size:9px}:host([data-size=md]) .ath-stack__more{width:24px;height:24px;font-size:10px}:host([data-size=lg]) .ath-stack__more{width:36px;height:36px;font-size:12px}:host([data-size=xl]) .ath-stack__more{width:48px;height:48px;font-size:14px}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -4730,6 +5059,7 @@ var AthButtonComponent = class AthButtonComponent {
 	handleClick(event) {
 		if (this.disabled() || this.busy()) {
 			event.preventDefault();
+			event.stopImmediatePropagation();
 			return;
 		}
 		this.clicked.emit(event);
@@ -4850,8 +5180,8 @@ var AthButtonComponent = class AthButtonComponent {
 				failed: "failed"
 			},
 			ngImport: i0,
-			template: "<button\n  [type]=\"type()\"\n  [disabled]=\"disabled() || busy()\"\n  [class]=\"buttonClasses()\"\n  [attr.aria-label]=\"ariaLabel()\"\n  [attr.aria-busy]=\"busy()\"\n  [attr.aria-pressed]=\"pressed()\"\n  [attr.aria-expanded]=\"expanded()\"\n  [attr.aria-controls]=\"controls()\"\n  (click)=\"handleClick($event)\"\n>\n  @if (busy()) {\n    <span class=\"ath-button__loader-wrap\">\n      <ath-icon [img]=\"loaderIcon\" class=\"ath-button__loader\" [size]=\"18\" aria-hidden=\"true\" />\n    </span>\n  }\n  <span class=\"ath-button__content\" [class.ath-button__content--hidden]=\"busy()\">\n    <ng-content />\n  </span>\n</button>\n",
-			styles: [".ath-button{display:inline-grid;place-items:center;position:relative;grid-template-columns:1fr;grid-template-rows:1fr;font-family:var(--font-sans);font-weight:var(--weight-medium);border-radius:var(--r);border:1px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:0;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,opacity .15s ease}.ath-button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--accent)}.ath-button:disabled{opacity:.5;cursor:not-allowed}.ath-button--xs{height:var(--control-h-xs);padding:0 10px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--xs .ath-button__content{gap:5px}.ath-button--sm{height:var(--control-h-sm);padding:0 8px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--md{height:var(--control-h);padding:0 var(--space-3);font-size:var(--control-font)}.ath-button--lg{height:var(--control-h-lg);padding:0 var(--space-5);font-size:var(--text-md)}.ath-button--primary{background:var(--action-primary-bg);color:var(--action-primary-fg);border-color:var(--action-primary-bg);font-weight:var(--weight-medium)}.ath-button--primary:disabled:not(.ath-button--loading){background:var(--action-primary-disabled-bg);border-color:var(--action-primary-disabled-border);color:var(--action-primary-disabled-fg);opacity:var(--action-primary-disabled-opacity)}.ath-button--primary:hover:not(:disabled){background:var(--action-primary-bg-hover);border-color:var(--action-primary-bg-hover)}.ath-button--primary:active:not(:disabled){background:var(--action-primary-bg-active);border-color:var(--action-primary-bg-active)}.ath-button--primary .ath-button__loader-wrap{color:var(--action-primary-fg)}.ath-button--create{background:var(--action-create-bg);color:var(--action-create-fg);border-color:var(--action-create-border)}.ath-button--create:hover:not(:disabled){background:var(--action-create-bg-hover)}.ath-button--create:active:not(:disabled){background:var(--action-create-bg-active)}.ath-button--create .ath-button__loader-wrap{color:var(--action-create-fg)}.ath-button--secondary{background-color:var(--bg-1);color:var(--fg);border-color:var(--action-outline-border)}.ath-button--secondary:hover:not(:disabled){border-color:var(--border-strong);background-color:var(--bg-2)}.ath-button--outline{background-color:transparent;border-color:var(--action-outline-border);color:var(--action-outline-fg)}.ath-button--outline:disabled{color:var(--fg-3);border-color:var(--border)}.ath-button--outline:hover:not(:disabled){background-color:var(--action-outline-hover-bg);border-color:var(--action-outline-hover-border)}.ath-button--ghost{background-color:transparent;color:var(--fg)}.ath-button--ghost:hover:not(:disabled){background-color:var(--hover)}.ath-button--danger{background-color:var(--action-danger-bg);color:var(--action-danger-fg);border-color:var(--action-danger-bg)}.ath-button--danger:hover:not(:disabled){background-color:var(--action-danger-bg-hover);border-color:var(--action-danger-bg-hover)}.ath-button--danger-ghost{background-color:transparent;color:var(--fg-3);border-color:transparent}.ath-button--danger-ghost:hover:not(:disabled){background-color:var(--red-tint);color:var(--red-text)}.ath-button--danger-ghost:active:not(:disabled){background-color:color-mix(in srgb,var(--red) 16%,transparent)}.ath-button--danger-ghost:focus-visible{box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--red)}.ath-button--full-width{width:100%}.ath-button--pressed:not(.ath-button--primary):not(.ath-button--create){background-color:var(--hover-strong);border-color:var(--action-outline-hover-border)}.ath-button--loading{pointer-events:none}.ath-button__loader-wrap{display:inline-flex;align-items:center;justify-content:center;grid-area:1/1}.ath-button__loader{animation:ath-spin 1s linear infinite}.ath-button__content{display:inline-flex;grid-area:1/1;align-items:center;gap:6px}.ath-button__content--hidden{opacity:0}@keyframes ath-spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}\n"],
+			template: "<button\n  [type]=\"type()\"\n  [disabled]=\"disabled()\"\n  [attr.aria-disabled]=\"busy() && !disabled() ? 'true' : null\"\n  [class]=\"buttonClasses()\"\n  [attr.aria-label]=\"ariaLabel()\"\n  [attr.aria-busy]=\"busy()\"\n  [attr.aria-pressed]=\"pressed()\"\n  [attr.aria-expanded]=\"expanded()\"\n  [attr.aria-controls]=\"controls()\"\n  (click)=\"handleClick($event)\"\n>\n  @if (busy()) {\n    <span class=\"ath-button__loader-wrap\">\n      <ath-icon [img]=\"loaderIcon\" class=\"ath-button__loader\" [size]=\"18\" aria-hidden=\"true\" />\n    </span>\n  }\n  <span class=\"ath-button__content\" [class.ath-button__content--hidden]=\"busy()\">\n    <ng-content />\n  </span>\n</button>\n",
+			styles: [".ath-button{display:inline-grid;place-items:center;position:relative;grid-template-columns:1fr;grid-template-rows:1fr;font-family:var(--font-sans);font-weight:var(--weight-medium);border-radius:var(--r);border:1px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:0;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,opacity .15s ease}.ath-button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--accent)}.ath-button:disabled,.ath-button[aria-disabled=true]{opacity:.5;cursor:not-allowed}.ath-button--xs{height:var(--control-h-xs);padding:0 10px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--xs .ath-button__content{gap:5px}.ath-button--sm{height:var(--control-h-sm);padding:0 8px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--md{height:var(--control-h);padding:0 var(--space-3);font-size:var(--control-font)}.ath-button--lg{height:var(--control-h-lg);padding:0 var(--space-5);font-size:var(--text-md)}.ath-button--primary{background:var(--action-primary-bg);color:var(--action-primary-fg);border-color:var(--action-primary-bg);font-weight:var(--weight-medium)}.ath-button--primary:disabled:not(.ath-button--loading){background:var(--action-primary-disabled-bg);border-color:var(--action-primary-disabled-border);color:var(--action-primary-disabled-fg);opacity:var(--action-primary-disabled-opacity)}.ath-button--primary:hover:not(:disabled){background:var(--action-primary-bg-hover);border-color:var(--action-primary-bg-hover)}.ath-button--primary:active:not(:disabled){background:var(--action-primary-bg-active);border-color:var(--action-primary-bg-active)}.ath-button--primary .ath-button__loader-wrap{color:var(--action-primary-fg)}.ath-button--create{background:var(--action-create-bg);color:var(--action-create-fg);border-color:var(--action-create-border)}.ath-button--create:hover:not(:disabled){background:var(--action-create-bg-hover)}.ath-button--create:active:not(:disabled){background:var(--action-create-bg-active)}.ath-button--create .ath-button__loader-wrap{color:var(--action-create-fg)}.ath-button--secondary{background-color:var(--bg-1);color:var(--fg);border-color:var(--action-outline-border)}.ath-button--secondary:hover:not(:disabled){border-color:var(--border-strong);background-color:var(--bg-2)}.ath-button--outline{background-color:transparent;border-color:var(--action-outline-border);color:var(--action-outline-fg)}.ath-button--outline:disabled,.ath-button--outline[aria-disabled=true]{color:var(--fg-3);border-color:var(--border)}.ath-button--outline:hover:not(:disabled){background-color:var(--action-outline-hover-bg);border-color:var(--action-outline-hover-border)}.ath-button--ghost{background-color:transparent;color:var(--fg)}.ath-button--ghost:hover:not(:disabled){background-color:var(--hover)}.ath-button--danger{background-color:var(--action-danger-bg);color:var(--action-danger-fg);border-color:var(--action-danger-bg)}.ath-button--danger:hover:not(:disabled){background-color:var(--action-danger-bg-hover);border-color:var(--action-danger-bg-hover)}.ath-button--danger-ghost{background-color:transparent;color:var(--fg-3);border-color:transparent}.ath-button--danger-ghost:hover:not(:disabled){background-color:var(--red-tint);color:var(--red-text)}.ath-button--danger-ghost:active:not(:disabled){background-color:color-mix(in srgb,var(--red) 16%,transparent)}.ath-button--danger-ghost:focus-visible{box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--red)}.ath-button--full-width{width:100%}.ath-button--pressed:not(.ath-button--primary):not(.ath-button--create){background-color:var(--hover-strong);border-color:var(--action-outline-hover-border)}.ath-button--loading{pointer-events:none}.ath-button__loader-wrap{display:inline-flex;align-items:center;justify-content:center;grid-area:1/1}.ath-button__loader{animation:ath-spin 1s linear infinite}.ath-button__content{display:inline-flex;grid-area:1/1;align-items:center;gap:6px}.ath-button__content--hidden{opacity:0}@keyframes ath-spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}\n"],
 			dependencies: [{
 				kind: "component",
 				type: AthIconComponent,
@@ -4880,8 +5210,8 @@ i0.ɵɵngDeclareClassMetadata({
 			selector: "ath-button",
 			imports: [AthIconComponent],
 			changeDetection: ChangeDetectionStrategy.OnPush,
-			template: "<button\n  [type]=\"type()\"\n  [disabled]=\"disabled() || busy()\"\n  [class]=\"buttonClasses()\"\n  [attr.aria-label]=\"ariaLabel()\"\n  [attr.aria-busy]=\"busy()\"\n  [attr.aria-pressed]=\"pressed()\"\n  [attr.aria-expanded]=\"expanded()\"\n  [attr.aria-controls]=\"controls()\"\n  (click)=\"handleClick($event)\"\n>\n  @if (busy()) {\n    <span class=\"ath-button__loader-wrap\">\n      <ath-icon [img]=\"loaderIcon\" class=\"ath-button__loader\" [size]=\"18\" aria-hidden=\"true\" />\n    </span>\n  }\n  <span class=\"ath-button__content\" [class.ath-button__content--hidden]=\"busy()\">\n    <ng-content />\n  </span>\n</button>\n",
-			styles: [".ath-button{display:inline-grid;place-items:center;position:relative;grid-template-columns:1fr;grid-template-rows:1fr;font-family:var(--font-sans);font-weight:var(--weight-medium);border-radius:var(--r);border:1px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:0;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,opacity .15s ease}.ath-button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--accent)}.ath-button:disabled{opacity:.5;cursor:not-allowed}.ath-button--xs{height:var(--control-h-xs);padding:0 10px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--xs .ath-button__content{gap:5px}.ath-button--sm{height:var(--control-h-sm);padding:0 8px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--md{height:var(--control-h);padding:0 var(--space-3);font-size:var(--control-font)}.ath-button--lg{height:var(--control-h-lg);padding:0 var(--space-5);font-size:var(--text-md)}.ath-button--primary{background:var(--action-primary-bg);color:var(--action-primary-fg);border-color:var(--action-primary-bg);font-weight:var(--weight-medium)}.ath-button--primary:disabled:not(.ath-button--loading){background:var(--action-primary-disabled-bg);border-color:var(--action-primary-disabled-border);color:var(--action-primary-disabled-fg);opacity:var(--action-primary-disabled-opacity)}.ath-button--primary:hover:not(:disabled){background:var(--action-primary-bg-hover);border-color:var(--action-primary-bg-hover)}.ath-button--primary:active:not(:disabled){background:var(--action-primary-bg-active);border-color:var(--action-primary-bg-active)}.ath-button--primary .ath-button__loader-wrap{color:var(--action-primary-fg)}.ath-button--create{background:var(--action-create-bg);color:var(--action-create-fg);border-color:var(--action-create-border)}.ath-button--create:hover:not(:disabled){background:var(--action-create-bg-hover)}.ath-button--create:active:not(:disabled){background:var(--action-create-bg-active)}.ath-button--create .ath-button__loader-wrap{color:var(--action-create-fg)}.ath-button--secondary{background-color:var(--bg-1);color:var(--fg);border-color:var(--action-outline-border)}.ath-button--secondary:hover:not(:disabled){border-color:var(--border-strong);background-color:var(--bg-2)}.ath-button--outline{background-color:transparent;border-color:var(--action-outline-border);color:var(--action-outline-fg)}.ath-button--outline:disabled{color:var(--fg-3);border-color:var(--border)}.ath-button--outline:hover:not(:disabled){background-color:var(--action-outline-hover-bg);border-color:var(--action-outline-hover-border)}.ath-button--ghost{background-color:transparent;color:var(--fg)}.ath-button--ghost:hover:not(:disabled){background-color:var(--hover)}.ath-button--danger{background-color:var(--action-danger-bg);color:var(--action-danger-fg);border-color:var(--action-danger-bg)}.ath-button--danger:hover:not(:disabled){background-color:var(--action-danger-bg-hover);border-color:var(--action-danger-bg-hover)}.ath-button--danger-ghost{background-color:transparent;color:var(--fg-3);border-color:transparent}.ath-button--danger-ghost:hover:not(:disabled){background-color:var(--red-tint);color:var(--red-text)}.ath-button--danger-ghost:active:not(:disabled){background-color:color-mix(in srgb,var(--red) 16%,transparent)}.ath-button--danger-ghost:focus-visible{box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--red)}.ath-button--full-width{width:100%}.ath-button--pressed:not(.ath-button--primary):not(.ath-button--create){background-color:var(--hover-strong);border-color:var(--action-outline-hover-border)}.ath-button--loading{pointer-events:none}.ath-button__loader-wrap{display:inline-flex;align-items:center;justify-content:center;grid-area:1/1}.ath-button__loader{animation:ath-spin 1s linear infinite}.ath-button__content{display:inline-flex;grid-area:1/1;align-items:center;gap:6px}.ath-button__content--hidden{opacity:0}@keyframes ath-spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}\n"]
+			template: "<button\n  [type]=\"type()\"\n  [disabled]=\"disabled()\"\n  [attr.aria-disabled]=\"busy() && !disabled() ? 'true' : null\"\n  [class]=\"buttonClasses()\"\n  [attr.aria-label]=\"ariaLabel()\"\n  [attr.aria-busy]=\"busy()\"\n  [attr.aria-pressed]=\"pressed()\"\n  [attr.aria-expanded]=\"expanded()\"\n  [attr.aria-controls]=\"controls()\"\n  (click)=\"handleClick($event)\"\n>\n  @if (busy()) {\n    <span class=\"ath-button__loader-wrap\">\n      <ath-icon [img]=\"loaderIcon\" class=\"ath-button__loader\" [size]=\"18\" aria-hidden=\"true\" />\n    </span>\n  }\n  <span class=\"ath-button__content\" [class.ath-button__content--hidden]=\"busy()\">\n    <ng-content />\n  </span>\n</button>\n",
+			styles: [".ath-button{display:inline-grid;place-items:center;position:relative;grid-template-columns:1fr;grid-template-rows:1fr;font-family:var(--font-sans);font-weight:var(--weight-medium);border-radius:var(--r);border:1px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:0;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,opacity .15s ease}.ath-button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--accent)}.ath-button:disabled,.ath-button[aria-disabled=true]{opacity:.5;cursor:not-allowed}.ath-button--xs{height:var(--control-h-xs);padding:0 10px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--xs .ath-button__content{gap:5px}.ath-button--sm{height:var(--control-h-sm);padding:0 8px;font-size:var(--control-font);border-radius:var(--r-sm)}.ath-button--md{height:var(--control-h);padding:0 var(--space-3);font-size:var(--control-font)}.ath-button--lg{height:var(--control-h-lg);padding:0 var(--space-5);font-size:var(--text-md)}.ath-button--primary{background:var(--action-primary-bg);color:var(--action-primary-fg);border-color:var(--action-primary-bg);font-weight:var(--weight-medium)}.ath-button--primary:disabled:not(.ath-button--loading){background:var(--action-primary-disabled-bg);border-color:var(--action-primary-disabled-border);color:var(--action-primary-disabled-fg);opacity:var(--action-primary-disabled-opacity)}.ath-button--primary:hover:not(:disabled){background:var(--action-primary-bg-hover);border-color:var(--action-primary-bg-hover)}.ath-button--primary:active:not(:disabled){background:var(--action-primary-bg-active);border-color:var(--action-primary-bg-active)}.ath-button--primary .ath-button__loader-wrap{color:var(--action-primary-fg)}.ath-button--create{background:var(--action-create-bg);color:var(--action-create-fg);border-color:var(--action-create-border)}.ath-button--create:hover:not(:disabled){background:var(--action-create-bg-hover)}.ath-button--create:active:not(:disabled){background:var(--action-create-bg-active)}.ath-button--create .ath-button__loader-wrap{color:var(--action-create-fg)}.ath-button--secondary{background-color:var(--bg-1);color:var(--fg);border-color:var(--action-outline-border)}.ath-button--secondary:hover:not(:disabled){border-color:var(--border-strong);background-color:var(--bg-2)}.ath-button--outline{background-color:transparent;border-color:var(--action-outline-border);color:var(--action-outline-fg)}.ath-button--outline:disabled,.ath-button--outline[aria-disabled=true]{color:var(--fg-3);border-color:var(--border)}.ath-button--outline:hover:not(:disabled){background-color:var(--action-outline-hover-bg);border-color:var(--action-outline-hover-border)}.ath-button--ghost{background-color:transparent;color:var(--fg)}.ath-button--ghost:hover:not(:disabled){background-color:var(--hover)}.ath-button--danger{background-color:var(--action-danger-bg);color:var(--action-danger-fg);border-color:var(--action-danger-bg)}.ath-button--danger:hover:not(:disabled){background-color:var(--action-danger-bg-hover);border-color:var(--action-danger-bg-hover)}.ath-button--danger-ghost{background-color:transparent;color:var(--fg-3);border-color:transparent}.ath-button--danger-ghost:hover:not(:disabled){background-color:var(--red-tint);color:var(--red-text)}.ath-button--danger-ghost:active:not(:disabled){background-color:color-mix(in srgb,var(--red) 16%,transparent)}.ath-button--danger-ghost:focus-visible{box-shadow:0 0 0 2px var(--bg-0),0 0 0 4px var(--red)}.ath-button--full-width{width:100%}.ath-button--pressed:not(.ath-button--primary):not(.ath-button--create){background-color:var(--hover-strong);border-color:var(--action-outline-hover-border)}.ath-button--loading{pointer-events:none}.ath-button__loader-wrap{display:inline-flex;align-items:center;justify-content:center;grid-area:1/1}.ath-button__loader{animation:ath-spin 1s linear infinite}.ath-button__content{display:inline-flex;grid-area:1/1;align-items:center;gap:6px}.ath-button__content--hidden{opacity:0}@keyframes ath-spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}\n"]
 		}]
 	}],
 	ctorParameters: () => [],
@@ -5695,6 +6025,447 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}
 });
+var AthSkeletonComponent = class AthSkeletonComponent {
+	constructor() {
+		this.variant = input("text", ...ngDevMode ? [{ debugName: "variant" }] : /* istanbul ignore next */ []);
+		this.width = input("100%", ...ngDevMode ? [{ debugName: "width" }] : /* istanbul ignore next */ []);
+		this.height = input("", ...ngDevMode ? [{ debugName: "height" }] : /* istanbul ignore next */ []);
+		this.animated = input(true, {
+			...ngDevMode ? { debugName: "animated" } : /* istanbul ignore next */ {},
+			transform: booleanAttribute
+		});
+	}
+	static {
+		this.ɵfac = i0.ɵɵngDeclareFactory({
+			minVersion: "12.0.0",
+			version: "22.2.2",
+			ngImport: i0,
+			type: AthSkeletonComponent,
+			deps: [],
+			target: i0.ɵɵFactoryTarget.Component
+		});
+	}
+	static {
+		this.ɵcmp = i0.ɵɵngDeclareComponent({
+			minVersion: "17.1.0",
+			version: "22.2.2",
+			type: AthSkeletonComponent,
+			isStandalone: true,
+			selector: "ath-skeleton",
+			inputs: {
+				variant: {
+					classPropertyName: "variant",
+					publicName: "variant",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
+				width: {
+					classPropertyName: "width",
+					publicName: "width",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
+				height: {
+					classPropertyName: "height",
+					publicName: "height",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
+				animated: {
+					classPropertyName: "animated",
+					publicName: "animated",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				}
+			},
+			host: {
+				attributes: { "aria-hidden": "true" },
+				properties: {
+					"attr.data-variant": "variant()",
+					"class.ath-skeleton--animated": "animated()",
+					"style.width": "width()",
+					"style.height": "height() || null"
+				},
+				classAttribute: "ath-skeleton"
+			},
+			ngImport: i0,
+			template: "",
+			isInline: true,
+			styles: [":host{display:block;background:var(--bg-2);border-radius:var(--r-xs)}:host([data-variant=line]){height:.8em;margin-block:.35em}:host([data-variant=text]){height:1em}:host([data-variant=row]){height:var(--row-h);border-radius:0;border-bottom:1px solid var(--border)}:host([data-variant=card]){height:64px;border-radius:var(--r)}:host([data-variant=circular]){border-radius:var(--r-full)}:host([data-variant=rectangular]){border-radius:var(--r)}:host(.ath-skeleton--animated){animation:ath-skeleton-pulse 1.6s ease-in-out infinite}@keyframes ath-skeleton-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){:host(.ath-skeleton--animated){animation:none;opacity:.65}}\n"],
+			changeDetection: i0.ChangeDetectionStrategy.OnPush
+		});
+	}
+};
+i0.ɵɵngDeclareClassMetadata({
+	minVersion: "12.0.0",
+	version: "22.2.2",
+	ngImport: i0,
+	type: AthSkeletonComponent,
+	decorators: [{
+		type: Component,
+		args: [{
+			selector: "ath-skeleton",
+			changeDetection: ChangeDetectionStrategy.OnPush,
+			host: {
+				"aria-hidden": "true",
+				class: "ath-skeleton",
+				"[attr.data-variant]": "variant()",
+				"[class.ath-skeleton--animated]": "animated()",
+				"[style.width]": "width()",
+				"[style.height]": "height() || null"
+			},
+			template: "",
+			styles: [":host{display:block;background:var(--bg-2);border-radius:var(--r-xs)}:host([data-variant=line]){height:.8em;margin-block:.35em}:host([data-variant=text]){height:1em}:host([data-variant=row]){height:var(--row-h);border-radius:0;border-bottom:1px solid var(--border)}:host([data-variant=card]){height:64px;border-radius:var(--r)}:host([data-variant=circular]){border-radius:var(--r-full)}:host([data-variant=rectangular]){border-radius:var(--r)}:host(.ath-skeleton--animated){animation:ath-skeleton-pulse 1.6s ease-in-out infinite}@keyframes ath-skeleton-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){:host(.ath-skeleton--animated){animation:none;opacity:.65}}\n"]
+		}]
+	}],
+	propDecorators: {
+		variant: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "variant",
+				required: false
+			}]
+		}],
+		width: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "width",
+				required: false
+			}]
+		}],
+		height: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "height",
+				required: false
+			}]
+		}],
+		animated: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "animated",
+				required: false
+			}]
+		}]
+	}
+});
+var AthSkeletonListComponent = class AthSkeletonListComponent {
+	constructor() {
+		this.labels = injectAthLabels();
+		this.variant = input("row", ...ngDevMode ? [{ debugName: "variant" }] : /* istanbul ignore next */ []);
+		this.count = input(6, {
+			...ngDevMode ? { debugName: "count" } : /* istanbul ignore next */ {},
+			transform: numberAttribute
+		});
+		this.label = input(null, ...ngDevMode ? [{ debugName: "label" }] : /* istanbul ignore next */ []);
+		this.indexes = computed(() => Array.from({ length: Math.max(1, Math.floor(this.count() || 0)) }, (_, i) => i), ...ngDevMode ? [{ debugName: "indexes" }] : /* istanbul ignore next */ []);
+		this.loadingLabel = computed(() => this.label() ?? this.labels.loading(), ...ngDevMode ? [{ debugName: "loadingLabel" }] : /* istanbul ignore next */ []);
+	}
+	static {
+		this.ɵfac = i0.ɵɵngDeclareFactory({
+			minVersion: "12.0.0",
+			version: "22.2.2",
+			ngImport: i0,
+			type: AthSkeletonListComponent,
+			deps: [],
+			target: i0.ɵɵFactoryTarget.Component
+		});
+	}
+	static {
+		this.ɵcmp = i0.ɵɵngDeclareComponent({
+			minVersion: "17.0.0",
+			version: "22.2.2",
+			type: AthSkeletonListComponent,
+			isStandalone: true,
+			selector: "ath-skeleton-list",
+			inputs: {
+				variant: {
+					classPropertyName: "variant",
+					publicName: "variant",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
+				count: {
+					classPropertyName: "count",
+					publicName: "count",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
+				label: {
+					classPropertyName: "label",
+					publicName: "label",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				}
+			},
+			ngImport: i0,
+			template: `
+    <div class="ath-skeleton-list" [attr.data-variant]="variant()" role="status">
+      <span class="ath-skeleton-list__sr">{{ loadingLabel() }}</span>
+      @for (i of indexes(); track i) {
+        <div class="ath-skeleton-list__cell" aria-hidden="true"></div>
+      }
+    </div>
+  `,
+			isInline: true,
+			styles: [":host{display:block}.ath-skeleton-list{overflow:hidden;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__cell{background:var(--bg-2);animation:ath-skeleton-list-pulse 1.6s ease-in-out infinite}.ath-skeleton-list[data-variant=row]{display:flex;flex-direction:column}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell{height:var(--row-h);border-bottom:1px solid var(--border)}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell:last-child{border-bottom:none}.ath-skeleton-list[data-variant=card]{display:flex;flex-direction:column;gap:var(--space-2);padding:10px}.ath-skeleton-list[data-variant=card] .ath-skeleton-list__cell{height:64px;border-radius:var(--r)}.ath-skeleton-list[data-variant=card-grid]{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-3);padding:var(--space-3);border:none;background:transparent}.ath-skeleton-list[data-variant=card-grid] .ath-skeleton-list__cell{height:168px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@keyframes ath-skeleton-list-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){.ath-skeleton-list__cell{animation:none;opacity:.65}}\n"],
+			changeDetection: i0.ChangeDetectionStrategy.OnPush
+		});
+	}
+};
+i0.ɵɵngDeclareClassMetadata({
+	minVersion: "12.0.0",
+	version: "22.2.2",
+	ngImport: i0,
+	type: AthSkeletonListComponent,
+	decorators: [{
+		type: Component,
+		args: [{
+			selector: "ath-skeleton-list",
+			changeDetection: ChangeDetectionStrategy.OnPush,
+			template: `
+    <div class="ath-skeleton-list" [attr.data-variant]="variant()" role="status">
+      <span class="ath-skeleton-list__sr">{{ loadingLabel() }}</span>
+      @for (i of indexes(); track i) {
+        <div class="ath-skeleton-list__cell" aria-hidden="true"></div>
+      }
+    </div>
+  `,
+			styles: [":host{display:block}.ath-skeleton-list{overflow:hidden;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__cell{background:var(--bg-2);animation:ath-skeleton-list-pulse 1.6s ease-in-out infinite}.ath-skeleton-list[data-variant=row]{display:flex;flex-direction:column}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell{height:var(--row-h);border-bottom:1px solid var(--border)}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell:last-child{border-bottom:none}.ath-skeleton-list[data-variant=card]{display:flex;flex-direction:column;gap:var(--space-2);padding:10px}.ath-skeleton-list[data-variant=card] .ath-skeleton-list__cell{height:64px;border-radius:var(--r)}.ath-skeleton-list[data-variant=card-grid]{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-3);padding:var(--space-3);border:none;background:transparent}.ath-skeleton-list[data-variant=card-grid] .ath-skeleton-list__cell{height:168px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@keyframes ath-skeleton-list-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){.ath-skeleton-list__cell{animation:none;opacity:.65}}\n"]
+		}]
+	}],
+	propDecorators: {
+		variant: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "variant",
+				required: false
+			}]
+		}],
+		count: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "count",
+				required: false
+			}]
+		}],
+		label: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "label",
+				required: false
+			}]
+		}]
+	}
+});
+var AthSkeletonTableComponent = class AthSkeletonTableComponent {
+	constructor() {
+		this.rows = input(5, {
+			...ngDevMode ? { debugName: "rows" } : /* istanbul ignore next */ {},
+			transform: numberAttribute
+		});
+		this.columns = input([
+			20,
+			30,
+			25,
+			25
+		], ...ngDevMode ? [{ debugName: "columns" }] : /* istanbul ignore next */ []);
+		this.rowsArray = computed(() => Array.from({ length: this.rows() }, (_, i) => i), ...ngDevMode ? [{ debugName: "rowsArray" }] : /* istanbul ignore next */ []);
+	}
+	static {
+		this.ɵfac = i0.ɵɵngDeclareFactory({
+			minVersion: "12.0.0",
+			version: "22.2.2",
+			ngImport: i0,
+			type: AthSkeletonTableComponent,
+			deps: [],
+			target: i0.ɵɵFactoryTarget.Component
+		});
+	}
+	static {
+		this.ɵcmp = i0.ɵɵngDeclareComponent({
+			minVersion: "17.0.0",
+			version: "22.2.2",
+			type: AthSkeletonTableComponent,
+			isStandalone: true,
+			selector: "ath-skeleton-table",
+			inputs: {
+				rows: {
+					classPropertyName: "rows",
+					publicName: "rows",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
+				columns: {
+					classPropertyName: "columns",
+					publicName: "columns",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				}
+			},
+			ngImport: i0,
+			template: "<div class=\"ath-skeleton-table\">\n  <!-- Header -->\n  <div class=\"ath-skeleton-table__header\">\n    @for (col of columns(); track col) {\n      <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"20px\" />\n    }\n  </div>\n\n  <!-- Rows -->\n  @for (row of rowsArray(); track row) {\n    <div class=\"ath-skeleton-table__row\">\n      @for (col of columns(); track col) {\n        <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"16px\" />\n      }\n    </div>\n  }\n</div>\n",
+			styles: [".ath-skeleton-table{display:flex;flex-direction:column;gap:var(--space-3)}.ath-skeleton-table__header{display:flex;gap:var(--space-4);padding-bottom:var(--space-3);border-bottom:1px solid var(--border)}.ath-skeleton-table__row{display:flex;gap:var(--space-4);padding:var(--space-2) 0}\n"],
+			dependencies: [{
+				kind: "component",
+				type: AthSkeletonComponent,
+				selector: "ath-skeleton",
+				inputs: [
+					"variant",
+					"width",
+					"height",
+					"animated"
+				]
+			}],
+			changeDetection: i0.ChangeDetectionStrategy.OnPush
+		});
+	}
+};
+i0.ɵɵngDeclareClassMetadata({
+	minVersion: "12.0.0",
+	version: "22.2.2",
+	ngImport: i0,
+	type: AthSkeletonTableComponent,
+	decorators: [{
+		type: Component,
+		args: [{
+			selector: "ath-skeleton-table",
+			imports: [AthSkeletonComponent],
+			changeDetection: ChangeDetectionStrategy.OnPush,
+			template: "<div class=\"ath-skeleton-table\">\n  <!-- Header -->\n  <div class=\"ath-skeleton-table__header\">\n    @for (col of columns(); track col) {\n      <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"20px\" />\n    }\n  </div>\n\n  <!-- Rows -->\n  @for (row of rowsArray(); track row) {\n    <div class=\"ath-skeleton-table__row\">\n      @for (col of columns(); track col) {\n        <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"16px\" />\n      }\n    </div>\n  }\n</div>\n",
+			styles: [".ath-skeleton-table{display:flex;flex-direction:column;gap:var(--space-3)}.ath-skeleton-table__header{display:flex;gap:var(--space-4);padding-bottom:var(--space-3);border-bottom:1px solid var(--border)}.ath-skeleton-table__row{display:flex;gap:var(--space-4);padding:var(--space-2) 0}\n"]
+		}]
+	}],
+	propDecorators: {
+		rows: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "rows",
+				required: false
+			}]
+		}],
+		columns: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "columns",
+				required: false
+			}]
+		}]
+	}
+});
+var AthSkeletonCardComponent = class AthSkeletonCardComponent {
+	constructor() {
+		this.showImage = input(true, {
+			...ngDevMode ? { debugName: "showImage" } : /* istanbul ignore next */ {},
+			transform: booleanAttribute
+		});
+		this.showActions = input(true, {
+			...ngDevMode ? { debugName: "showActions" } : /* istanbul ignore next */ {},
+			transform: booleanAttribute
+		});
+	}
+	static {
+		this.ɵfac = i0.ɵɵngDeclareFactory({
+			minVersion: "12.0.0",
+			version: "22.2.2",
+			ngImport: i0,
+			type: AthSkeletonCardComponent,
+			deps: [],
+			target: i0.ɵɵFactoryTarget.Component
+		});
+	}
+	static {
+		this.ɵcmp = i0.ɵɵngDeclareComponent({
+			minVersion: "17.0.0",
+			version: "22.2.2",
+			type: AthSkeletonCardComponent,
+			isStandalone: true,
+			selector: "ath-skeleton-card",
+			inputs: {
+				showImage: {
+					classPropertyName: "showImage",
+					publicName: "showImage",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
+				showActions: {
+					classPropertyName: "showActions",
+					publicName: "showActions",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				}
+			},
+			ngImport: i0,
+			template: "<div class=\"ath-skeleton-card\">\n  @if (showImage()) {\n    <ath-skeleton variant=\"rectangular\" height=\"160px\" />\n  }\n  <div class=\"ath-skeleton-card__content\">\n    <ath-skeleton variant=\"text\" width=\"70%\" height=\"24px\" />\n    <ath-skeleton variant=\"text\" width=\"100%\" height=\"16px\" />\n    <ath-skeleton variant=\"text\" width=\"90%\" height=\"16px\" />\n    @if (showActions()) {\n      <div class=\"ath-skeleton-card__actions\">\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n      </div>\n    }\n  </div>\n</div>\n",
+			styles: [""],
+			dependencies: [{
+				kind: "component",
+				type: AthSkeletonComponent,
+				selector: "ath-skeleton",
+				inputs: [
+					"variant",
+					"width",
+					"height",
+					"animated"
+				]
+			}],
+			changeDetection: i0.ChangeDetectionStrategy.OnPush
+		});
+	}
+};
+i0.ɵɵngDeclareClassMetadata({
+	minVersion: "12.0.0",
+	version: "22.2.2",
+	ngImport: i0,
+	type: AthSkeletonCardComponent,
+	decorators: [{
+		type: Component,
+		args: [{
+			selector: "ath-skeleton-card",
+			imports: [AthSkeletonComponent],
+			changeDetection: ChangeDetectionStrategy.OnPush,
+			template: "<div class=\"ath-skeleton-card\">\n  @if (showImage()) {\n    <ath-skeleton variant=\"rectangular\" height=\"160px\" />\n  }\n  <div class=\"ath-skeleton-card__content\">\n    <ath-skeleton variant=\"text\" width=\"70%\" height=\"24px\" />\n    <ath-skeleton variant=\"text\" width=\"100%\" height=\"16px\" />\n    <ath-skeleton variant=\"text\" width=\"90%\" height=\"16px\" />\n    @if (showActions()) {\n      <div class=\"ath-skeleton-card__actions\">\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n      </div>\n    }\n  </div>\n</div>\n"
+		}]
+	}],
+	propDecorators: {
+		showImage: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "showImage",
+				required: false
+			}]
+		}],
+		showActions: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "showActions",
+				required: false
+			}]
+		}]
+	}
+});
 const SPARK_COLOR = {
 	neutral: "var(--fg-3)",
 	amber: "var(--amber)",
@@ -5707,6 +6478,7 @@ function hasKpiTrend(spark) {
 }
 var AthKpiTileComponent = class AthKpiTileComponent {
 	constructor() {
+		this.labels = injectAthLabels();
 		this.label = input.required(...ngDevMode ? [{ debugName: "label" }] : /* istanbul ignore next */ []);
 		this.value = input(0, ...ngDevMode ? [{ debugName: "value" }] : /* istanbul ignore next */ []);
 		this.delta = input(null, ...ngDevMode ? [{ debugName: "delta" }] : /* istanbul ignore next */ []);
@@ -5724,8 +6496,10 @@ var AthKpiTileComponent = class AthKpiTileComponent {
 		this.link = input(null, ...ngDevMode ? [{ debugName: "link" }] : /* istanbul ignore next */ []);
 		this.linkParams = input(null, ...ngDevMode ? [{ debugName: "linkParams" }] : /* istanbul ignore next */ []);
 		this.linkLabel = input(null, ...ngDevMode ? [{ debugName: "linkLabel" }] : /* istanbul ignore next */ []);
+		this.loading = computed(() => this.value() == null, ...ngDevMode ? [{ debugName: "loading" }] : /* istanbul ignore next */ []);
+		this.loadingLabel = computed(() => this.labels.loading(), ...ngDevMode ? [{ debugName: "loadingLabel" }] : /* istanbul ignore next */ []);
 		this.samples = computed(() => this.spark() ?? null, ...ngDevMode ? [{ debugName: "samples" }] : /* istanbul ignore next */ []);
-		this.showTrend = computed(() => !this.muted() && hasKpiTrend(this.samples()), ...ngDevMode ? [{ debugName: "showTrend" }] : /* istanbul ignore next */ []);
+		this.showTrend = computed(() => !this.muted() && !this.loading() && hasKpiTrend(this.samples()), ...ngDevMode ? [{ debugName: "showTrend" }] : /* istanbul ignore next */ []);
 		this.trendColor = computed(() => this.sparkColor() ?? SPARK_COLOR[this.tone()], ...ngDevMode ? [{ debugName: "trendColor" }] : /* istanbul ignore next */ []);
 		this.routerLink = computed(() => this.link(), ...ngDevMode ? [{ debugName: "routerLink" }] : /* istanbul ignore next */ []);
 		this.figureTone = computed(() => this.alert() || this.muted() ? null : this.valueTone() ?? null, ...ngDevMode ? [{ debugName: "figureTone" }] : /* istanbul ignore next */ []);
@@ -5873,40 +6647,54 @@ var AthKpiTileComponent = class AthKpiTileComponent {
 				"class.ath-kpi--link": "link() !== null"
 			} },
 			ngImport: i0,
-			template: "<div class=\"ath-kpi__row\">\n  @if (link() !== null) {\n    <a\n      class=\"ath-kpi__label ath-kpi__link\"\n      [routerLink]=\"routerLink()\"\n      [queryParams]=\"linkParams()\"\n      [attr.aria-label]=\"linkLabel() ?? label()\"\n    >\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</a\n    >\n  } @else {\n    <span class=\"ath-kpi__label\">\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</span\n    >\n  }\n  @if (delta() !== null && delta() !== undefined) {\n    <span\n      class=\"ath-kpi__delta\"\n      [attr.data-direction]=\"deltaDirection() ?? 'neutral'\"\n      [attr.title]=\"deltaTitle()\"\n      [attr.aria-label]=\"deltaTitle()\"\n      >{{ delta() }}</span\n    >\n  }\n</div>\n\n<div class=\"ath-kpi__bottom\">\n  <span\n    class=\"ath-kpi__value\"\n    [attr.data-tone]=\"figureTone()\"\n    [class.ath-kpi__value--alert]=\"alert()\"\n    [class.ath-kpi__value--muted]=\"muted()\"\n    >{{ value() }}</span\n  >\n  @if (note()) {\n    <span class=\"ath-kpi__note\" [attr.title]=\"noteTitle()\">{{ note() }}</span>\n  } @else if (showTrend()) {\n    <ath-sparkline [data]=\"samples()\" [color]=\"trendColor()\" />\n  } @else {\n    <!-- No trend: the slot keeps the sparkline's footprint so tiles line up. -->\n    <span class=\"ath-kpi__spark-slot\" aria-hidden=\"true\"></span>\n  }\n</div>\n\n<!-- Under the figure: a progress bar or a short line; nothing when empty. -->\n<div class=\"ath-kpi__extra\"><ng-content /></div>\n",
-			styles: [":host{display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:0;padding:11px var(--space-4);border-left:1px solid var(--border-faint);background:var(--surface)}:host(:first-child){border-left:none}@container ath-kpi-strip (max-width: 920px){:host(:nth-child(odd)){border-left:none}:host(:nth-child(n+3)){border-top:1px solid var(--border-faint)}}.ath-kpi__row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-kpi__label{overflow:hidden;color:var(--fg-3);font-size:var(--text-sm);font-weight:var(--weight-medium);letter-spacing:-.003em;text-overflow:ellipsis;white-space:nowrap}.ath-kpi__dot{display:inline-block;width:7px;height:7px;margin-inline-end:3px;border-radius:var(--r-full);vertical-align:.05em}.ath-kpi__delta{position:relative;z-index:var(--z-raised);padding:0 var(--space-1);border-radius:var(--r-xs);background:var(--bg-2);color:var(--fg-3);font-family:var(--font-mono);font-size:10.5px;font-feature-settings:\"tnum\";font-weight:var(--weight-medium);line-height:14px;white-space:nowrap}.ath-kpi__delta[data-direction=up]{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green-text)}.ath-kpi__delta[data-direction=down]{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red-text)}.ath-kpi__bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.ath-kpi__value{color:var(--fg);font-family:var(--font-sans);font-size:var(--text-2xl);font-variant-numeric:tabular-nums;font-weight:var(--weight-semibold);letter-spacing:-.02em;line-height:1}.ath-kpi__value[data-tone=amber]{color:var(--amber-text)}.ath-kpi__value[data-tone=blue]{color:var(--blue-text)}.ath-kpi__value[data-tone=green]{color:var(--green-text)}.ath-kpi__value[data-tone=red]{color:var(--red-text)}.ath-kpi__value[data-tone=purple]{color:var(--purple-text)}.ath-kpi__value--alert{color:var(--red-text)}.ath-kpi__value--muted{color:var(--fg-4);font-weight:var(--weight-medium)}.ath-kpi__note{color:var(--fg-3);font-family:var(--font-mono);font-size:var(--text-xs);line-height:22px;white-space:nowrap}.ath-kpi__extra{margin-top:-4px}.ath-kpi__extra:empty{display:none}.ath-kpi__spark-slot{display:inline-block;width:70px;height:22px}:host(.ath-kpi--link){position:relative;transition:background var(--t-fast)}:host(.ath-kpi--link):hover{background:var(--bg-2)}:host(.ath-kpi--link):has(.ath-kpi__link:focus-visible){box-shadow:inset 0 0 0 2px var(--focus-ring-color)}.ath-kpi__link{text-decoration:none}.ath-kpi__link:after{content:\"\";position:absolute;inset:0}.ath-kpi__link:focus-visible{outline:none}:host(.ath-kpi--link:hover) .ath-kpi__link{color:var(--fg)}\n"],
-			dependencies: [{
-				kind: "directive",
-				type: RouterLink,
-				selector: "[routerLink]",
-				inputs: [
-					"target",
-					"queryParams",
-					"fragment",
-					"queryParamsHandling",
-					"state",
-					"info",
-					"relativeTo",
-					"preserveFragment",
-					"skipLocationChange",
-					"replaceUrl",
-					"browserUrl",
-					"routerLink"
-				]
-			}, {
-				kind: "component",
-				type: AthSparklineComponent,
-				selector: "ath-sparkline",
-				inputs: [
-					"data",
-					"width",
-					"height",
-					"color",
-					"showDot",
-					"showArea",
-					"strokeWidth"
-				]
-			}],
+			template: "<div class=\"ath-kpi__row\">\n  @if (link() !== null) {\n    <a\n      class=\"ath-kpi__label ath-kpi__link\"\n      [routerLink]=\"routerLink()\"\n      [queryParams]=\"linkParams()\"\n      [attr.aria-label]=\"linkLabel() ?? label()\"\n    >\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</a\n    >\n  } @else {\n    <span class=\"ath-kpi__label\">\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</span\n    >\n  }\n  @if (delta() !== null && delta() !== undefined) {\n    <span\n      class=\"ath-kpi__delta\"\n      [attr.data-direction]=\"deltaDirection() ?? 'neutral'\"\n      [attr.title]=\"deltaTitle()\"\n      [attr.aria-label]=\"deltaTitle()\"\n      >{{ delta() }}</span\n    >\n  }\n</div>\n\n<div class=\"ath-kpi__bottom\" [class.ath-kpi__bottom--note]=\"!!note()\">\n  @if (loading()) {\n    <!-- The figure is not there yet: a skeleton the size of a number, not\n         a fake \"–\" or 0. -->\n    <span class=\"ath-kpi__value ath-kpi__value--loading\">\n      <ath-skeleton variant=\"rectangular\" width=\"48px\" height=\"22px\" />\n      <span class=\"ath-kpi__sr\">{{ loadingLabel() }}</span>\n    </span>\n  } @else {\n    <span\n      class=\"ath-kpi__value\"\n      [attr.data-tone]=\"figureTone()\"\n      [class.ath-kpi__value--alert]=\"alert()\"\n      [class.ath-kpi__value--muted]=\"muted()\"\n      >{{ value() }}</span\n    >\n  }\n  @if (note()) {\n    <!-- Under the figure; a narrow tile ends it in an ellipsis, the full\n         text is the tooltip. -->\n    <span class=\"ath-kpi__note\" [attr.title]=\"noteTitle() ?? note()\">{{ note() }}</span>\n  } @else if (showTrend()) {\n    <ath-sparkline [data]=\"samples()\" [color]=\"trendColor()\" />\n  } @else {\n    <!-- No trend: the slot keeps the sparkline's footprint so tiles line up. -->\n    <span class=\"ath-kpi__spark-slot\" aria-hidden=\"true\"></span>\n  }\n</div>\n\n<!-- Under the figure: a progress bar or a short line; nothing when empty. -->\n<div class=\"ath-kpi__extra\"><ng-content /></div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:flex;flex-direction:column;justify-content:flex-start;gap:10px;min-width:0;padding:11px var(--space-4);border-left:1px solid var(--border-faint);background:var(--surface)}:host(:first-child){border-left:none}@container ath-kpi-strip (max-width: 920px){:host(:nth-child(odd)){border-left:none}:host(:nth-child(n+3)){border-top:1px solid var(--border-faint)}}.ath-kpi__row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-kpi__label{overflow:hidden;color:var(--fg-3);font-size:var(--text-sm);font-weight:var(--weight-medium);letter-spacing:-.003em;text-overflow:ellipsis;white-space:nowrap}.ath-kpi__dot{display:inline-block;width:7px;height:7px;margin-inline-end:3px;border-radius:var(--r-full);vertical-align:.05em}.ath-kpi__delta{position:relative;z-index:var(--z-raised);padding:0 var(--space-1);border-radius:var(--r-xs);background:var(--bg-2);color:var(--fg-3);font-family:var(--font-mono);font-size:10.5px;font-feature-settings:\"tnum\";font-weight:var(--weight-medium);line-height:14px;white-space:nowrap}.ath-kpi__delta[data-direction=up]{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green-text)}.ath-kpi__delta[data-direction=down]{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red-text)}.ath-kpi__bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.ath-kpi__value{color:var(--fg);font-family:var(--font-sans);font-size:var(--text-2xl);font-variant-numeric:tabular-nums;font-weight:var(--weight-semibold);letter-spacing:-.02em;line-height:1}.ath-kpi__value[data-tone=amber]{color:var(--amber-text)}.ath-kpi__value[data-tone=blue]{color:var(--blue-text)}.ath-kpi__value[data-tone=green]{color:var(--green-text)}.ath-kpi__value[data-tone=red]{color:var(--red-text)}.ath-kpi__value[data-tone=purple]{color:var(--purple-text)}.ath-kpi__value--alert{color:var(--red-text)}.ath-kpi__value--muted{color:var(--fg-4);font-weight:var(--weight-medium)}.ath-kpi__value--loading{display:inline-flex;align-items:center;height:1em}.ath-kpi__bottom--note{flex-direction:column;align-items:stretch;gap:6px}.ath-kpi__note{overflow:hidden;min-width:0;color:var(--fg-3);font-family:var(--font-sans);font-size:var(--text-xs);line-height:16px;text-overflow:ellipsis;white-space:nowrap}.ath-kpi__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}.ath-kpi__extra{margin-top:-4px}.ath-kpi__extra:empty{display:none}.ath-kpi__spark-slot{display:inline-block;width:70px;height:22px}:host(.ath-kpi--link){position:relative;transition:background var(--t-fast)}:host(.ath-kpi--link):hover{background:var(--bg-2)}:host(.ath-kpi--link):has(.ath-kpi__link:focus-visible){box-shadow:inset 0 0 0 2px var(--focus-ring-color)}.ath-kpi__link{text-decoration:none}.ath-kpi__link:after{content:\"\";position:absolute;inset:0}.ath-kpi__link:focus-visible{outline:none}:host(.ath-kpi--link:hover) .ath-kpi__link{color:var(--fg)}\n"],
+			dependencies: [
+				{
+					kind: "directive",
+					type: RouterLink,
+					selector: "[routerLink]",
+					inputs: [
+						"target",
+						"queryParams",
+						"fragment",
+						"queryParamsHandling",
+						"state",
+						"info",
+						"relativeTo",
+						"preserveFragment",
+						"skipLocationChange",
+						"replaceUrl",
+						"browserUrl",
+						"routerLink"
+					]
+				},
+				{
+					kind: "component",
+					type: AthSkeletonComponent,
+					selector: "ath-skeleton",
+					inputs: [
+						"variant",
+						"width",
+						"height",
+						"animated"
+					]
+				},
+				{
+					kind: "component",
+					type: AthSparklineComponent,
+					selector: "ath-sparkline",
+					inputs: [
+						"data",
+						"width",
+						"height",
+						"color",
+						"showDot",
+						"showArea",
+						"strokeWidth"
+					]
+				}
+			],
 			changeDetection: i0.ChangeDetectionStrategy.OnPush
 		});
 	}
@@ -5920,14 +6708,18 @@ i0.ɵɵngDeclareClassMetadata({
 		type: Component,
 		args: [{
 			selector: "ath-kpi-tile",
-			imports: [RouterLink, AthSparklineComponent],
+			imports: [
+				RouterLink,
+				AthSkeletonComponent,
+				AthSparklineComponent
+			],
 			changeDetection: ChangeDetectionStrategy.OnPush,
 			host: {
 				"[attr.data-tone]": "tone()",
 				"[class.ath-kpi--link]": "link() !== null"
 			},
-			template: "<div class=\"ath-kpi__row\">\n  @if (link() !== null) {\n    <a\n      class=\"ath-kpi__label ath-kpi__link\"\n      [routerLink]=\"routerLink()\"\n      [queryParams]=\"linkParams()\"\n      [attr.aria-label]=\"linkLabel() ?? label()\"\n    >\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</a\n    >\n  } @else {\n    <span class=\"ath-kpi__label\">\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</span\n    >\n  }\n  @if (delta() !== null && delta() !== undefined) {\n    <span\n      class=\"ath-kpi__delta\"\n      [attr.data-direction]=\"deltaDirection() ?? 'neutral'\"\n      [attr.title]=\"deltaTitle()\"\n      [attr.aria-label]=\"deltaTitle()\"\n      >{{ delta() }}</span\n    >\n  }\n</div>\n\n<div class=\"ath-kpi__bottom\">\n  <span\n    class=\"ath-kpi__value\"\n    [attr.data-tone]=\"figureTone()\"\n    [class.ath-kpi__value--alert]=\"alert()\"\n    [class.ath-kpi__value--muted]=\"muted()\"\n    >{{ value() }}</span\n  >\n  @if (note()) {\n    <span class=\"ath-kpi__note\" [attr.title]=\"noteTitle()\">{{ note() }}</span>\n  } @else if (showTrend()) {\n    <ath-sparkline [data]=\"samples()\" [color]=\"trendColor()\" />\n  } @else {\n    <!-- No trend: the slot keeps the sparkline's footprint so tiles line up. -->\n    <span class=\"ath-kpi__spark-slot\" aria-hidden=\"true\"></span>\n  }\n</div>\n\n<!-- Under the figure: a progress bar or a short line; nothing when empty. -->\n<div class=\"ath-kpi__extra\"><ng-content /></div>\n",
-			styles: [":host{display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:0;padding:11px var(--space-4);border-left:1px solid var(--border-faint);background:var(--surface)}:host(:first-child){border-left:none}@container ath-kpi-strip (max-width: 920px){:host(:nth-child(odd)){border-left:none}:host(:nth-child(n+3)){border-top:1px solid var(--border-faint)}}.ath-kpi__row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-kpi__label{overflow:hidden;color:var(--fg-3);font-size:var(--text-sm);font-weight:var(--weight-medium);letter-spacing:-.003em;text-overflow:ellipsis;white-space:nowrap}.ath-kpi__dot{display:inline-block;width:7px;height:7px;margin-inline-end:3px;border-radius:var(--r-full);vertical-align:.05em}.ath-kpi__delta{position:relative;z-index:var(--z-raised);padding:0 var(--space-1);border-radius:var(--r-xs);background:var(--bg-2);color:var(--fg-3);font-family:var(--font-mono);font-size:10.5px;font-feature-settings:\"tnum\";font-weight:var(--weight-medium);line-height:14px;white-space:nowrap}.ath-kpi__delta[data-direction=up]{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green-text)}.ath-kpi__delta[data-direction=down]{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red-text)}.ath-kpi__bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.ath-kpi__value{color:var(--fg);font-family:var(--font-sans);font-size:var(--text-2xl);font-variant-numeric:tabular-nums;font-weight:var(--weight-semibold);letter-spacing:-.02em;line-height:1}.ath-kpi__value[data-tone=amber]{color:var(--amber-text)}.ath-kpi__value[data-tone=blue]{color:var(--blue-text)}.ath-kpi__value[data-tone=green]{color:var(--green-text)}.ath-kpi__value[data-tone=red]{color:var(--red-text)}.ath-kpi__value[data-tone=purple]{color:var(--purple-text)}.ath-kpi__value--alert{color:var(--red-text)}.ath-kpi__value--muted{color:var(--fg-4);font-weight:var(--weight-medium)}.ath-kpi__note{color:var(--fg-3);font-family:var(--font-mono);font-size:var(--text-xs);line-height:22px;white-space:nowrap}.ath-kpi__extra{margin-top:-4px}.ath-kpi__extra:empty{display:none}.ath-kpi__spark-slot{display:inline-block;width:70px;height:22px}:host(.ath-kpi--link){position:relative;transition:background var(--t-fast)}:host(.ath-kpi--link):hover{background:var(--bg-2)}:host(.ath-kpi--link):has(.ath-kpi__link:focus-visible){box-shadow:inset 0 0 0 2px var(--focus-ring-color)}.ath-kpi__link{text-decoration:none}.ath-kpi__link:after{content:\"\";position:absolute;inset:0}.ath-kpi__link:focus-visible{outline:none}:host(.ath-kpi--link:hover) .ath-kpi__link{color:var(--fg)}\n"]
+			template: "<div class=\"ath-kpi__row\">\n  @if (link() !== null) {\n    <a\n      class=\"ath-kpi__label ath-kpi__link\"\n      [routerLink]=\"routerLink()\"\n      [queryParams]=\"linkParams()\"\n      [attr.aria-label]=\"linkLabel() ?? label()\"\n    >\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</a\n    >\n  } @else {\n    <span class=\"ath-kpi__label\">\n      @if (dot()) {\n        <span class=\"ath-kpi__dot\" [style.background]=\"dot()\" aria-hidden=\"true\"></span>\n      }\n      {{ label() }}</span\n    >\n  }\n  @if (delta() !== null && delta() !== undefined) {\n    <span\n      class=\"ath-kpi__delta\"\n      [attr.data-direction]=\"deltaDirection() ?? 'neutral'\"\n      [attr.title]=\"deltaTitle()\"\n      [attr.aria-label]=\"deltaTitle()\"\n      >{{ delta() }}</span\n    >\n  }\n</div>\n\n<div class=\"ath-kpi__bottom\" [class.ath-kpi__bottom--note]=\"!!note()\">\n  @if (loading()) {\n    <!-- The figure is not there yet: a skeleton the size of a number, not\n         a fake \"–\" or 0. -->\n    <span class=\"ath-kpi__value ath-kpi__value--loading\">\n      <ath-skeleton variant=\"rectangular\" width=\"48px\" height=\"22px\" />\n      <span class=\"ath-kpi__sr\">{{ loadingLabel() }}</span>\n    </span>\n  } @else {\n    <span\n      class=\"ath-kpi__value\"\n      [attr.data-tone]=\"figureTone()\"\n      [class.ath-kpi__value--alert]=\"alert()\"\n      [class.ath-kpi__value--muted]=\"muted()\"\n      >{{ value() }}</span\n    >\n  }\n  @if (note()) {\n    <!-- Under the figure; a narrow tile ends it in an ellipsis, the full\n         text is the tooltip. -->\n    <span class=\"ath-kpi__note\" [attr.title]=\"noteTitle() ?? note()\">{{ note() }}</span>\n  } @else if (showTrend()) {\n    <ath-sparkline [data]=\"samples()\" [color]=\"trendColor()\" />\n  } @else {\n    <!-- No trend: the slot keeps the sparkline's footprint so tiles line up. -->\n    <span class=\"ath-kpi__spark-slot\" aria-hidden=\"true\"></span>\n  }\n</div>\n\n<!-- Under the figure: a progress bar or a short line; nothing when empty. -->\n<div class=\"ath-kpi__extra\"><ng-content /></div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:flex;flex-direction:column;justify-content:flex-start;gap:10px;min-width:0;padding:11px var(--space-4);border-left:1px solid var(--border-faint);background:var(--surface)}:host(:first-child){border-left:none}@container ath-kpi-strip (max-width: 920px){:host(:nth-child(odd)){border-left:none}:host(:nth-child(n+3)){border-top:1px solid var(--border-faint)}}.ath-kpi__row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-kpi__label{overflow:hidden;color:var(--fg-3);font-size:var(--text-sm);font-weight:var(--weight-medium);letter-spacing:-.003em;text-overflow:ellipsis;white-space:nowrap}.ath-kpi__dot{display:inline-block;width:7px;height:7px;margin-inline-end:3px;border-radius:var(--r-full);vertical-align:.05em}.ath-kpi__delta{position:relative;z-index:var(--z-raised);padding:0 var(--space-1);border-radius:var(--r-xs);background:var(--bg-2);color:var(--fg-3);font-family:var(--font-mono);font-size:10.5px;font-feature-settings:\"tnum\";font-weight:var(--weight-medium);line-height:14px;white-space:nowrap}.ath-kpi__delta[data-direction=up]{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green-text)}.ath-kpi__delta[data-direction=down]{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red-text)}.ath-kpi__bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.ath-kpi__value{color:var(--fg);font-family:var(--font-sans);font-size:var(--text-2xl);font-variant-numeric:tabular-nums;font-weight:var(--weight-semibold);letter-spacing:-.02em;line-height:1}.ath-kpi__value[data-tone=amber]{color:var(--amber-text)}.ath-kpi__value[data-tone=blue]{color:var(--blue-text)}.ath-kpi__value[data-tone=green]{color:var(--green-text)}.ath-kpi__value[data-tone=red]{color:var(--red-text)}.ath-kpi__value[data-tone=purple]{color:var(--purple-text)}.ath-kpi__value--alert{color:var(--red-text)}.ath-kpi__value--muted{color:var(--fg-4);font-weight:var(--weight-medium)}.ath-kpi__value--loading{display:inline-flex;align-items:center;height:1em}.ath-kpi__bottom--note{flex-direction:column;align-items:stretch;gap:6px}.ath-kpi__note{overflow:hidden;min-width:0;color:var(--fg-3);font-family:var(--font-sans);font-size:var(--text-xs);line-height:16px;text-overflow:ellipsis;white-space:nowrap}.ath-kpi__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}.ath-kpi__extra{margin-top:-4px}.ath-kpi__extra:empty{display:none}.ath-kpi__spark-slot{display:inline-block;width:70px;height:22px}:host(.ath-kpi--link){position:relative;transition:background var(--t-fast)}:host(.ath-kpi--link):hover{background:var(--bg-2)}:host(.ath-kpi--link):has(.ath-kpi__link:focus-visible){box-shadow:inset 0 0 0 2px var(--focus-ring-color)}.ath-kpi__link{text-decoration:none}.ath-kpi__link:after{content:\"\";position:absolute;inset:0}.ath-kpi__link:focus-visible{outline:none}:host(.ath-kpi--link:hover) .ath-kpi__link{color:var(--fg)}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -6414,6 +7206,32 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}
 });
+async function copyText(text, doc = document) {
+	try {
+		await doc.defaultView.navigator.clipboard.writeText(text);
+		return true;
+	} catch {
+		return copyWithSelection(text, doc);
+	}
+}
+function copyWithSelection(text, doc) {
+	const previous = doc.activeElement;
+	const textarea = doc.createElement("textarea");
+	textarea.value = text;
+	textarea.setAttribute("readonly", "");
+	textarea.style.position = "fixed";
+	textarea.style.opacity = "0";
+	doc.body.appendChild(textarea);
+	textarea.select();
+	try {
+		return doc.execCommand("copy");
+	} catch {
+		return false;
+	} finally {
+		textarea.remove();
+		previous?.focus?.();
+	}
+}
 var AthCodeBlockComponent = class AthCodeBlockComponent {
 	constructor() {
 		this.labels = injectAthLabels();
@@ -6431,16 +7249,24 @@ var AthCodeBlockComponent = class AthCodeBlockComponent {
 		this.copyIcon = Copy;
 		this.checkIcon = Check;
 		this.copied = signal(false, ...ngDevMode ? [{ debugName: "copied" }] : /* istanbul ignore next */ []);
+		this.host = inject(ElementRef);
 		this.lines = computed(() => this.code().split("\n"), ...ngDevMode ? [{ debugName: "lines" }] : /* istanbul ignore next */ []);
 		inject(DestroyRef).onDestroy(() => clearTimeout(this.resetTimer));
 	}
 	async copy() {
-		try {
-			await navigator.clipboard.writeText(this.code());
-			this.copied.set(true);
-			clearTimeout(this.resetTimer);
-			this.resetTimer = setTimeout(() => this.copied.set(false), 1500);
-		} catch {}
+		if (!await copyText(this.code())) {
+			this.selectCode();
+			return;
+		}
+		this.copied.set(true);
+		clearTimeout(this.resetTimer);
+		this.resetTimer = setTimeout(() => this.copied.set(false), 1500);
+	}
+	selectCode() {
+		const body = this.host.nativeElement.querySelector(".ath-code__body");
+		const selection = body?.ownerDocument.getSelection();
+		if (!body || !selection) return;
+		selection.selectAllChildren(body);
 	}
 	static {
 		this.ɵfac = i0.ɵɵngDeclareFactory({
@@ -6726,6 +7552,9 @@ var AthInputComponent = class AthInputComponent {
 		});
 		this.autocomplete = input("off", ...ngDevMode ? [{ debugName: "autocomplete" }] : /* istanbul ignore next */ []);
 		this.inputId = input(`ath-input-${Math.random().toString(36).substr(2, 9)}`, ...ngDevMode ? [{ debugName: "inputId" }] : /* istanbul ignore next */ []);
+		this.errorId = computed(() => `${this.inputId()}-error`, ...ngDevMode ? [{ debugName: "errorId" }] : /* istanbul ignore next */ []);
+		this.hintId = computed(() => `${this.inputId()}-hint`, ...ngDevMode ? [{ debugName: "hintId" }] : /* istanbul ignore next */ []);
+		this.describedBy = computed(() => this.error() ? this.errorId() : this.hint() ? this.hintId() : null, ...ngDevMode ? [{ debugName: "describedBy" }] : /* istanbul ignore next */ []);
 		this.fieldValue = signal("", ...ngDevMode ? [{ debugName: "fieldValue" }] : /* istanbul ignore next */ []);
 		this.formDisabled = signal(false, ...ngDevMode ? [{ debugName: "formDisabled" }] : /* istanbul ignore next */ []);
 		this.isDisabled = computed(() => this.disabled() || this.formDisabled(), ...ngDevMode ? [{ debugName: "isDisabled" }] : /* istanbul ignore next */ []);
@@ -6874,8 +7703,8 @@ var AthInputComponent = class AthInputComponent {
 				multi: true
 			}],
 			ngImport: i0,
-			template: "<div\n  class=\"ath-input\"\n  [class.ath-input--sm]=\"size() === 'sm'\"\n  [class.ath-input--error]=\"error()\"\n  [class.ath-input--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-input__label\" [for]=\"inputId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-input__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-input__wrapper\">\n    <input\n      [id]=\"inputId()\"\n      [type]=\"showPassword() ? 'text' : type()\"\n      [placeholder]=\"placeholder()\"\n      [disabled]=\"isDisabled()\"\n      [readonly]=\"readonly()\"\n      [autocomplete]=\"autocomplete()\"\n      [value]=\"fieldValue()\"\n      (input)=\"onInput($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-input__field\"\n    />\n\n    @if (type() === 'password') {\n      <button\n        type=\"button\"\n        class=\"ath-input__toggle\"\n        (click)=\"togglePassword()\"\n        [attr.aria-label]=\"showPassword() ? hidePasswordText() : showPasswordText()\"\n        [attr.aria-pressed]=\"showPassword()\"\n        tabindex=\"-1\"\n      >\n        <ath-icon [img]=\"showPassword() ? eyeOffIcon : eyeIcon\" [size]=\"18\" />\n      </button>\n    }\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-input__error\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-input__hint\">{{ hint() }}</div>\n  }\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-input{display:flex;flex-direction:column;gap:var(--space-1)}.ath-input__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-input__required{color:var(--red-text);margin-left:2px}.ath-input__wrapper{position:relative;display:flex;align-items:center}.ath-input__field{width:100%;height:44px;padding:0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);transition:border-color var(--t-fast),box-shadow var(--t-fast),background-color var(--t-fast)}.ath-input__field::placeholder{color:var(--fg-3)}.ath-input__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-input__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-input__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-input__toggle{position:absolute;right:var(--space-2);display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;color:var(--fg-3);background:none;border:none;border-radius:var(--r-sm);cursor:pointer;transition:color var(--t-fast),background-color var(--t-fast)}.ath-input__toggle:hover{color:var(--fg-2);background-color:var(--bg-2)}.ath-input__error{display:flex;align-items:center;gap:var(--space-1);font-size:var(--text-sm);color:var(--red-text)}.ath-input__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-input--error .ath-input__field{border-color:var(--red)}.ath-input--error .ath-input__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-input--disabled .ath-input__label{opacity:.5}.ath-input--sm .ath-input__field{height:var(--field-h-sm);padding-left:10px;padding-right:10px;font-size:13.5px}\n"],
+			template: "<div\n  class=\"ath-input\"\n  [class.ath-input--sm]=\"size() === 'sm'\"\n  [class.ath-input--error]=\"error()\"\n  [class.ath-input--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-input__label\" [for]=\"inputId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-input__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-input__wrapper\">\n    <input\n      [id]=\"inputId()\"\n      [type]=\"showPassword() ? 'text' : type()\"\n      [placeholder]=\"placeholder()\"\n      [disabled]=\"isDisabled()\"\n      [readonly]=\"readonly()\"\n      [attr.aria-required]=\"required() || null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      [attr.aria-describedby]=\"describedBy()\"\n      [autocomplete]=\"autocomplete()\"\n      [value]=\"fieldValue()\"\n      (input)=\"onInput($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-input__field\"\n    />\n\n    @if (type() === 'password') {\n      <button\n        type=\"button\"\n        class=\"ath-input__toggle\"\n        (click)=\"togglePassword()\"\n        [attr.aria-label]=\"showPassword() ? hidePasswordText() : showPasswordText()\"\n        [attr.aria-pressed]=\"showPassword()\"\n        [attr.aria-controls]=\"inputId()\"\n      >\n        <ath-icon [img]=\"showPassword() ? eyeOffIcon : eyeIcon\" [size]=\"18\" />\n      </button>\n    }\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-input__error\" [id]=\"errorId()\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-input__hint\" [id]=\"hintId()\">{{ hint() }}</div>\n  }\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-input{display:flex;flex-direction:column;gap:var(--space-1)}.ath-input__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-input__required{color:var(--red-text);margin-left:2px}.ath-input__wrapper{position:relative;display:flex;align-items:center}.ath-input__field{width:100%;height:44px;padding:0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);transition:border-color var(--t-fast),box-shadow var(--t-fast),background-color var(--t-fast)}.ath-input__field::placeholder{color:var(--fg-3)}.ath-input__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-input__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-input__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-input__toggle{position:absolute;right:var(--space-2);display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;color:var(--fg-3);background:none;border:none;border-radius:var(--r-sm);cursor:pointer;transition:color var(--t-fast),background-color var(--t-fast)}.ath-input__toggle:hover{color:var(--fg-2);background-color:var(--bg-2)}.ath-input__toggle:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}.ath-input__error{display:flex;align-items:flex-start;gap:var(--space-1);font-size:var(--text-sm);line-height:1.4;color:var(--red-text)}.ath-input__error ath-icon{flex:none;margin-top:2px}.ath-input__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-input--error .ath-input__field{border-color:var(--red)}.ath-input--error .ath-input__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-input--disabled .ath-input__label{opacity:.5}.ath-input--sm .ath-input__field{height:var(--field-h-sm);padding-left:10px;padding-right:10px;font-size:13.5px}@media(pointer:coarse){.ath-input__field,.ath-input--sm .ath-input__field{font-size:max(16px,var(--text-md))}}\n"],
 			dependencies: [{
 				kind: "ngmodule",
 				type: FormsModule
@@ -6912,8 +7741,8 @@ i0.ɵɵngDeclareClassMetadata({
 				useExisting: forwardRef(() => AthInputComponent),
 				multi: true
 			}],
-			template: "<div\n  class=\"ath-input\"\n  [class.ath-input--sm]=\"size() === 'sm'\"\n  [class.ath-input--error]=\"error()\"\n  [class.ath-input--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-input__label\" [for]=\"inputId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-input__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-input__wrapper\">\n    <input\n      [id]=\"inputId()\"\n      [type]=\"showPassword() ? 'text' : type()\"\n      [placeholder]=\"placeholder()\"\n      [disabled]=\"isDisabled()\"\n      [readonly]=\"readonly()\"\n      [autocomplete]=\"autocomplete()\"\n      [value]=\"fieldValue()\"\n      (input)=\"onInput($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-input__field\"\n    />\n\n    @if (type() === 'password') {\n      <button\n        type=\"button\"\n        class=\"ath-input__toggle\"\n        (click)=\"togglePassword()\"\n        [attr.aria-label]=\"showPassword() ? hidePasswordText() : showPasswordText()\"\n        [attr.aria-pressed]=\"showPassword()\"\n        tabindex=\"-1\"\n      >\n        <ath-icon [img]=\"showPassword() ? eyeOffIcon : eyeIcon\" [size]=\"18\" />\n      </button>\n    }\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-input__error\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-input__hint\">{{ hint() }}</div>\n  }\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-input{display:flex;flex-direction:column;gap:var(--space-1)}.ath-input__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-input__required{color:var(--red-text);margin-left:2px}.ath-input__wrapper{position:relative;display:flex;align-items:center}.ath-input__field{width:100%;height:44px;padding:0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);transition:border-color var(--t-fast),box-shadow var(--t-fast),background-color var(--t-fast)}.ath-input__field::placeholder{color:var(--fg-3)}.ath-input__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-input__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-input__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-input__toggle{position:absolute;right:var(--space-2);display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;color:var(--fg-3);background:none;border:none;border-radius:var(--r-sm);cursor:pointer;transition:color var(--t-fast),background-color var(--t-fast)}.ath-input__toggle:hover{color:var(--fg-2);background-color:var(--bg-2)}.ath-input__error{display:flex;align-items:center;gap:var(--space-1);font-size:var(--text-sm);color:var(--red-text)}.ath-input__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-input--error .ath-input__field{border-color:var(--red)}.ath-input--error .ath-input__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-input--disabled .ath-input__label{opacity:.5}.ath-input--sm .ath-input__field{height:var(--field-h-sm);padding-left:10px;padding-right:10px;font-size:13.5px}\n"]
+			template: "<div\n  class=\"ath-input\"\n  [class.ath-input--sm]=\"size() === 'sm'\"\n  [class.ath-input--error]=\"error()\"\n  [class.ath-input--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-input__label\" [for]=\"inputId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-input__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-input__wrapper\">\n    <input\n      [id]=\"inputId()\"\n      [type]=\"showPassword() ? 'text' : type()\"\n      [placeholder]=\"placeholder()\"\n      [disabled]=\"isDisabled()\"\n      [readonly]=\"readonly()\"\n      [attr.aria-required]=\"required() || null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      [attr.aria-describedby]=\"describedBy()\"\n      [autocomplete]=\"autocomplete()\"\n      [value]=\"fieldValue()\"\n      (input)=\"onInput($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-input__field\"\n    />\n\n    @if (type() === 'password') {\n      <button\n        type=\"button\"\n        class=\"ath-input__toggle\"\n        (click)=\"togglePassword()\"\n        [attr.aria-label]=\"showPassword() ? hidePasswordText() : showPasswordText()\"\n        [attr.aria-pressed]=\"showPassword()\"\n        [attr.aria-controls]=\"inputId()\"\n      >\n        <ath-icon [img]=\"showPassword() ? eyeOffIcon : eyeIcon\" [size]=\"18\" />\n      </button>\n    }\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-input__error\" [id]=\"errorId()\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-input__hint\" [id]=\"hintId()\">{{ hint() }}</div>\n  }\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-input{display:flex;flex-direction:column;gap:var(--space-1)}.ath-input__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-input__required{color:var(--red-text);margin-left:2px}.ath-input__wrapper{position:relative;display:flex;align-items:center}.ath-input__field{width:100%;height:44px;padding:0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);transition:border-color var(--t-fast),box-shadow var(--t-fast),background-color var(--t-fast)}.ath-input__field::placeholder{color:var(--fg-3)}.ath-input__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-input__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-input__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-input__toggle{position:absolute;right:var(--space-2);display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;color:var(--fg-3);background:none;border:none;border-radius:var(--r-sm);cursor:pointer;transition:color var(--t-fast),background-color var(--t-fast)}.ath-input__toggle:hover{color:var(--fg-2);background-color:var(--bg-2)}.ath-input__toggle:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus-ring-color)}.ath-input__error{display:flex;align-items:flex-start;gap:var(--space-1);font-size:var(--text-sm);line-height:1.4;color:var(--red-text)}.ath-input__error ath-icon{flex:none;margin-top:2px}.ath-input__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-input--error .ath-input__field{border-color:var(--red)}.ath-input--error .ath-input__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-input--disabled .ath-input__label{opacity:.5}.ath-input--sm .ath-input__field{height:var(--field-h-sm);padding-left:10px;padding-right:10px;font-size:13.5px}@media(pointer:coarse){.ath-input__field,.ath-input--sm .ath-input__field{font-size:max(16px,var(--text-md))}}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -7043,6 +7872,9 @@ var AthSelectComponent = class AthSelectComponent {
 		});
 		this.ariaLabel = input("", ...ngDevMode ? [{ debugName: "ariaLabel" }] : /* istanbul ignore next */ []);
 		this.selectId = input(`ath-select-${Math.random().toString(36).substr(2, 9)}`, ...ngDevMode ? [{ debugName: "selectId" }] : /* istanbul ignore next */ []);
+		this.errorId = computed(() => `${this.selectId()}-error`, ...ngDevMode ? [{ debugName: "errorId" }] : /* istanbul ignore next */ []);
+		this.hintId = computed(() => `${this.selectId()}-hint`, ...ngDevMode ? [{ debugName: "hintId" }] : /* istanbul ignore next */ []);
+		this.describedBy = computed(() => this.error() ? this.errorId() : this.hint() ? this.hintId() : null, ...ngDevMode ? [{ debugName: "describedBy" }] : /* istanbul ignore next */ []);
 		this.fieldValue = signal("", ...ngDevMode ? [{ debugName: "fieldValue" }] : /* istanbul ignore next */ []);
 		this.formDisabled = signal(false, ...ngDevMode ? [{ debugName: "formDisabled" }] : /* istanbul ignore next */ []);
 		this.isDisabled = computed(() => this.disabled() || this.formDisabled(), ...ngDevMode ? [{ debugName: "isDisabled" }] : /* istanbul ignore next */ []);
@@ -7163,8 +7995,8 @@ var AthSelectComponent = class AthSelectComponent {
 				multi: true
 			}],
 			ngImport: i0,
-			template: "<div\n  class=\"ath-select\"\n  [class.ath-select--sm]=\"size() === 'sm'\"\n  [class.ath-select--error]=\"error()\"\n  [class.ath-select--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-select__label\" [for]=\"selectId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-select__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-select__wrapper\">\n    <select\n      [id]=\"selectId()\"\n      [attr.aria-label]=\"ariaLabel() || null\"\n      [disabled]=\"isDisabled()\"\n      [value]=\"fieldValue()\"\n      (change)=\"onSelectionChange($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-select__field\"\n    >\n      @if (placeholderText()) {\n        <option value=\"\" disabled [selected]=\"!fieldValue()\">{{ placeholderText() }}</option>\n      }\n      @for (option of options(); track option.value) {\n        <!-- [selected] as well as the select's [value]: options that arrive after\n             the value (loaded later) must still show it. -->\n        <option\n          [value]=\"option.value\"\n          [disabled]=\"option.disabled\"\n          [selected]=\"option.value === fieldValue()\"\n        >\n          {{ option.label }}\n        </option>\n      }\n    </select>\n    <ath-icon [img]=\"chevronIcon\" [size]=\"16\" class=\"ath-select__chevron\" />\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-select__error\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-select__hint\">{{ hint() }}</div>\n  }\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-select{display:flex;flex-direction:column;gap:var(--space-1)}.ath-select__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-select__required{color:var(--red-text);margin-left:2px}.ath-select__wrapper{position:relative;display:flex;align-items:center}.ath-select__field{width:100%;height:44px;padding:0 var(--space-10) 0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);appearance:none;cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-select__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-select__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-select__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-select__field option{background-color:var(--bg-1);color:var(--fg)}.ath-select__chevron{position:absolute;right:var(--space-3);color:var(--fg-3);pointer-events:none}.ath-select__error{display:flex;align-items:center;gap:var(--space-1);font-size:var(--text-sm);color:var(--red-text)}.ath-select__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-select--error .ath-select__field{border-color:var(--red)}.ath-select--error .ath-select__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-select--disabled .ath-select__label{opacity:.5}.ath-select--sm .ath-select__field{height:var(--field-h-sm);padding-left:10px;padding-right:32px;font-size:13.5px}\n"],
+			template: "<div\n  class=\"ath-select\"\n  [class.ath-select--sm]=\"size() === 'sm'\"\n  [class.ath-select--error]=\"error()\"\n  [class.ath-select--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-select__label\" [for]=\"selectId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-select__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-select__wrapper\">\n    <select\n      [id]=\"selectId()\"\n      [attr.aria-label]=\"ariaLabel() || null\"\n      [disabled]=\"isDisabled()\"\n      [attr.aria-required]=\"required() || null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      [attr.aria-describedby]=\"describedBy()\"\n      [value]=\"fieldValue()\"\n      (change)=\"onSelectionChange($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-select__field\"\n    >\n      @if (placeholderText()) {\n        <option value=\"\" disabled [selected]=\"!fieldValue()\">{{ placeholderText() }}</option>\n      }\n      @for (option of options(); track option.value) {\n        <!-- [selected] as well as the select's [value]: options that arrive after\n             the value (loaded later) must still show it. -->\n        <option\n          [value]=\"option.value\"\n          [disabled]=\"option.disabled\"\n          [selected]=\"option.value === fieldValue()\"\n        >\n          {{ option.label }}\n        </option>\n      }\n    </select>\n    <ath-icon [img]=\"chevronIcon\" [size]=\"16\" class=\"ath-select__chevron\" />\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-select__error\" [id]=\"errorId()\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-select__hint\" [id]=\"hintId()\">{{ hint() }}</div>\n  }\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-select{display:flex;flex-direction:column;gap:var(--space-1)}.ath-select__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-select__required{color:var(--red-text);margin-left:2px}.ath-select__wrapper{position:relative;display:flex;align-items:center}.ath-select__field{width:100%;height:44px;padding:0 var(--space-10) 0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);appearance:none;cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-select__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-select__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-select__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-select__field option{background-color:var(--bg-1);color:var(--fg)}.ath-select__chevron{position:absolute;right:var(--space-3);color:var(--fg-3);pointer-events:none}.ath-select__error{display:flex;align-items:flex-start;gap:var(--space-1);font-size:var(--text-sm);line-height:1.4;color:var(--red-text)}.ath-select__error ath-icon{flex:none;margin-top:2px}.ath-select__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-select--error .ath-select__field{border-color:var(--red)}.ath-select--error .ath-select__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-select--disabled .ath-select__label{opacity:.5}.ath-select--sm .ath-select__field{height:var(--field-h-sm);padding-left:10px;padding-right:32px;font-size:13.5px}\n"],
 			dependencies: [
 				{
 					kind: "ngmodule",
@@ -7216,8 +8048,8 @@ i0.ɵɵngDeclareClassMetadata({
 				useExisting: forwardRef(() => AthSelectComponent),
 				multi: true
 			}],
-			template: "<div\n  class=\"ath-select\"\n  [class.ath-select--sm]=\"size() === 'sm'\"\n  [class.ath-select--error]=\"error()\"\n  [class.ath-select--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-select__label\" [for]=\"selectId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-select__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-select__wrapper\">\n    <select\n      [id]=\"selectId()\"\n      [attr.aria-label]=\"ariaLabel() || null\"\n      [disabled]=\"isDisabled()\"\n      [value]=\"fieldValue()\"\n      (change)=\"onSelectionChange($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-select__field\"\n    >\n      @if (placeholderText()) {\n        <option value=\"\" disabled [selected]=\"!fieldValue()\">{{ placeholderText() }}</option>\n      }\n      @for (option of options(); track option.value) {\n        <!-- [selected] as well as the select's [value]: options that arrive after\n             the value (loaded later) must still show it. -->\n        <option\n          [value]=\"option.value\"\n          [disabled]=\"option.disabled\"\n          [selected]=\"option.value === fieldValue()\"\n        >\n          {{ option.label }}\n        </option>\n      }\n    </select>\n    <ath-icon [img]=\"chevronIcon\" [size]=\"16\" class=\"ath-select__chevron\" />\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-select__error\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-select__hint\">{{ hint() }}</div>\n  }\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-select{display:flex;flex-direction:column;gap:var(--space-1)}.ath-select__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-select__required{color:var(--red-text);margin-left:2px}.ath-select__wrapper{position:relative;display:flex;align-items:center}.ath-select__field{width:100%;height:44px;padding:0 var(--space-10) 0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);appearance:none;cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-select__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-select__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-select__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-select__field option{background-color:var(--bg-1);color:var(--fg)}.ath-select__chevron{position:absolute;right:var(--space-3);color:var(--fg-3);pointer-events:none}.ath-select__error{display:flex;align-items:center;gap:var(--space-1);font-size:var(--text-sm);color:var(--red-text)}.ath-select__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-select--error .ath-select__field{border-color:var(--red)}.ath-select--error .ath-select__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-select--disabled .ath-select__label{opacity:.5}.ath-select--sm .ath-select__field{height:var(--field-h-sm);padding-left:10px;padding-right:32px;font-size:13.5px}\n"]
+			template: "<div\n  class=\"ath-select\"\n  [class.ath-select--sm]=\"size() === 'sm'\"\n  [class.ath-select--error]=\"error()\"\n  [class.ath-select--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-select__label\" [for]=\"selectId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-select__required\">*</span>\n      }\n    </label>\n  }\n\n  <div class=\"ath-select__wrapper\">\n    <select\n      [id]=\"selectId()\"\n      [attr.aria-label]=\"ariaLabel() || null\"\n      [disabled]=\"isDisabled()\"\n      [attr.aria-required]=\"required() || null\"\n      [attr.aria-invalid]=\"error() ? 'true' : null\"\n      [attr.aria-describedby]=\"describedBy()\"\n      [value]=\"fieldValue()\"\n      (change)=\"onSelectionChange($event)\"\n      (blur)=\"onTouched()\"\n      class=\"ath-select__field\"\n    >\n      @if (placeholderText()) {\n        <option value=\"\" disabled [selected]=\"!fieldValue()\">{{ placeholderText() }}</option>\n      }\n      @for (option of options(); track option.value) {\n        <!-- [selected] as well as the select's [value]: options that arrive after\n             the value (loaded later) must still show it. -->\n        <option\n          [value]=\"option.value\"\n          [disabled]=\"option.disabled\"\n          [selected]=\"option.value === fieldValue()\"\n        >\n          {{ option.label }}\n        </option>\n      }\n    </select>\n    <ath-icon [img]=\"chevronIcon\" [size]=\"16\" class=\"ath-select__chevron\" />\n  </div>\n\n  @if (error()) {\n    <div class=\"ath-select__error\" [id]=\"errorId()\">\n      <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n      {{ error() }}\n    </div>\n  }\n\n  @if (hint() && !error()) {\n    <div class=\"ath-select__hint\" [id]=\"hintId()\">{{ hint() }}</div>\n  }\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-select{display:flex;flex-direction:column;gap:var(--space-1)}.ath-select__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-select__required{color:var(--red-text);margin-left:2px}.ath-select__wrapper{position:relative;display:flex;align-items:center}.ath-select__field{width:100%;height:44px;padding:0 var(--space-10) 0 var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);appearance:none;cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-select__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-select__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-select__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-select__field option{background-color:var(--bg-1);color:var(--fg)}.ath-select__chevron{position:absolute;right:var(--space-3);color:var(--fg-3);pointer-events:none}.ath-select__error{display:flex;align-items:flex-start;gap:var(--space-1);font-size:var(--text-sm);line-height:1.4;color:var(--red-text)}.ath-select__error ath-icon{flex:none;margin-top:2px}.ath-select__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-select--error .ath-select__field{border-color:var(--red)}.ath-select--error .ath-select__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-select--disabled .ath-select__label{opacity:.5}.ath-select--sm .ath-select__field{height:var(--field-h-sm);padding-left:10px;padding-right:32px;font-size:13.5px}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -7324,6 +8156,9 @@ var AthTextareaComponent = class AthTextareaComponent {
 		this.resize = input("vertical", ...ngDevMode ? [{ debugName: "resize" }] : /* istanbul ignore next */ []);
 		this.maxLength = input(null, ...ngDevMode ? [{ debugName: "maxLength" }] : /* istanbul ignore next */ []);
 		this.textareaId = input(`ath-textarea-${Math.random().toString(36).substr(2, 9)}`, ...ngDevMode ? [{ debugName: "textareaId" }] : /* istanbul ignore next */ []);
+		this.errorId = computed(() => `${this.textareaId()}-error`, ...ngDevMode ? [{ debugName: "errorId" }] : /* istanbul ignore next */ []);
+		this.hintId = computed(() => `${this.textareaId()}-hint`, ...ngDevMode ? [{ debugName: "hintId" }] : /* istanbul ignore next */ []);
+		this.describedBy = computed(() => this.error() ? this.errorId() : this.hint() ? this.hintId() : null, ...ngDevMode ? [{ debugName: "describedBy" }] : /* istanbul ignore next */ []);
 		this.fieldValue = signal("", ...ngDevMode ? [{ debugName: "fieldValue" }] : /* istanbul ignore next */ []);
 		this.formDisabled = signal(false, ...ngDevMode ? [{ debugName: "formDisabled" }] : /* istanbul ignore next */ []);
 		this.isDisabled = computed(() => this.disabled() || this.formDisabled(), ...ngDevMode ? [{ debugName: "isDisabled" }] : /* istanbul ignore next */ []);
@@ -7448,8 +8283,8 @@ var AthTextareaComponent = class AthTextareaComponent {
 				multi: true
 			}],
 			ngImport: i0,
-			template: "<div\n  class=\"ath-textarea\"\n  [class.ath-textarea--error]=\"error()\"\n  [class.ath-textarea--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-textarea__label\" [for]=\"textareaId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-textarea__required\">*</span>\n      }\n    </label>\n  }\n\n  <textarea\n    [id]=\"textareaId()\"\n    [rows]=\"rows()\"\n    [placeholder]=\"placeholder()\"\n    [disabled]=\"isDisabled()\"\n    [value]=\"fieldValue()\"\n    [attr.maxlength]=\"maxLength()\"\n    [style.resize]=\"resize()\"\n    (input)=\"onInput($event)\"\n    (blur)=\"onTouched()\"\n    class=\"ath-textarea__field\"\n  ></textarea>\n\n  <div class=\"ath-textarea__meta\">\n    @if (error()) {\n      <div class=\"ath-textarea__error\">\n        <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n        {{ error() }}\n      </div>\n    } @else if (hint()) {\n      <div class=\"ath-textarea__hint\">{{ hint() }}</div>\n    } @else {\n      <div></div>\n    }\n\n    @if (maxLength()) {\n      <div class=\"ath-textarea__count\" [class.ath-textarea__count--near-limit]=\"nearLimit()\">\n        {{ characterCount() }}/{{ maxLength() }}\n      </div>\n    }\n  </div>\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-textarea{display:flex;flex-direction:column;gap:var(--space-1)}.ath-textarea__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-textarea__required{color:var(--red-text);margin-left:2px}.ath-textarea__field{width:100%;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);line-height:var(--line-normal);transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-textarea__field::placeholder{color:var(--fg-3)}.ath-textarea__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-textarea__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-textarea__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-textarea__meta{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-textarea__error{display:flex;align-items:center;gap:var(--space-1);font-size:var(--text-sm);color:var(--red-text)}.ath-textarea__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-textarea__count{font-size:var(--text-xs);color:var(--fg-3)}.ath-textarea__count--near-limit{color:var(--amber-text)}.ath-textarea--error .ath-textarea__field{border-color:var(--red)}.ath-textarea--error .ath-textarea__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-textarea--disabled .ath-textarea__label{opacity:.5}\n"],
+			template: "<div\n  class=\"ath-textarea\"\n  [class.ath-textarea--error]=\"error()\"\n  [class.ath-textarea--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-textarea__label\" [for]=\"textareaId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-textarea__required\">*</span>\n      }\n    </label>\n  }\n\n  <textarea\n    [id]=\"textareaId()\"\n    [rows]=\"rows()\"\n    [placeholder]=\"placeholder()\"\n    [disabled]=\"isDisabled()\"\n    [attr.aria-required]=\"required() || null\"\n    [attr.aria-invalid]=\"error() ? 'true' : null\"\n    [attr.aria-describedby]=\"describedBy()\"\n    [value]=\"fieldValue()\"\n    [attr.maxlength]=\"maxLength()\"\n    [style.resize]=\"resize()\"\n    (input)=\"onInput($event)\"\n    (blur)=\"onTouched()\"\n    class=\"ath-textarea__field\"\n  ></textarea>\n\n  <div class=\"ath-textarea__meta\">\n    @if (error()) {\n      <div class=\"ath-textarea__error\" [id]=\"errorId()\">\n        <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n        {{ error() }}\n      </div>\n    } @else if (hint()) {\n      <div class=\"ath-textarea__hint\" [id]=\"hintId()\">{{ hint() }}</div>\n    } @else {\n      <div></div>\n    }\n\n    @if (maxLength()) {\n      <div class=\"ath-textarea__count\" [class.ath-textarea__count--near-limit]=\"nearLimit()\">\n        {{ characterCount() }}/{{ maxLength() }}\n      </div>\n    }\n  </div>\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-textarea{display:flex;flex-direction:column;gap:var(--space-1)}.ath-textarea__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-textarea__required{color:var(--red-text);margin-left:2px}.ath-textarea__field{width:100%;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);line-height:var(--line-normal);transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-textarea__field::placeholder{color:var(--fg-3)}.ath-textarea__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-textarea__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-textarea__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-textarea__meta{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-textarea__error{display:flex;align-items:flex-start;gap:var(--space-1);font-size:var(--text-sm);line-height:1.4;color:var(--red-text)}.ath-textarea__error ath-icon{flex:none;margin-top:2px}.ath-textarea__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-textarea__count{font-size:var(--text-xs);color:var(--fg-3)}.ath-textarea__count--near-limit{color:var(--amber-text)}.ath-textarea--error .ath-textarea__field{border-color:var(--red)}.ath-textarea--error .ath-textarea__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-textarea--disabled .ath-textarea__label{opacity:.5}@media(pointer:coarse){.ath-textarea__field{font-size:max(16px,var(--text-md))}}\n"],
 			dependencies: [{
 				kind: "ngmodule",
 				type: FormsModule
@@ -7486,8 +8321,8 @@ i0.ɵɵngDeclareClassMetadata({
 				useExisting: forwardRef(() => AthTextareaComponent),
 				multi: true
 			}],
-			template: "<div\n  class=\"ath-textarea\"\n  [class.ath-textarea--error]=\"error()\"\n  [class.ath-textarea--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-textarea__label\" [for]=\"textareaId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-textarea__required\">*</span>\n      }\n    </label>\n  }\n\n  <textarea\n    [id]=\"textareaId()\"\n    [rows]=\"rows()\"\n    [placeholder]=\"placeholder()\"\n    [disabled]=\"isDisabled()\"\n    [value]=\"fieldValue()\"\n    [attr.maxlength]=\"maxLength()\"\n    [style.resize]=\"resize()\"\n    (input)=\"onInput($event)\"\n    (blur)=\"onTouched()\"\n    class=\"ath-textarea__field\"\n  ></textarea>\n\n  <div class=\"ath-textarea__meta\">\n    @if (error()) {\n      <div class=\"ath-textarea__error\">\n        <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n        {{ error() }}\n      </div>\n    } @else if (hint()) {\n      <div class=\"ath-textarea__hint\">{{ hint() }}</div>\n    } @else {\n      <div></div>\n    }\n\n    @if (maxLength()) {\n      <div class=\"ath-textarea__count\" [class.ath-textarea__count--near-limit]=\"nearLimit()\">\n        {{ characterCount() }}/{{ maxLength() }}\n      </div>\n    }\n  </div>\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-textarea{display:flex;flex-direction:column;gap:var(--space-1)}.ath-textarea__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-textarea__required{color:var(--red-text);margin-left:2px}.ath-textarea__field{width:100%;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);line-height:var(--line-normal);transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-textarea__field::placeholder{color:var(--fg-3)}.ath-textarea__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-textarea__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-textarea__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-textarea__meta{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-textarea__error{display:flex;align-items:center;gap:var(--space-1);font-size:var(--text-sm);color:var(--red-text)}.ath-textarea__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-textarea__count{font-size:var(--text-xs);color:var(--fg-3)}.ath-textarea__count--near-limit{color:var(--amber-text)}.ath-textarea--error .ath-textarea__field{border-color:var(--red)}.ath-textarea--error .ath-textarea__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-textarea--disabled .ath-textarea__label{opacity:.5}\n"]
+			template: "<div\n  class=\"ath-textarea\"\n  [class.ath-textarea--error]=\"error()\"\n  [class.ath-textarea--disabled]=\"isDisabled()\"\n>\n  @if (label()) {\n    <label class=\"ath-textarea__label\" [for]=\"textareaId()\">\n      {{ label() }}\n      @if (required()) {\n        <span class=\"ath-textarea__required\">*</span>\n      }\n    </label>\n  }\n\n  <textarea\n    [id]=\"textareaId()\"\n    [rows]=\"rows()\"\n    [placeholder]=\"placeholder()\"\n    [disabled]=\"isDisabled()\"\n    [attr.aria-required]=\"required() || null\"\n    [attr.aria-invalid]=\"error() ? 'true' : null\"\n    [attr.aria-describedby]=\"describedBy()\"\n    [value]=\"fieldValue()\"\n    [attr.maxlength]=\"maxLength()\"\n    [style.resize]=\"resize()\"\n    (input)=\"onInput($event)\"\n    (blur)=\"onTouched()\"\n    class=\"ath-textarea__field\"\n  ></textarea>\n\n  <div class=\"ath-textarea__meta\">\n    @if (error()) {\n      <div class=\"ath-textarea__error\" [id]=\"errorId()\">\n        <ath-icon [img]=\"alertIcon\" [size]=\"14\" />\n        {{ error() }}\n      </div>\n    } @else if (hint()) {\n      <div class=\"ath-textarea__hint\" [id]=\"hintId()\">{{ hint() }}</div>\n    } @else {\n      <div></div>\n    }\n\n    @if (maxLength()) {\n      <div class=\"ath-textarea__count\" [class.ath-textarea__count--near-limit]=\"nearLimit()\">\n        {{ characterCount() }}/{{ maxLength() }}\n      </div>\n    }\n  </div>\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}.ath-textarea{display:flex;flex-direction:column;gap:var(--space-1)}.ath-textarea__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-textarea__required{color:var(--red-text);margin-left:2px}.ath-textarea__field{width:100%;padding:var(--space-3) var(--space-4);font-family:var(--font-sans);font-size:var(--text-md);color:var(--fg);background-color:var(--bg-1);border:1px solid var(--border);border-radius:var(--r);line-height:var(--line-normal);transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-textarea__field::placeholder{color:var(--fg-3)}.ath-textarea__field:hover:not(:disabled):not(:focus){border-color:var(--border-strong)}.ath-textarea__field:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-textarea__field:disabled{opacity:.5;cursor:not-allowed;background-color:var(--bg-2)}.ath-textarea__meta{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2)}.ath-textarea__error{display:flex;align-items:flex-start;gap:var(--space-1);font-size:var(--text-sm);line-height:1.4;color:var(--red-text)}.ath-textarea__error ath-icon{flex:none;margin-top:2px}.ath-textarea__hint{font-size:var(--text-sm);color:var(--fg-3)}.ath-textarea__count{font-size:var(--text-xs);color:var(--fg-3)}.ath-textarea__count--near-limit{color:var(--amber-text)}.ath-textarea--error .ath-textarea__field{border-color:var(--red)}.ath-textarea--error .ath-textarea__field:focus-visible{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}.ath-textarea--disabled .ath-textarea__label{opacity:.5}@media(pointer:coarse){.ath-textarea__field{font-size:max(16px,var(--text-md))}}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -7649,7 +8484,7 @@ var AthToggleComponent = class AthToggleComponent {
 			host: { properties: { "attr.data-bare": "label() || description() ? null : ''" } },
 			ngImport: i0,
 			template: "<button\n  type=\"button\"\n  class=\"ath-toggle\"\n  [class.ath-toggle--boxed]=\"label() || description()\"\n  [class.ath-toggle--checked]=\"checked()\"\n  [class.ath-toggle--disabled]=\"disabled()\"\n  role=\"switch\"\n  [attr.aria-checked]=\"checked()\"\n  [attr.aria-label]=\"ariaLabel() || null\"\n  [disabled]=\"disabled()\"\n  (click)=\"toggle()\"\n>\n  <span class=\"ath-toggle__track\">\n    <span class=\"ath-toggle__thumb\"></span>\n  </span>\n  @if (label() || description()) {\n    <span class=\"ath-toggle__content\">\n      @if (label()) {\n        <span class=\"ath-toggle__label\">{{ label() }}</span>\n      }\n      @if (description()) {\n        <span class=\"ath-toggle__description\">{{ description() }}</span>\n      }\n    </span>\n  }\n</button>\n",
-			styles: [":host([data-bare]){display:inline-flex;vertical-align:top}.ath-toggle{display:inline-flex;align-items:center;gap:var(--space-3);padding:0;border:0;background:none;color:var(--fg);text-align:left;cursor:pointer;transition:border-color var(--t-fast),background-color var(--t-fast)}.ath-toggle:focus-visible{outline:none}.ath-toggle:focus-visible .ath-toggle__track{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}.ath-toggle--boxed{display:flex;width:100%;padding:var(--space-3) var(--space-4);border-radius:var(--r);border:1px solid var(--border);background:var(--surface)}.ath-toggle--boxed:hover:not(.ath-toggle--disabled){border-color:var(--border-strong);background:var(--hover)}.ath-toggle__track{position:relative;flex-shrink:0;width:36px;height:20px;border-radius:var(--r-full);background:var(--bg-2);border:1px solid var(--border);transition:background-color var(--t-fast),border-color var(--t-fast)}.ath-toggle__thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:var(--r-full);background:var(--fg-3);transition:transform var(--t-fast),background-color var(--t-fast)}.ath-toggle__content{display:flex;flex-direction:column;gap:2px}.ath-toggle__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-toggle__description{font-size:var(--text-xs);color:var(--fg-3)}.ath-toggle--checked .ath-toggle__track{background:var(--action-primary-bg);border-color:var(--action-primary-bg)}.ath-toggle--checked .ath-toggle__thumb{transform:translate(16px);background:#fff}.ath-toggle--disabled{opacity:.5;cursor:not-allowed}\n"],
+			styles: [":host([data-bare]){display:inline-flex;vertical-align:top}.ath-toggle{position:relative;display:inline-flex;align-items:center;gap:var(--space-3);padding:0;border:0;background:none;color:var(--fg);text-align:left;cursor:pointer;transition:border-color var(--t-fast),background-color var(--t-fast)}.ath-toggle:focus-visible{outline:none}.ath-toggle:focus-visible .ath-toggle__track{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}.ath-toggle--boxed{display:flex;width:100%;padding:var(--space-3) var(--space-4);border-radius:var(--r);border:1px solid var(--border);background:var(--surface)}.ath-toggle--boxed:hover:not(.ath-toggle--disabled){border-color:var(--border-strong);background:var(--hover)}.ath-toggle__track{position:relative;flex-shrink:0;width:36px;height:20px;border-radius:var(--r-full);background:var(--control-off-bg);border:1px solid transparent;transition:background-color var(--t-fast),border-color var(--t-fast)}.ath-toggle__thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:var(--r-full);background:var(--control-off-thumb);box-shadow:var(--control-thumb-shadow);transition:transform var(--t-fast),background-color var(--t-fast)}.ath-toggle__content{display:flex;flex-direction:column;gap:2px}.ath-toggle__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-toggle__description{font-size:var(--text-xs);color:var(--fg-3)}.ath-toggle--checked .ath-toggle__track{background:var(--action-primary-bg);border-color:var(--action-primary-bg)}.ath-toggle--checked .ath-toggle__thumb{transform:translate(16px);background:var(--action-primary-fg)}@media(pointer:coarse){.ath-toggle:not(.ath-toggle--boxed):before{content:\"\";position:absolute;inset:-12px -4px}}.ath-toggle--disabled{opacity:.5;cursor:not-allowed}\n"],
 			changeDetection: i0.ChangeDetectionStrategy.OnPush
 		});
 	}
@@ -7666,7 +8501,7 @@ i0.ɵɵngDeclareClassMetadata({
 			changeDetection: ChangeDetectionStrategy.OnPush,
 			host: { "[attr.data-bare]": "label() || description() ? null : ''" },
 			template: "<button\n  type=\"button\"\n  class=\"ath-toggle\"\n  [class.ath-toggle--boxed]=\"label() || description()\"\n  [class.ath-toggle--checked]=\"checked()\"\n  [class.ath-toggle--disabled]=\"disabled()\"\n  role=\"switch\"\n  [attr.aria-checked]=\"checked()\"\n  [attr.aria-label]=\"ariaLabel() || null\"\n  [disabled]=\"disabled()\"\n  (click)=\"toggle()\"\n>\n  <span class=\"ath-toggle__track\">\n    <span class=\"ath-toggle__thumb\"></span>\n  </span>\n  @if (label() || description()) {\n    <span class=\"ath-toggle__content\">\n      @if (label()) {\n        <span class=\"ath-toggle__label\">{{ label() }}</span>\n      }\n      @if (description()) {\n        <span class=\"ath-toggle__description\">{{ description() }}</span>\n      }\n    </span>\n  }\n</button>\n",
-			styles: [":host([data-bare]){display:inline-flex;vertical-align:top}.ath-toggle{display:inline-flex;align-items:center;gap:var(--space-3);padding:0;border:0;background:none;color:var(--fg);text-align:left;cursor:pointer;transition:border-color var(--t-fast),background-color var(--t-fast)}.ath-toggle:focus-visible{outline:none}.ath-toggle:focus-visible .ath-toggle__track{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}.ath-toggle--boxed{display:flex;width:100%;padding:var(--space-3) var(--space-4);border-radius:var(--r);border:1px solid var(--border);background:var(--surface)}.ath-toggle--boxed:hover:not(.ath-toggle--disabled){border-color:var(--border-strong);background:var(--hover)}.ath-toggle__track{position:relative;flex-shrink:0;width:36px;height:20px;border-radius:var(--r-full);background:var(--bg-2);border:1px solid var(--border);transition:background-color var(--t-fast),border-color var(--t-fast)}.ath-toggle__thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:var(--r-full);background:var(--fg-3);transition:transform var(--t-fast),background-color var(--t-fast)}.ath-toggle__content{display:flex;flex-direction:column;gap:2px}.ath-toggle__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-toggle__description{font-size:var(--text-xs);color:var(--fg-3)}.ath-toggle--checked .ath-toggle__track{background:var(--action-primary-bg);border-color:var(--action-primary-bg)}.ath-toggle--checked .ath-toggle__thumb{transform:translate(16px);background:#fff}.ath-toggle--disabled{opacity:.5;cursor:not-allowed}\n"]
+			styles: [":host([data-bare]){display:inline-flex;vertical-align:top}.ath-toggle{position:relative;display:inline-flex;align-items:center;gap:var(--space-3);padding:0;border:0;background:none;color:var(--fg);text-align:left;cursor:pointer;transition:border-color var(--t-fast),background-color var(--t-fast)}.ath-toggle:focus-visible{outline:none}.ath-toggle:focus-visible .ath-toggle__track{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}.ath-toggle--boxed{display:flex;width:100%;padding:var(--space-3) var(--space-4);border-radius:var(--r);border:1px solid var(--border);background:var(--surface)}.ath-toggle--boxed:hover:not(.ath-toggle--disabled){border-color:var(--border-strong);background:var(--hover)}.ath-toggle__track{position:relative;flex-shrink:0;width:36px;height:20px;border-radius:var(--r-full);background:var(--control-off-bg);border:1px solid transparent;transition:background-color var(--t-fast),border-color var(--t-fast)}.ath-toggle__thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:var(--r-full);background:var(--control-off-thumb);box-shadow:var(--control-thumb-shadow);transition:transform var(--t-fast),background-color var(--t-fast)}.ath-toggle__content{display:flex;flex-direction:column;gap:2px}.ath-toggle__label{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--fg)}.ath-toggle__description{font-size:var(--text-xs);color:var(--fg-3)}.ath-toggle--checked .ath-toggle__track{background:var(--action-primary-bg);border-color:var(--action-primary-bg)}.ath-toggle--checked .ath-toggle__thumb{transform:translate(16px);background:var(--action-primary-fg)}@media(pointer:coarse){.ath-toggle:not(.ath-toggle--boxed):before{content:\"\";position:absolute;inset:-12px -4px}}.ath-toggle--disabled{opacity:.5;cursor:not-allowed}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -7844,11 +8679,24 @@ var AthSegmentComponent = class AthSegmentComponent {
 		this.size = input("md", ...ngDevMode ? [{ debugName: "size" }] : /* istanbul ignore next */ []);
 		this.ariaLabel = input(null, ...ngDevMode ? [{ debugName: "ariaLabel" }] : /* istanbul ignore next */ []);
 		this.valueChange = output();
+		this.host = inject(ElementRef);
+		this.tabStop = computed(() => {
+			const options = this.options();
+			return tabStopIndex(options.findIndex((option) => option.value === this.value()), options.map((option) => !!option.disabled));
+		}, ...ngDevMode ? [{ debugName: "tabStop" }] : /* istanbul ignore next */ []);
 		this.trackByValue = (_, item) => item.value;
 	}
 	select(option) {
 		if (option.disabled) return;
 		if (option.value !== this.value()) this.valueChange.emit(option.value);
+	}
+	onKey(event, index) {
+		const options = this.options();
+		const next = nextTabIndex(event, index, options.map((option) => !!option.disabled), this.host.nativeElement);
+		if (next === null) return;
+		event.preventDefault();
+		this.select(options[next]);
+		this.host.nativeElement.querySelectorAll("[role=\"tab\"]")[next]?.focus();
 	}
 	isActive(option) {
 		return option.value === this.value();
@@ -7909,8 +8757,8 @@ var AthSegmentComponent = class AthSegmentComponent {
 				}
 			},
 			ngImport: i0,
-			template: "@for (option of options(); track trackByValue($index, option)) {\n  <button\n    type=\"button\"\n    role=\"tab\"\n    class=\"ath-seg__item\"\n    [class.ath-seg__item--active]=\"isActive(option)\"\n    [class.ath-seg__item--disabled]=\"option.disabled\"\n    [attr.aria-selected]=\"isActive(option)\"\n    [attr.aria-disabled]=\"option.disabled || null\"\n    [disabled]=\"option.disabled\"\n    (click)=\"select(option)\"\n  >\n    <span class=\"ath-seg__label\">{{ option.label }}</span>\n    @if (option.count != null) {\n      <span class=\"ath-seg__count\">{{ option.count }}</span>\n    }\n  </button>\n}\n",
-			styles: [":host{display:inline-flex;align-items:center;gap:2px;padding:2px;background:var(--segment-track-bg);border-radius:var(--r);border:1px solid var(--border)}.ath-seg__item{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:calc(var(--control-h) - 6px);padding:0 10px;background:transparent;border:0;border-radius:var(--r-sm);font-family:var(--font-sans);font-size:var(--control-font);font-weight:500;color:var(--fg-3);cursor:pointer;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast);white-space:nowrap;letter-spacing:-.005em}.ath-seg__item:hover:not(.ath-seg__item--active):not(.ath-seg__item--disabled){color:var(--fg);background:var(--hover)}.ath-seg__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-seg__item--active{background:var(--segment-active-bg);color:var(--segment-active-fg);box-shadow:var(--shadow-1)}.ath-seg__item--disabled{opacity:.5;cursor:not-allowed}.ath-seg__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;padding:0 5px;height:16px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;border-radius:999px;background:var(--bg-2);color:var(--fg-3);line-height:1}.ath-seg__item--active .ath-seg__count{background:var(--segment-count-active-bg);color:var(--segment-count-active-fg)}:host([data-size=sm]) .ath-seg__item,body.compact :host .ath-seg__item{height:calc(var(--control-h-sm) - 6px);padding:0 9px;font-size:12.5px}\n"],
+			template: "@for (option of options(); track trackByValue($index, option); let i = $index) {\n  <button\n    type=\"button\"\n    role=\"tab\"\n    class=\"ath-seg__item\"\n    [class.ath-seg__item--active]=\"isActive(option)\"\n    [class.ath-seg__item--disabled]=\"option.disabled\"\n    [attr.aria-selected]=\"isActive(option)\"\n    [attr.aria-disabled]=\"option.disabled || null\"\n    [attr.tabindex]=\"i === tabStop() ? 0 : -1\"\n    [disabled]=\"option.disabled\"\n    (click)=\"select(option)\"\n    (keydown)=\"onKey($event, i)\"\n  >\n    <span class=\"ath-seg__label\">{{ option.label }}</span>\n    @if (option.count != null) {\n      <span class=\"ath-seg__count\">{{ option.count }}</span>\n    }\n  </button>\n}\n",
+			styles: [":host{display:inline-flex;align-items:center;gap:2px;padding:2px;background:var(--segment-track-bg);border-radius:var(--r);border:1px solid var(--border)}.ath-seg__item{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:calc(var(--control-h) - 6px);padding:0 10px;background:transparent;border:0;border-radius:var(--r-sm);font-family:var(--font-sans);font-size:var(--control-font);font-weight:500;color:var(--fg-3);cursor:pointer;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast);white-space:nowrap;letter-spacing:-.005em}.ath-seg__item:hover:not(.ath-seg__item--active):not(.ath-seg__item--disabled){color:var(--fg);background:var(--hover)}.ath-seg__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-seg__item--active{background:var(--segment-active-bg);color:var(--segment-active-fg);box-shadow:var(--segment-active-shadow)}.ath-seg__item--disabled{opacity:.5;cursor:not-allowed}.ath-seg__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;padding:0 5px;height:16px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;border-radius:999px;background:var(--bg-2);color:var(--fg-3);line-height:1}.ath-seg__item--active .ath-seg__count{background:var(--segment-count-active-bg);color:var(--segment-count-active-fg)}:host([data-size=sm]) .ath-seg__item,body.compact :host .ath-seg__item{height:calc(var(--control-h-sm) - 6px);padding:0 9px;font-size:12.5px}@media(pointer:coarse),(max-width:639px){:host .ath-seg__item,:host([data-size=sm]) .ath-seg__item{min-height:32px;padding:0 12px}}\n"],
 			changeDetection: i0.ChangeDetectionStrategy.OnPush
 		});
 	}
@@ -7930,8 +8778,8 @@ i0.ɵɵngDeclareClassMetadata({
 				"[attr.aria-label]": "ariaLabel()",
 				"[attr.data-size]": "size()"
 			},
-			template: "@for (option of options(); track trackByValue($index, option)) {\n  <button\n    type=\"button\"\n    role=\"tab\"\n    class=\"ath-seg__item\"\n    [class.ath-seg__item--active]=\"isActive(option)\"\n    [class.ath-seg__item--disabled]=\"option.disabled\"\n    [attr.aria-selected]=\"isActive(option)\"\n    [attr.aria-disabled]=\"option.disabled || null\"\n    [disabled]=\"option.disabled\"\n    (click)=\"select(option)\"\n  >\n    <span class=\"ath-seg__label\">{{ option.label }}</span>\n    @if (option.count != null) {\n      <span class=\"ath-seg__count\">{{ option.count }}</span>\n    }\n  </button>\n}\n",
-			styles: [":host{display:inline-flex;align-items:center;gap:2px;padding:2px;background:var(--segment-track-bg);border-radius:var(--r);border:1px solid var(--border)}.ath-seg__item{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:calc(var(--control-h) - 6px);padding:0 10px;background:transparent;border:0;border-radius:var(--r-sm);font-family:var(--font-sans);font-size:var(--control-font);font-weight:500;color:var(--fg-3);cursor:pointer;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast);white-space:nowrap;letter-spacing:-.005em}.ath-seg__item:hover:not(.ath-seg__item--active):not(.ath-seg__item--disabled){color:var(--fg);background:var(--hover)}.ath-seg__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-seg__item--active{background:var(--segment-active-bg);color:var(--segment-active-fg);box-shadow:var(--shadow-1)}.ath-seg__item--disabled{opacity:.5;cursor:not-allowed}.ath-seg__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;padding:0 5px;height:16px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;border-radius:999px;background:var(--bg-2);color:var(--fg-3);line-height:1}.ath-seg__item--active .ath-seg__count{background:var(--segment-count-active-bg);color:var(--segment-count-active-fg)}:host([data-size=sm]) .ath-seg__item,body.compact :host .ath-seg__item{height:calc(var(--control-h-sm) - 6px);padding:0 9px;font-size:12.5px}\n"]
+			template: "@for (option of options(); track trackByValue($index, option); let i = $index) {\n  <button\n    type=\"button\"\n    role=\"tab\"\n    class=\"ath-seg__item\"\n    [class.ath-seg__item--active]=\"isActive(option)\"\n    [class.ath-seg__item--disabled]=\"option.disabled\"\n    [attr.aria-selected]=\"isActive(option)\"\n    [attr.aria-disabled]=\"option.disabled || null\"\n    [attr.tabindex]=\"i === tabStop() ? 0 : -1\"\n    [disabled]=\"option.disabled\"\n    (click)=\"select(option)\"\n    (keydown)=\"onKey($event, i)\"\n  >\n    <span class=\"ath-seg__label\">{{ option.label }}</span>\n    @if (option.count != null) {\n      <span class=\"ath-seg__count\">{{ option.count }}</span>\n    }\n  </button>\n}\n",
+			styles: [":host{display:inline-flex;align-items:center;gap:2px;padding:2px;background:var(--segment-track-bg);border-radius:var(--r);border:1px solid var(--border)}.ath-seg__item{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:calc(var(--control-h) - 6px);padding:0 10px;background:transparent;border:0;border-radius:var(--r-sm);font-family:var(--font-sans);font-size:var(--control-font);font-weight:500;color:var(--fg-3);cursor:pointer;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast);white-space:nowrap;letter-spacing:-.005em}.ath-seg__item:hover:not(.ath-seg__item--active):not(.ath-seg__item--disabled){color:var(--fg);background:var(--hover)}.ath-seg__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-seg__item--active{background:var(--segment-active-bg);color:var(--segment-active-fg);box-shadow:var(--segment-active-shadow)}.ath-seg__item--disabled{opacity:.5;cursor:not-allowed}.ath-seg__count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;padding:0 5px;height:16px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;border-radius:999px;background:var(--bg-2);color:var(--fg-3);line-height:1}.ath-seg__item--active .ath-seg__count{background:var(--segment-count-active-bg);color:var(--segment-count-active-fg)}:host([data-size=sm]) .ath-seg__item,body.compact :host .ath-seg__item{height:calc(var(--control-h-sm) - 6px);padding:0 9px;font-size:12.5px}@media(pointer:coarse),(max-width:639px){:host .ath-seg__item,:host([data-size=sm]) .ath-seg__item{min-height:32px;padding:0 12px}}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -8997,7 +9845,7 @@ var AthOptionPickerComponent = class AthOptionPickerComponent {
 		this.valueId = `ath-picker-value-${nextPickerId}`;
 		this.popover = viewChild.required(AthPopoverComponent, ...ngDevMode ? [{ debugName: "popover" }] : /* istanbul ignore next */ []);
 		this.triggerButton = viewChild("triggerBtn", ...ngDevMode ? [{ debugName: "triggerButton" }] : /* istanbul ignore next */ []);
-		this.listbox = viewChild.required(AthListboxComponent, ...ngDevMode ? [{ debugName: "listbox" }] : /* istanbul ignore next */ []);
+		this.listbox = viewChild(AthListboxComponent, ...ngDevMode ? [{ debugName: "listbox" }] : /* istanbul ignore next */ []);
 		this.popupAnchor = computed(() => resolveAnchor(this.anchor()) ?? (this.trigger() === "none" ? this.host : this.triggerButton()?.nativeElement ?? null), ...ngDevMode ? [{ debugName: "popupAnchor" }] : /* istanbul ignore next */ []);
 		this.placeholderText = computed(() => this.placeholder() ?? this.labels.pickerPlaceholder(), ...ngDevMode ? [{ debugName: "placeholderText" }] : /* istanbul ignore next */ []);
 		this.selectedOptions = computed(() => {
@@ -9034,7 +9882,7 @@ var AthOptionPickerComponent = class AthOptionPickerComponent {
 	onOpened() {
 		if (this.resetQueryOnOpen()) this.query.set("");
 		this.opened.emit();
-		this.popover().whenPanelReady(() => this.listbox().resetActive());
+		this.popover().whenPanelReady(() => this.listbox()?.resetActive());
 	}
 	onPicked(option) {
 		this.picked.emit(option);
@@ -9276,7 +10124,7 @@ var AthOptionPickerComponent = class AthOptionPickerComponent {
 			],
 			exportAs: ["athOptionPicker"],
 			ngImport: i0,
-			template: "@if (trigger() === 'button') {\n  <div\n    class=\"ath-picker__control\"\n    [class.ath-picker__control--open]=\"open()\"\n    [class.ath-picker__control--clearable]=\"clearable() && hasValue() && !disabled()\"\n  >\n    @if (ariaLabel()) {\n      <span class=\"ath-picker__label\" [id]=\"labelId\" hidden>{{ ariaLabel() }}</span>\n    }\n    <button\n      #triggerBtn\n      type=\"button\"\n      class=\"ath-picker__trigger\"\n      [disabled]=\"disabled()\"\n      [attr.aria-labelledby]=\"ariaLabel() ? labelId + ' ' + valueId : null\"\n      [athPopoverTrigger]=\"pop\"\n      [popupType]=\"searchable() ? 'dialog' : 'listbox'\"\n    >\n      <span\n        class=\"ath-picker__value\"\n        [id]=\"valueId\"\n        [class.ath-picker__value--placeholder]=\"!hasValue()\"\n        >{{ summary() }}</span\n      >\n      <ath-icon class=\"ath-picker__chevron\" [img]=\"chevronIcon\" [size]=\"14\" aria-hidden=\"true\" />\n    </button>\n    @if (clearable() && hasValue() && !disabled()) {\n      <button\n        type=\"button\"\n        class=\"ath-picker__clear\"\n        [attr.aria-label]=\"labels.pickerClear()\"\n        (click)=\"clear()\"\n      >\n        <ath-icon [img]=\"clearIcon\" [size]=\"12\" aria-hidden=\"true\" />\n      </button>\n    }\n  </div>\n}\n\n<ath-popover\n  #pop\n  [(open)]=\"open\"\n  [anchor]=\"popupAnchor()\"\n  [size]=\"size()\"\n  padding=\"sm\"\n  [align]=\"align()\"\n  [matchWidth]=\"matchWidth()\"\n  [panelRole]=\"searchable() ? 'dialog' : null\"\n  [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n  (opened)=\"onOpened()\"\n  (closed)=\"closed.emit($event)\"\n>\n  <ath-listbox\n    [options]=\"options()\"\n    [multiple]=\"multiple()\"\n    [(value)]=\"value\"\n    [(values)]=\"values\"\n    [(query)]=\"query\"\n    [searchable]=\"searchable()\"\n    [localFilter]=\"localFilter()\"\n    [creatable]=\"creatable()\"\n    [loading]=\"loading()\"\n    [searchPlaceholder]=\"searchPlaceholder()\"\n    [emptyLabel]=\"emptyLabel()\"\n    [optionTemplate]=\"optionTemplate()\"\n    [compareWith]=\"compareWith()\"\n    [maxHeight]=\"maxHeight()\"\n    [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n    (picked)=\"onPicked($event)\"\n    (create)=\"create.emit($event)\"\n  />\n</ath-popover>\n",
+			template: "@if (trigger() === 'button') {\n  <div\n    class=\"ath-picker__control\"\n    [class.ath-picker__control--open]=\"open()\"\n    [class.ath-picker__control--clearable]=\"clearable() && hasValue() && !disabled()\"\n  >\n    @if (ariaLabel()) {\n      <span class=\"ath-picker__label\" [id]=\"labelId\" hidden>{{ ariaLabel() }}</span>\n    }\n    <button\n      #triggerBtn\n      type=\"button\"\n      class=\"ath-picker__trigger\"\n      [disabled]=\"disabled()\"\n      [attr.aria-labelledby]=\"ariaLabel() ? labelId + ' ' + valueId : null\"\n      [athPopoverTrigger]=\"pop\"\n      [popupType]=\"searchable() ? 'dialog' : 'listbox'\"\n    >\n      <span\n        class=\"ath-picker__value\"\n        [id]=\"valueId\"\n        [class.ath-picker__value--placeholder]=\"!hasValue()\"\n        >{{ summary() }}</span\n      >\n      <ath-icon class=\"ath-picker__chevron\" [img]=\"chevronIcon\" [size]=\"14\" aria-hidden=\"true\" />\n    </button>\n    @if (clearable() && hasValue() && !disabled()) {\n      <button\n        type=\"button\"\n        class=\"ath-picker__clear\"\n        [attr.aria-label]=\"labels.pickerClear()\"\n        (click)=\"clear()\"\n      >\n        <ath-icon [img]=\"clearIcon\" [size]=\"12\" aria-hidden=\"true\" />\n      </button>\n    }\n  </div>\n}\n\n<ath-popover\n  #pop\n  [(open)]=\"open\"\n  [anchor]=\"popupAnchor()\"\n  [size]=\"size()\"\n  padding=\"sm\"\n  [align]=\"align()\"\n  [matchWidth]=\"matchWidth()\"\n  [panelRole]=\"searchable() ? 'dialog' : null\"\n  [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n  (opened)=\"onOpened()\"\n  (closed)=\"closed.emit($event)\"\n>\n  <!-- Built only while open: a closed picker per table cell holds no options. -->\n  <ng-template athPopoverContent>\n    <ath-listbox\n      [options]=\"options()\"\n      [multiple]=\"multiple()\"\n      [(value)]=\"value\"\n      [(values)]=\"values\"\n      [(query)]=\"query\"\n      [searchable]=\"searchable()\"\n      [localFilter]=\"localFilter()\"\n      [creatable]=\"creatable()\"\n      [loading]=\"loading()\"\n      [searchPlaceholder]=\"searchPlaceholder()\"\n      [emptyLabel]=\"emptyLabel()\"\n      [optionTemplate]=\"optionTemplate()\"\n      [compareWith]=\"compareWith()\"\n      [maxHeight]=\"maxHeight()\"\n      [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n      (picked)=\"onPicked($event)\"\n      (create)=\"create.emit($event)\"\n    />\n  </ng-template>\n</ath-popover>\n",
 			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-block;max-width:100%;font-family:var(--font-sans)}.ath-picker__control{position:relative;display:flex}.ath-picker__trigger{display:inline-flex;flex:1;align-items:center;gap:var(--space-2);min-width:140px;height:var(--space-8);padding:0 var(--space-2) 0 var(--space-3);font:inherit;font-size:var(--text-base);font-weight:var(--weight-medium);color:var(--fg);background:var(--bg-1);border:1px solid var(--border-strong);border-radius:var(--r);cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-picker__trigger:hover:not(:disabled){border-color:var(--accent-dim)}.ath-picker__trigger:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-picker__trigger:disabled{cursor:not-allowed;opacity:.5}.ath-picker__control--open>.ath-picker__trigger{border-color:var(--accent)}.ath-picker__control--clearable>.ath-picker__trigger{padding-inline-end:calc(var(--space-8) + var(--space-2))}.ath-picker__value{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start}.ath-picker__value--placeholder{font-weight:var(--weight-normal);color:var(--fg-4)}.ath-picker__chevron{flex-shrink:0;color:var(--fg-3)}.ath-picker__clear{position:absolute;inset-block:0;inset-inline-end:calc(var(--space-6) + var(--space-1));display:inline-flex;align-items:center;justify-content:center;width:var(--space-5);height:var(--space-5);margin-block:auto;padding:0;color:var(--fg-3);background:transparent;border:0;border-radius:var(--r-sm);cursor:pointer}.ath-picker__clear:hover{color:var(--fg);background:var(--hover-strong)}.ath-picker__clear:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}\n"],
 			dependencies: [
 				{
@@ -9311,6 +10159,11 @@ var AthOptionPickerComponent = class AthOptionPickerComponent {
 						"closed"
 					],
 					exportAs: ["athPopover"]
+				},
+				{
+					kind: "directive",
+					type: AthPopoverContentDirective,
+					selector: "ng-template[athPopoverContent]"
 				},
 				{
 					kind: "directive",
@@ -9380,13 +10233,14 @@ i0.ɵɵngDeclareClassMetadata({
 			selector: "ath-option-picker",
 			imports: [
 				AthPopoverComponent,
+				AthPopoverContentDirective,
 				AthPopoverTriggerDirective,
 				AthListboxComponent,
 				AthIconComponent
 			],
 			changeDetection: ChangeDetectionStrategy.OnPush,
 			exportAs: "athOptionPicker",
-			template: "@if (trigger() === 'button') {\n  <div\n    class=\"ath-picker__control\"\n    [class.ath-picker__control--open]=\"open()\"\n    [class.ath-picker__control--clearable]=\"clearable() && hasValue() && !disabled()\"\n  >\n    @if (ariaLabel()) {\n      <span class=\"ath-picker__label\" [id]=\"labelId\" hidden>{{ ariaLabel() }}</span>\n    }\n    <button\n      #triggerBtn\n      type=\"button\"\n      class=\"ath-picker__trigger\"\n      [disabled]=\"disabled()\"\n      [attr.aria-labelledby]=\"ariaLabel() ? labelId + ' ' + valueId : null\"\n      [athPopoverTrigger]=\"pop\"\n      [popupType]=\"searchable() ? 'dialog' : 'listbox'\"\n    >\n      <span\n        class=\"ath-picker__value\"\n        [id]=\"valueId\"\n        [class.ath-picker__value--placeholder]=\"!hasValue()\"\n        >{{ summary() }}</span\n      >\n      <ath-icon class=\"ath-picker__chevron\" [img]=\"chevronIcon\" [size]=\"14\" aria-hidden=\"true\" />\n    </button>\n    @if (clearable() && hasValue() && !disabled()) {\n      <button\n        type=\"button\"\n        class=\"ath-picker__clear\"\n        [attr.aria-label]=\"labels.pickerClear()\"\n        (click)=\"clear()\"\n      >\n        <ath-icon [img]=\"clearIcon\" [size]=\"12\" aria-hidden=\"true\" />\n      </button>\n    }\n  </div>\n}\n\n<ath-popover\n  #pop\n  [(open)]=\"open\"\n  [anchor]=\"popupAnchor()\"\n  [size]=\"size()\"\n  padding=\"sm\"\n  [align]=\"align()\"\n  [matchWidth]=\"matchWidth()\"\n  [panelRole]=\"searchable() ? 'dialog' : null\"\n  [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n  (opened)=\"onOpened()\"\n  (closed)=\"closed.emit($event)\"\n>\n  <ath-listbox\n    [options]=\"options()\"\n    [multiple]=\"multiple()\"\n    [(value)]=\"value\"\n    [(values)]=\"values\"\n    [(query)]=\"query\"\n    [searchable]=\"searchable()\"\n    [localFilter]=\"localFilter()\"\n    [creatable]=\"creatable()\"\n    [loading]=\"loading()\"\n    [searchPlaceholder]=\"searchPlaceholder()\"\n    [emptyLabel]=\"emptyLabel()\"\n    [optionTemplate]=\"optionTemplate()\"\n    [compareWith]=\"compareWith()\"\n    [maxHeight]=\"maxHeight()\"\n    [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n    (picked)=\"onPicked($event)\"\n    (create)=\"create.emit($event)\"\n  />\n</ath-popover>\n",
+			template: "@if (trigger() === 'button') {\n  <div\n    class=\"ath-picker__control\"\n    [class.ath-picker__control--open]=\"open()\"\n    [class.ath-picker__control--clearable]=\"clearable() && hasValue() && !disabled()\"\n  >\n    @if (ariaLabel()) {\n      <span class=\"ath-picker__label\" [id]=\"labelId\" hidden>{{ ariaLabel() }}</span>\n    }\n    <button\n      #triggerBtn\n      type=\"button\"\n      class=\"ath-picker__trigger\"\n      [disabled]=\"disabled()\"\n      [attr.aria-labelledby]=\"ariaLabel() ? labelId + ' ' + valueId : null\"\n      [athPopoverTrigger]=\"pop\"\n      [popupType]=\"searchable() ? 'dialog' : 'listbox'\"\n    >\n      <span\n        class=\"ath-picker__value\"\n        [id]=\"valueId\"\n        [class.ath-picker__value--placeholder]=\"!hasValue()\"\n        >{{ summary() }}</span\n      >\n      <ath-icon class=\"ath-picker__chevron\" [img]=\"chevronIcon\" [size]=\"14\" aria-hidden=\"true\" />\n    </button>\n    @if (clearable() && hasValue() && !disabled()) {\n      <button\n        type=\"button\"\n        class=\"ath-picker__clear\"\n        [attr.aria-label]=\"labels.pickerClear()\"\n        (click)=\"clear()\"\n      >\n        <ath-icon [img]=\"clearIcon\" [size]=\"12\" aria-hidden=\"true\" />\n      </button>\n    }\n  </div>\n}\n\n<ath-popover\n  #pop\n  [(open)]=\"open\"\n  [anchor]=\"popupAnchor()\"\n  [size]=\"size()\"\n  padding=\"sm\"\n  [align]=\"align()\"\n  [matchWidth]=\"matchWidth()\"\n  [panelRole]=\"searchable() ? 'dialog' : null\"\n  [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n  (opened)=\"onOpened()\"\n  (closed)=\"closed.emit($event)\"\n>\n  <!-- Built only while open: a closed picker per table cell holds no options. -->\n  <ng-template athPopoverContent>\n    <ath-listbox\n      [options]=\"options()\"\n      [multiple]=\"multiple()\"\n      [(value)]=\"value\"\n      [(values)]=\"values\"\n      [(query)]=\"query\"\n      [searchable]=\"searchable()\"\n      [localFilter]=\"localFilter()\"\n      [creatable]=\"creatable()\"\n      [loading]=\"loading()\"\n      [searchPlaceholder]=\"searchPlaceholder()\"\n      [emptyLabel]=\"emptyLabel()\"\n      [optionTemplate]=\"optionTemplate()\"\n      [compareWith]=\"compareWith()\"\n      [maxHeight]=\"maxHeight()\"\n      [ariaLabel]=\"ariaLabel() ?? placeholderText()\"\n      (picked)=\"onPicked($event)\"\n      (create)=\"create.emit($event)\"\n    />\n  </ng-template>\n</ath-popover>\n",
 			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-block;max-width:100%;font-family:var(--font-sans)}.ath-picker__control{position:relative;display:flex}.ath-picker__trigger{display:inline-flex;flex:1;align-items:center;gap:var(--space-2);min-width:140px;height:var(--space-8);padding:0 var(--space-2) 0 var(--space-3);font:inherit;font-size:var(--text-base);font-weight:var(--weight-medium);color:var(--fg);background:var(--bg-1);border:1px solid var(--border-strong);border-radius:var(--r);cursor:pointer;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ath-picker__trigger:hover:not(:disabled){border-color:var(--accent-dim)}.ath-picker__trigger:focus-visible{outline:none;border-color:var(--focus-ring-color);box-shadow:var(--field-focus-shadow)}.ath-picker__trigger:disabled{cursor:not-allowed;opacity:.5}.ath-picker__control--open>.ath-picker__trigger{border-color:var(--accent)}.ath-picker__control--clearable>.ath-picker__trigger{padding-inline-end:calc(var(--space-8) + var(--space-2))}.ath-picker__value{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start}.ath-picker__value--placeholder{font-weight:var(--weight-normal);color:var(--fg-4)}.ath-picker__chevron{flex-shrink:0;color:var(--fg-3)}.ath-picker__clear{position:absolute;inset-block:0;inset-inline-end:calc(var(--space-6) + var(--space-1));display:inline-flex;align-items:center;justify-content:center;width:var(--space-5);height:var(--space-5);margin-block:auto;padding:0;color:var(--fg-3);background:transparent;border:0;border-radius:var(--r-sm);cursor:pointer}.ath-picker__clear:hover{color:var(--fg);background:var(--hover-strong)}.ath-picker__clear:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}\n"]
 		}]
 	}],
@@ -10439,6 +11293,7 @@ var AthColorSwatchComponent = class AthColorSwatchComponent {
 			...ngDevMode ? { debugName: "disabled" } : /* istanbul ignore next */ {},
 			transform: booleanAttribute
 		});
+		this.tone = input("muted", ...ngDevMode ? [{ debugName: "tone" }] : /* istanbul ignore next */ []);
 		this.colors = input(ATH_DECO_COLORS, ...ngDevMode ? [{ debugName: "colors" }] : /* istanbul ignore next */ []);
 		this.checkIcon = Check;
 		this.groupLabel = computed(() => this.label() || this.labels.colorPicker(), ...ngDevMode ? [{ debugName: "groupLabel" }] : /* istanbul ignore next */ []);
@@ -10529,6 +11384,13 @@ var AthColorSwatchComponent = class AthColorSwatchComponent {
 					isRequired: false,
 					transformFunction: null
 				},
+				tone: {
+					classPropertyName: "tone",
+					publicName: "tone",
+					isSignal: true,
+					isRequired: false,
+					transformFunction: null
+				},
 				colors: {
 					classPropertyName: "colors",
 					publicName: "colors",
@@ -10539,8 +11401,8 @@ var AthColorSwatchComponent = class AthColorSwatchComponent {
 			},
 			outputs: { value: "valueChange" },
 			ngImport: i0,
-			template: "<div\n  class=\"ath-swatch\"\n  role=\"radiogroup\"\n  [attr.aria-label]=\"groupLabel()\"\n  [attr.aria-disabled]=\"disabled() || null\"\n>\n  @for (option of options(); track option.color; let i = $index) {\n    <button\n      type=\"button\"\n      role=\"radio\"\n      class=\"ath-swatch__item\"\n      [attr.data-color]=\"option.color\"\n      [attr.aria-checked]=\"value() === option.color\"\n      [attr.aria-label]=\"option.name\"\n      [attr.title]=\"option.name\"\n      [attr.tabindex]=\"i === stop() ? 0 : -1\"\n      [disabled]=\"disabled()\"\n      (click)=\"pick(option.color)\"\n      (keydown)=\"onKey($event, i)\"\n    >\n      @if (value() === option.color) {\n        <ath-icon [img]=\"checkIcon\" [size]=\"14\" aria-hidden=\"true\" />\n      }\n    </button>\n  }\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-swatch{display:inline-flex;flex-wrap:wrap;gap:var(--space-2)}.ath-swatch[aria-disabled=true]{opacity:.5}.ath-swatch__item{border:none;background:none;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer}.ath-swatch__item{display:inline-flex;align-items:center;justify-content:center;width:var(--control-h-sm);height:var(--control-h-sm);border-radius:var(--r-full);border:1px solid var(--border);color:var(--surface);transition:transform var(--t-fast),box-shadow var(--t-fast)}.ath-swatch__item[data-color=neutral]{background:var(--grey-muted)}.ath-swatch__item[data-color=blue]{background:var(--blue-muted)}.ath-swatch__item[data-color=green]{background:var(--green-muted)}.ath-swatch__item[data-color=amber]{background:var(--amber-muted)}.ath-swatch__item[data-color=red]{background:var(--red-muted)}.ath-swatch__item[data-color=purple]{background:var(--purple-muted)}.ath-swatch__item[data-color=pink]{background:var(--pink-muted)}.ath-swatch__item:hover:not(:disabled){transform:scale(1.08)}.ath-swatch__item[aria-checked=true]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--fg)}.ath-swatch__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-swatch__item:disabled{cursor:not-allowed}\n"],
+			template: "<div\n  class=\"ath-swatch\"\n  [class.ath-swatch--solid]=\"tone() === 'solid'\"\n  role=\"radiogroup\"\n  [attr.aria-label]=\"groupLabel()\"\n  [attr.aria-disabled]=\"disabled() || null\"\n>\n  @for (option of options(); track option.color; let i = $index) {\n    <button\n      type=\"button\"\n      role=\"radio\"\n      class=\"ath-swatch__item\"\n      [attr.data-color]=\"option.color\"\n      [attr.aria-checked]=\"value() === option.color\"\n      [attr.aria-label]=\"option.name\"\n      [attr.title]=\"option.name\"\n      [attr.tabindex]=\"i === stop() ? 0 : -1\"\n      [disabled]=\"disabled()\"\n      (click)=\"pick(option.color)\"\n      (keydown)=\"onKey($event, i)\"\n    >\n      @if (value() === option.color) {\n        <ath-icon [img]=\"checkIcon\" [size]=\"14\" aria-hidden=\"true\" />\n      }\n    </button>\n  }\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-swatch{display:inline-flex;flex-wrap:wrap;gap:var(--space-2)}.ath-swatch[aria-disabled=true]{opacity:.5}.ath-swatch__item{border:none;background:none;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer}.ath-swatch__item{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--r-full);border:1px solid var(--border);color:var(--mark-on-color);transition:transform var(--t-fast),box-shadow var(--t-fast)}.ath-swatch__item[data-color=neutral]{background:var(--grey-muted)}.ath-swatch__item[data-color=blue]{background:var(--blue-muted)}.ath-swatch__item[data-color=green]{background:var(--green-muted)}.ath-swatch__item[data-color=amber]{background:var(--amber-muted)}.ath-swatch__item[data-color=red]{background:var(--red-muted)}.ath-swatch__item[data-color=purple]{background:var(--purple-muted)}.ath-swatch__item[data-color=pink]{background:var(--pink-muted)}.ath-swatch__item ath-icon{filter:drop-shadow(var(--mark-shadow))}.ath-swatch__item:hover:not(:disabled){transform:scale(1.08)}.ath-swatch__item[aria-checked=true]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--fg)}.ath-swatch__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-swatch__item:disabled{cursor:not-allowed}.ath-swatch--solid .ath-swatch__item{border-color:transparent}.ath-swatch--solid .ath-swatch__item[data-color=neutral]{background:var(--fg-4)}.ath-swatch--solid .ath-swatch__item[data-color=blue]{background:var(--blue)}.ath-swatch--solid .ath-swatch__item[data-color=green]{background:var(--green)}.ath-swatch--solid .ath-swatch__item[data-color=amber]{background:var(--amber)}.ath-swatch--solid .ath-swatch__item[data-color=red]{background:var(--red)}.ath-swatch--solid .ath-swatch__item[data-color=purple]{background:var(--purple)}.ath-swatch--solid .ath-swatch__item[data-color=pink]{background:var(--pink)}\n"],
 			dependencies: [{
 				kind: "component",
 				type: AthIconComponent,
@@ -10569,8 +11431,8 @@ i0.ɵɵngDeclareClassMetadata({
 			selector: "ath-color-swatch",
 			imports: [AthIconComponent],
 			changeDetection: ChangeDetectionStrategy.OnPush,
-			template: "<div\n  class=\"ath-swatch\"\n  role=\"radiogroup\"\n  [attr.aria-label]=\"groupLabel()\"\n  [attr.aria-disabled]=\"disabled() || null\"\n>\n  @for (option of options(); track option.color; let i = $index) {\n    <button\n      type=\"button\"\n      role=\"radio\"\n      class=\"ath-swatch__item\"\n      [attr.data-color]=\"option.color\"\n      [attr.aria-checked]=\"value() === option.color\"\n      [attr.aria-label]=\"option.name\"\n      [attr.title]=\"option.name\"\n      [attr.tabindex]=\"i === stop() ? 0 : -1\"\n      [disabled]=\"disabled()\"\n      (click)=\"pick(option.color)\"\n      (keydown)=\"onKey($event, i)\"\n    >\n      @if (value() === option.color) {\n        <ath-icon [img]=\"checkIcon\" [size]=\"14\" aria-hidden=\"true\" />\n      }\n    </button>\n  }\n</div>\n",
-			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-swatch{display:inline-flex;flex-wrap:wrap;gap:var(--space-2)}.ath-swatch[aria-disabled=true]{opacity:.5}.ath-swatch__item{border:none;background:none;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer}.ath-swatch__item{display:inline-flex;align-items:center;justify-content:center;width:var(--control-h-sm);height:var(--control-h-sm);border-radius:var(--r-full);border:1px solid var(--border);color:var(--surface);transition:transform var(--t-fast),box-shadow var(--t-fast)}.ath-swatch__item[data-color=neutral]{background:var(--grey-muted)}.ath-swatch__item[data-color=blue]{background:var(--blue-muted)}.ath-swatch__item[data-color=green]{background:var(--green-muted)}.ath-swatch__item[data-color=amber]{background:var(--amber-muted)}.ath-swatch__item[data-color=red]{background:var(--red-muted)}.ath-swatch__item[data-color=purple]{background:var(--purple-muted)}.ath-swatch__item[data-color=pink]{background:var(--pink-muted)}.ath-swatch__item:hover:not(:disabled){transform:scale(1.08)}.ath-swatch__item[aria-checked=true]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--fg)}.ath-swatch__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-swatch__item:disabled{cursor:not-allowed}\n"]
+			template: "<div\n  class=\"ath-swatch\"\n  [class.ath-swatch--solid]=\"tone() === 'solid'\"\n  role=\"radiogroup\"\n  [attr.aria-label]=\"groupLabel()\"\n  [attr.aria-disabled]=\"disabled() || null\"\n>\n  @for (option of options(); track option.color; let i = $index) {\n    <button\n      type=\"button\"\n      role=\"radio\"\n      class=\"ath-swatch__item\"\n      [attr.data-color]=\"option.color\"\n      [attr.aria-checked]=\"value() === option.color\"\n      [attr.aria-label]=\"option.name\"\n      [attr.title]=\"option.name\"\n      [attr.tabindex]=\"i === stop() ? 0 : -1\"\n      [disabled]=\"disabled()\"\n      (click)=\"pick(option.color)\"\n      (keydown)=\"onKey($event, i)\"\n    >\n      @if (value() === option.color) {\n        <ath-icon [img]=\"checkIcon\" [size]=\"14\" aria-hidden=\"true\" />\n      }\n    </button>\n  }\n</div>\n",
+			styles: ["@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}:host{display:inline-flex}.ath-swatch{display:inline-flex;flex-wrap:wrap;gap:var(--space-2)}.ath-swatch[aria-disabled=true]{opacity:.5}.ath-swatch__item{border:none;background:none;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer}.ath-swatch__item{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--r-full);border:1px solid var(--border);color:var(--mark-on-color);transition:transform var(--t-fast),box-shadow var(--t-fast)}.ath-swatch__item[data-color=neutral]{background:var(--grey-muted)}.ath-swatch__item[data-color=blue]{background:var(--blue-muted)}.ath-swatch__item[data-color=green]{background:var(--green-muted)}.ath-swatch__item[data-color=amber]{background:var(--amber-muted)}.ath-swatch__item[data-color=red]{background:var(--red-muted)}.ath-swatch__item[data-color=purple]{background:var(--purple-muted)}.ath-swatch__item[data-color=pink]{background:var(--pink-muted)}.ath-swatch__item ath-icon{filter:drop-shadow(var(--mark-shadow))}.ath-swatch__item:hover:not(:disabled){transform:scale(1.08)}.ath-swatch__item[aria-checked=true]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--fg)}.ath-swatch__item:focus-visible{outline:none;box-shadow:var(--focus-ring-shadow)}.ath-swatch__item:disabled{cursor:not-allowed}.ath-swatch--solid .ath-swatch__item{border-color:transparent}.ath-swatch--solid .ath-swatch__item[data-color=neutral]{background:var(--fg-4)}.ath-swatch--solid .ath-swatch__item[data-color=blue]{background:var(--blue)}.ath-swatch--solid .ath-swatch__item[data-color=green]{background:var(--green)}.ath-swatch--solid .ath-swatch__item[data-color=amber]{background:var(--amber)}.ath-swatch--solid .ath-swatch__item[data-color=red]{background:var(--red)}.ath-swatch--solid .ath-swatch__item[data-color=purple]{background:var(--purple)}.ath-swatch--solid .ath-swatch__item[data-color=pink]{background:var(--pink)}\n"]
 		}]
 	}],
 	propDecorators: {
@@ -10598,6 +11460,14 @@ i0.ɵɵngDeclareClassMetadata({
 			args: [{
 				isSignal: true,
 				alias: "disabled",
+				required: false
+			}]
+		}],
+		tone: [{
+			type: i0.Input,
+			args: [{
+				isSignal: true,
+				alias: "tone",
 				required: false
 			}]
 		}],
@@ -11768,7 +12638,12 @@ var AthDialogComponent = class AthDialogComponent {
 		this.requestClose();
 	}
 	onNativeClose() {
-		if (this.open() && this.dialogEl && !this.dialogEl.open) this.requestClose();
+		const el = this.dialogEl;
+		if (!this.open() || !el || el.open) return;
+		this.showNative(el);
+		this.stack.raiseTopLayer();
+		this.focusInitial(el);
+		if (this.closeOnEscape()) this.requestClose();
 	}
 	onPointerDown(event) {
 		this.pressedOnBackdrop = this.isBackdropEvent(event);
@@ -11794,15 +12669,18 @@ var AthDialogComponent = class AthDialogComponent {
 		this.stack.open(this.entry);
 		this.stack.lockScroll();
 		this.locked = true;
+		this.showNative(el);
+		this.stack.raiseTopLayer();
+		this.focusInitial(el);
+		this.opened.emit();
+	}
+	showNative(el) {
 		try {
 			if (el.open) {} else if (this.uncovered()) el.show();
 			else el.showModal();
 		} catch {
 			el.setAttribute("open", "");
 		}
-		this.stack.raiseTopLayer();
-		this.focusInitial(el);
-		this.opened.emit();
 	}
 	focusInitial(el) {
 		const auto = el.querySelector("[autofocus]");
@@ -12636,447 +13514,6 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}] }
 });
-var AthSkeletonComponent = class AthSkeletonComponent {
-	constructor() {
-		this.variant = input("text", ...ngDevMode ? [{ debugName: "variant" }] : /* istanbul ignore next */ []);
-		this.width = input("100%", ...ngDevMode ? [{ debugName: "width" }] : /* istanbul ignore next */ []);
-		this.height = input("", ...ngDevMode ? [{ debugName: "height" }] : /* istanbul ignore next */ []);
-		this.animated = input(true, {
-			...ngDevMode ? { debugName: "animated" } : /* istanbul ignore next */ {},
-			transform: booleanAttribute
-		});
-	}
-	static {
-		this.ɵfac = i0.ɵɵngDeclareFactory({
-			minVersion: "12.0.0",
-			version: "22.2.2",
-			ngImport: i0,
-			type: AthSkeletonComponent,
-			deps: [],
-			target: i0.ɵɵFactoryTarget.Component
-		});
-	}
-	static {
-		this.ɵcmp = i0.ɵɵngDeclareComponent({
-			minVersion: "17.1.0",
-			version: "22.2.2",
-			type: AthSkeletonComponent,
-			isStandalone: true,
-			selector: "ath-skeleton",
-			inputs: {
-				variant: {
-					classPropertyName: "variant",
-					publicName: "variant",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				},
-				width: {
-					classPropertyName: "width",
-					publicName: "width",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				},
-				height: {
-					classPropertyName: "height",
-					publicName: "height",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				},
-				animated: {
-					classPropertyName: "animated",
-					publicName: "animated",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				}
-			},
-			host: {
-				attributes: { "aria-hidden": "true" },
-				properties: {
-					"attr.data-variant": "variant()",
-					"class.ath-skeleton--animated": "animated()",
-					"style.width": "width()",
-					"style.height": "height() || null"
-				},
-				classAttribute: "ath-skeleton"
-			},
-			ngImport: i0,
-			template: "",
-			isInline: true,
-			styles: [":host{display:block;background:var(--bg-2);border-radius:var(--r-xs)}:host([data-variant=line]){height:.8em;margin-block:.35em}:host([data-variant=text]){height:1em}:host([data-variant=row]){height:var(--row-h);border-radius:0;border-bottom:1px solid var(--border)}:host([data-variant=card]){height:64px;border-radius:var(--r)}:host([data-variant=circular]){border-radius:var(--r-full)}:host([data-variant=rectangular]){border-radius:var(--r)}:host(.ath-skeleton--animated){animation:ath-skeleton-pulse 1.6s ease-in-out infinite}@keyframes ath-skeleton-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){:host(.ath-skeleton--animated){animation:none;opacity:.65}}\n"],
-			changeDetection: i0.ChangeDetectionStrategy.OnPush
-		});
-	}
-};
-i0.ɵɵngDeclareClassMetadata({
-	minVersion: "12.0.0",
-	version: "22.2.2",
-	ngImport: i0,
-	type: AthSkeletonComponent,
-	decorators: [{
-		type: Component,
-		args: [{
-			selector: "ath-skeleton",
-			changeDetection: ChangeDetectionStrategy.OnPush,
-			host: {
-				"aria-hidden": "true",
-				class: "ath-skeleton",
-				"[attr.data-variant]": "variant()",
-				"[class.ath-skeleton--animated]": "animated()",
-				"[style.width]": "width()",
-				"[style.height]": "height() || null"
-			},
-			template: "",
-			styles: [":host{display:block;background:var(--bg-2);border-radius:var(--r-xs)}:host([data-variant=line]){height:.8em;margin-block:.35em}:host([data-variant=text]){height:1em}:host([data-variant=row]){height:var(--row-h);border-radius:0;border-bottom:1px solid var(--border)}:host([data-variant=card]){height:64px;border-radius:var(--r)}:host([data-variant=circular]){border-radius:var(--r-full)}:host([data-variant=rectangular]){border-radius:var(--r)}:host(.ath-skeleton--animated){animation:ath-skeleton-pulse 1.6s ease-in-out infinite}@keyframes ath-skeleton-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){:host(.ath-skeleton--animated){animation:none;opacity:.65}}\n"]
-		}]
-	}],
-	propDecorators: {
-		variant: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "variant",
-				required: false
-			}]
-		}],
-		width: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "width",
-				required: false
-			}]
-		}],
-		height: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "height",
-				required: false
-			}]
-		}],
-		animated: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "animated",
-				required: false
-			}]
-		}]
-	}
-});
-var AthSkeletonListComponent = class AthSkeletonListComponent {
-	constructor() {
-		this.labels = injectAthLabels();
-		this.variant = input("row", ...ngDevMode ? [{ debugName: "variant" }] : /* istanbul ignore next */ []);
-		this.count = input(6, {
-			...ngDevMode ? { debugName: "count" } : /* istanbul ignore next */ {},
-			transform: numberAttribute
-		});
-		this.label = input(null, ...ngDevMode ? [{ debugName: "label" }] : /* istanbul ignore next */ []);
-		this.indexes = computed(() => Array.from({ length: Math.max(1, Math.floor(this.count() || 0)) }, (_, i) => i), ...ngDevMode ? [{ debugName: "indexes" }] : /* istanbul ignore next */ []);
-		this.loadingLabel = computed(() => this.label() ?? this.labels.loading(), ...ngDevMode ? [{ debugName: "loadingLabel" }] : /* istanbul ignore next */ []);
-	}
-	static {
-		this.ɵfac = i0.ɵɵngDeclareFactory({
-			minVersion: "12.0.0",
-			version: "22.2.2",
-			ngImport: i0,
-			type: AthSkeletonListComponent,
-			deps: [],
-			target: i0.ɵɵFactoryTarget.Component
-		});
-	}
-	static {
-		this.ɵcmp = i0.ɵɵngDeclareComponent({
-			minVersion: "17.0.0",
-			version: "22.2.2",
-			type: AthSkeletonListComponent,
-			isStandalone: true,
-			selector: "ath-skeleton-list",
-			inputs: {
-				variant: {
-					classPropertyName: "variant",
-					publicName: "variant",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				},
-				count: {
-					classPropertyName: "count",
-					publicName: "count",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				},
-				label: {
-					classPropertyName: "label",
-					publicName: "label",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				}
-			},
-			ngImport: i0,
-			template: `
-    <div class="ath-skeleton-list" [attr.data-variant]="variant()" role="status">
-      <span class="ath-skeleton-list__sr">{{ loadingLabel() }}</span>
-      @for (i of indexes(); track i) {
-        <div class="ath-skeleton-list__cell" aria-hidden="true"></div>
-      }
-    </div>
-  `,
-			isInline: true,
-			styles: [":host{display:block}.ath-skeleton-list{overflow:hidden;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__cell{background:var(--bg-2);animation:ath-skeleton-list-pulse 1.6s ease-in-out infinite}.ath-skeleton-list[data-variant=row]{display:flex;flex-direction:column}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell{height:var(--row-h);border-bottom:1px solid var(--border)}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell:last-child{border-bottom:none}.ath-skeleton-list[data-variant=card]{display:flex;flex-direction:column;gap:var(--space-2);padding:10px}.ath-skeleton-list[data-variant=card] .ath-skeleton-list__cell{height:64px;border-radius:var(--r)}.ath-skeleton-list[data-variant=card-grid]{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-3);padding:var(--space-3);border:none;background:transparent}.ath-skeleton-list[data-variant=card-grid] .ath-skeleton-list__cell{height:168px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@keyframes ath-skeleton-list-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){.ath-skeleton-list__cell{animation:none;opacity:.65}}\n"],
-			changeDetection: i0.ChangeDetectionStrategy.OnPush
-		});
-	}
-};
-i0.ɵɵngDeclareClassMetadata({
-	minVersion: "12.0.0",
-	version: "22.2.2",
-	ngImport: i0,
-	type: AthSkeletonListComponent,
-	decorators: [{
-		type: Component,
-		args: [{
-			selector: "ath-skeleton-list",
-			changeDetection: ChangeDetectionStrategy.OnPush,
-			template: `
-    <div class="ath-skeleton-list" [attr.data-variant]="variant()" role="status">
-      <span class="ath-skeleton-list__sr">{{ loadingLabel() }}</span>
-      @for (i of indexes(); track i) {
-        <div class="ath-skeleton-list__cell" aria-hidden="true"></div>
-      }
-    </div>
-  `,
-			styles: [":host{display:block}.ath-skeleton-list{overflow:hidden;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__cell{background:var(--bg-2);animation:ath-skeleton-list-pulse 1.6s ease-in-out infinite}.ath-skeleton-list[data-variant=row]{display:flex;flex-direction:column}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell{height:var(--row-h);border-bottom:1px solid var(--border)}.ath-skeleton-list[data-variant=row] .ath-skeleton-list__cell:last-child{border-bottom:none}.ath-skeleton-list[data-variant=card]{display:flex;flex-direction:column;gap:var(--space-2);padding:10px}.ath-skeleton-list[data-variant=card] .ath-skeleton-list__cell{height:64px;border-radius:var(--r)}.ath-skeleton-list[data-variant=card-grid]{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-3);padding:var(--space-3);border:none;background:transparent}.ath-skeleton-list[data-variant=card-grid] .ath-skeleton-list__cell{height:168px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}.ath-skeleton-list__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@keyframes ath-skeleton-list-pulse{0%,to{opacity:.45}50%{opacity:.85}}@media(prefers-reduced-motion:reduce){.ath-skeleton-list__cell{animation:none;opacity:.65}}\n"]
-		}]
-	}],
-	propDecorators: {
-		variant: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "variant",
-				required: false
-			}]
-		}],
-		count: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "count",
-				required: false
-			}]
-		}],
-		label: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "label",
-				required: false
-			}]
-		}]
-	}
-});
-var AthSkeletonTableComponent = class AthSkeletonTableComponent {
-	constructor() {
-		this.rows = input(5, {
-			...ngDevMode ? { debugName: "rows" } : /* istanbul ignore next */ {},
-			transform: numberAttribute
-		});
-		this.columns = input([
-			20,
-			30,
-			25,
-			25
-		], ...ngDevMode ? [{ debugName: "columns" }] : /* istanbul ignore next */ []);
-		this.rowsArray = computed(() => Array.from({ length: this.rows() }, (_, i) => i), ...ngDevMode ? [{ debugName: "rowsArray" }] : /* istanbul ignore next */ []);
-	}
-	static {
-		this.ɵfac = i0.ɵɵngDeclareFactory({
-			minVersion: "12.0.0",
-			version: "22.2.2",
-			ngImport: i0,
-			type: AthSkeletonTableComponent,
-			deps: [],
-			target: i0.ɵɵFactoryTarget.Component
-		});
-	}
-	static {
-		this.ɵcmp = i0.ɵɵngDeclareComponent({
-			minVersion: "17.0.0",
-			version: "22.2.2",
-			type: AthSkeletonTableComponent,
-			isStandalone: true,
-			selector: "ath-skeleton-table",
-			inputs: {
-				rows: {
-					classPropertyName: "rows",
-					publicName: "rows",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				},
-				columns: {
-					classPropertyName: "columns",
-					publicName: "columns",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				}
-			},
-			ngImport: i0,
-			template: "<div class=\"ath-skeleton-table\">\n  <!-- Header -->\n  <div class=\"ath-skeleton-table__header\">\n    @for (col of columns(); track col) {\n      <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"20px\" />\n    }\n  </div>\n\n  <!-- Rows -->\n  @for (row of rowsArray(); track row) {\n    <div class=\"ath-skeleton-table__row\">\n      @for (col of columns(); track col) {\n        <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"16px\" />\n      }\n    </div>\n  }\n</div>\n",
-			styles: [".ath-skeleton-table{display:flex;flex-direction:column;gap:var(--space-3)}.ath-skeleton-table__header{display:flex;gap:var(--space-4);padding-bottom:var(--space-3);border-bottom:1px solid var(--border)}.ath-skeleton-table__row{display:flex;gap:var(--space-4);padding:var(--space-2) 0}\n"],
-			dependencies: [{
-				kind: "component",
-				type: AthSkeletonComponent,
-				selector: "ath-skeleton",
-				inputs: [
-					"variant",
-					"width",
-					"height",
-					"animated"
-				]
-			}],
-			changeDetection: i0.ChangeDetectionStrategy.OnPush
-		});
-	}
-};
-i0.ɵɵngDeclareClassMetadata({
-	minVersion: "12.0.0",
-	version: "22.2.2",
-	ngImport: i0,
-	type: AthSkeletonTableComponent,
-	decorators: [{
-		type: Component,
-		args: [{
-			selector: "ath-skeleton-table",
-			imports: [AthSkeletonComponent],
-			changeDetection: ChangeDetectionStrategy.OnPush,
-			template: "<div class=\"ath-skeleton-table\">\n  <!-- Header -->\n  <div class=\"ath-skeleton-table__header\">\n    @for (col of columns(); track col) {\n      <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"20px\" />\n    }\n  </div>\n\n  <!-- Rows -->\n  @for (row of rowsArray(); track row) {\n    <div class=\"ath-skeleton-table__row\">\n      @for (col of columns(); track col) {\n        <ath-skeleton variant=\"text\" [width]=\"col + '%'\" height=\"16px\" />\n      }\n    </div>\n  }\n</div>\n",
-			styles: [".ath-skeleton-table{display:flex;flex-direction:column;gap:var(--space-3)}.ath-skeleton-table__header{display:flex;gap:var(--space-4);padding-bottom:var(--space-3);border-bottom:1px solid var(--border)}.ath-skeleton-table__row{display:flex;gap:var(--space-4);padding:var(--space-2) 0}\n"]
-		}]
-	}],
-	propDecorators: {
-		rows: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "rows",
-				required: false
-			}]
-		}],
-		columns: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "columns",
-				required: false
-			}]
-		}]
-	}
-});
-var AthSkeletonCardComponent = class AthSkeletonCardComponent {
-	constructor() {
-		this.showImage = input(true, {
-			...ngDevMode ? { debugName: "showImage" } : /* istanbul ignore next */ {},
-			transform: booleanAttribute
-		});
-		this.showActions = input(true, {
-			...ngDevMode ? { debugName: "showActions" } : /* istanbul ignore next */ {},
-			transform: booleanAttribute
-		});
-	}
-	static {
-		this.ɵfac = i0.ɵɵngDeclareFactory({
-			minVersion: "12.0.0",
-			version: "22.2.2",
-			ngImport: i0,
-			type: AthSkeletonCardComponent,
-			deps: [],
-			target: i0.ɵɵFactoryTarget.Component
-		});
-	}
-	static {
-		this.ɵcmp = i0.ɵɵngDeclareComponent({
-			minVersion: "17.0.0",
-			version: "22.2.2",
-			type: AthSkeletonCardComponent,
-			isStandalone: true,
-			selector: "ath-skeleton-card",
-			inputs: {
-				showImage: {
-					classPropertyName: "showImage",
-					publicName: "showImage",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				},
-				showActions: {
-					classPropertyName: "showActions",
-					publicName: "showActions",
-					isSignal: true,
-					isRequired: false,
-					transformFunction: null
-				}
-			},
-			ngImport: i0,
-			template: "<div class=\"ath-skeleton-card\">\n  @if (showImage()) {\n    <ath-skeleton variant=\"rectangular\" height=\"160px\" />\n  }\n  <div class=\"ath-skeleton-card__content\">\n    <ath-skeleton variant=\"text\" width=\"70%\" height=\"24px\" />\n    <ath-skeleton variant=\"text\" width=\"100%\" height=\"16px\" />\n    <ath-skeleton variant=\"text\" width=\"90%\" height=\"16px\" />\n    @if (showActions()) {\n      <div class=\"ath-skeleton-card__actions\">\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n      </div>\n    }\n  </div>\n</div>\n",
-			styles: [""],
-			dependencies: [{
-				kind: "component",
-				type: AthSkeletonComponent,
-				selector: "ath-skeleton",
-				inputs: [
-					"variant",
-					"width",
-					"height",
-					"animated"
-				]
-			}],
-			changeDetection: i0.ChangeDetectionStrategy.OnPush
-		});
-	}
-};
-i0.ɵɵngDeclareClassMetadata({
-	minVersion: "12.0.0",
-	version: "22.2.2",
-	ngImport: i0,
-	type: AthSkeletonCardComponent,
-	decorators: [{
-		type: Component,
-		args: [{
-			selector: "ath-skeleton-card",
-			imports: [AthSkeletonComponent],
-			changeDetection: ChangeDetectionStrategy.OnPush,
-			template: "<div class=\"ath-skeleton-card\">\n  @if (showImage()) {\n    <ath-skeleton variant=\"rectangular\" height=\"160px\" />\n  }\n  <div class=\"ath-skeleton-card__content\">\n    <ath-skeleton variant=\"text\" width=\"70%\" height=\"24px\" />\n    <ath-skeleton variant=\"text\" width=\"100%\" height=\"16px\" />\n    <ath-skeleton variant=\"text\" width=\"90%\" height=\"16px\" />\n    @if (showActions()) {\n      <div class=\"ath-skeleton-card__actions\">\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n        <ath-skeleton variant=\"rectangular\" width=\"80px\" height=\"32px\" />\n      </div>\n    }\n  </div>\n</div>\n"
-		}]
-	}],
-	propDecorators: {
-		showImage: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "showImage",
-				required: false
-			}]
-		}],
-		showActions: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "showActions",
-				required: false
-			}]
-		}]
-	}
-});
 var AthKbdComponent = class AthKbdComponent {
 	constructor() {
 		this.size = input("md", ...ngDevMode ? [{ debugName: "size" }] : /* istanbul ignore next */ []);
@@ -13167,19 +13604,7 @@ var AthCopyButtonComponent = class AthCopyButtonComponent {
 		inject(DestroyRef).onDestroy(() => clearTimeout(this.resetTimeout));
 	}
 	async copy() {
-		const value = this.value();
-		try {
-			await navigator.clipboard.writeText(value);
-		} catch {
-			const textarea = document.createElement("textarea");
-			textarea.value = value;
-			textarea.style.position = "fixed";
-			textarea.style.opacity = "0";
-			document.body.appendChild(textarea);
-			textarea.select();
-			document.execCommand("copy");
-			document.body.removeChild(textarea);
-		}
+		if (!await copyText(this.value())) return;
 		this.copied.set(true);
 		clearTimeout(this.resetTimeout);
 		this.resetTimeout = setTimeout(() => this.copied.set(false), 2e3);
@@ -13687,18 +14112,27 @@ function range(from, to) {
 	return out;
 }
 const DAY_MS = 864e5;
+const wallClockFormats = /* @__PURE__ */ new Map();
+function wallClockFormat(timeZone) {
+	let format = wallClockFormats.get(timeZone);
+	if (!format) {
+		format = new Intl.DateTimeFormat("en-US", {
+			timeZone,
+			hourCycle: "h23",
+			year: "numeric",
+			month: "numeric",
+			day: "numeric",
+			hour: "numeric",
+			minute: "numeric",
+			second: "numeric"
+		});
+		wallClockFormats.set(timeZone, format);
+	}
+	return format;
+}
 function zonedWallClock(date, timeZone) {
 	if (!timeZone) return new Date(date);
-	const parts = new Intl.DateTimeFormat("en-US", {
-		timeZone,
-		hourCycle: "h23",
-		year: "numeric",
-		month: "numeric",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-		second: "numeric"
-	}).formatToParts(date);
+	const parts = wallClockFormat(timeZone).formatToParts(date);
 	const get = (t) => Number(parts.find((p) => p.type === t)?.value ?? 0);
 	return new Date(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
 }
@@ -13783,11 +14217,64 @@ function describeDue(input, labels, ctx = {}) {
 		full: fullDueDate(input.date, day, ctx)
 	};
 }
+const HOUR_MS = 36e5;
+var AthToday = class AthToday {
+	constructor() {
+		this.version = signal(0, ...ngDevMode ? [{ debugName: "version" }] : /* istanbul ignore next */ []);
+		this.tick = this.version.asReadonly();
+		this.dateContext = inject(ATH_DATE_CONTEXT, { optional: true });
+		if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
+		this.schedule();
+		inject(DestroyRef).onDestroy(() => clearTimeout(this.timer));
+	}
+	schedule() {
+		const now = /* @__PURE__ */ new Date();
+		const delay = Math.min(untilMidnight(now), untilMidnight(zonedWallClock(now, this.dateContext?.().timeZone)), HOUR_MS);
+		this.timer = setTimeout(() => {
+			this.version.update((v) => v + 1);
+			this.schedule();
+		}, delay);
+	}
+	static {
+		this.ɵfac = i0.ɵɵngDeclareFactory({
+			minVersion: "12.0.0",
+			version: "22.2.2",
+			ngImport: i0,
+			type: AthToday,
+			deps: [],
+			target: i0.ɵɵFactoryTarget.Injectable
+		});
+	}
+	static {
+		this.ɵprov = i0.ɵɵngDeclareInjectable({
+			minVersion: "12.0.0",
+			version: "22.2.2",
+			ngImport: i0,
+			type: AthToday,
+			providedIn: "root"
+		});
+	}
+};
+i0.ɵɵngDeclareClassMetadata({
+	minVersion: "12.0.0",
+	version: "22.2.2",
+	ngImport: i0,
+	type: AthToday,
+	decorators: [{
+		type: Injectable,
+		args: [{ providedIn: "root" }]
+	}],
+	ctorParameters: () => []
+});
+function untilMidnight(now) {
+	return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+}
 var AthDueLabelComponent = class AthDueLabelComponent {
 	constructor() {
 		this.labels = injectAthLabels();
 		this.localeId = inject(LOCALE_ID);
 		this.dateContext = inject(ATH_DATE_CONTEXT, { optional: true });
+		this.today = inject(AthToday);
 		this.date = input(null, ...ngDevMode ? [{ debugName: "date" }] : /* istanbul ignore next */ []);
 		this.done = input(false, ...ngDevMode ? [{ debugName: "done" }] : /* istanbul ignore next */ []);
 		this.source = input("own", ...ngDevMode ? [{ debugName: "source" }] : /* istanbul ignore next */ []);
@@ -13808,7 +14295,7 @@ var AthDueLabelComponent = class AthDueLabelComponent {
 			date: this.date(),
 			done: this.done(),
 			source: this.source(),
-			now: this.now() ?? void 0
+			now: this.now() ?? this.currentTime()
 		}, {
 			overdue: this.labels.dueOverdue(),
 			overdueOne: this.labels.dueOverdueOne(),
@@ -13835,6 +14322,10 @@ var AthDueLabelComponent = class AthDueLabelComponent {
 			const sprint = this.sprintName();
 			return sprint ? `${this.warnText()} · ${sprint}` : this.warnText();
 		}, ...ngDevMode ? [{ debugName: "warnTitle" }] : /* istanbul ignore next */ []);
+	}
+	currentTime() {
+		this.today.tick();
+		return /* @__PURE__ */ new Date();
 	}
 	static {
 		this.ɵfac = i0.ɵɵngDeclareFactory({
@@ -14842,6 +15333,6 @@ i0.ɵɵngDeclareClassMetadata({
 		}]
 	}
 });
-export { AI_MARK_REGULAR, AI_MARK_SMALL, AI_MARK_SMALL_MAX, ATH_DATE_CONTEXT, ATH_DECO_COLORS, ATH_DEFAULT_LABELS, ATH_LABELS, ATH_MARKDOWN_PARSER, ATH_PRIORITY_LABELS, ATH_STATUS_LABELS, ATH_STATUS_TONES, AVATAR_TONE_COUNT, AthAiMarkComponent, AthAlertComponent, AthAvatarComponent, AthAvatarStackComponent, AthBadgeComponent, AthBreadcrumbComponent, AthButtonComponent, AthChipComponent, AthCodeBlockComponent, AthColorSwatchComponent, AthComboboxComponent, AthCopyButtonComponent, AthDialogComponent, AthDividerComponent, AthDropdownComponent, AthDueLabelComponent, AthEmptyStateComponent, AthFileDropComponent, AthFilterChipComponent, AthFloatingDirective, AthIconComponent, AthInputComponent, AthKbdComponent, AthKpiStripComponent, AthKpiTileComponent, AthListboxComponent, AthMarkdownComponent, AthMenuComponent, AthMenuItemComponent, AthMenuSeparatorComponent, AthMenuTriggerDirective, AthNavItemComponent, AthOptionPickerComponent, AthOverlayStack, AthPageComponent, AthPageHeaderComponent, AthPaginationComponent, AthPanelComponent, AthPanelGridComponent, AthPermissionRowComponent, AthPopoverComponent, AthPopoverContentDirective, AthPopoverTriggerDirective, AthPriorityComponent, AthProgressComponent, AthRoleBadgeComponent, AthSaveBarComponent, AthSearchInputComponent, AthSegmentComponent, AthSelectComponent, AthSheetComponent, AthSidebarComponent, AthSkeletonCardComponent, AthSkeletonComponent, AthSkeletonListComponent, AthSkeletonTableComponent, AthSlaBarComponent, AthSparklineComponent, AthSpinnerComponent, AthStatusPillComponent, AthTableComponent, AthTabsComponent, AthTextareaComponent, AthTimelineComponent, AthTimelineEntryComponent, AthTimelineEventComponent, AthTimerPillComponent, AthToastContainerComponent, AthToastService, AthToggleComponent, AthTooltipDirective, AthTriStateComponent, AthUserPickerComponent, DROPDOWN_SEPARATOR, athDecoColorLabel, athEscapeHtml, athPlainTextHtml, avatarInitials, avatarToneFor, calendarDayOf, calendarDaysUntil, compactDueText, describeDue, dueToneOf, floatPanel, formatAthLabel, fullDueDate, hasKpiTrend, injectAthLabels, installTopLayerStyles, isAthDecoColor, isDayOnly, isDropdownSeparator, isVirtualAnchor, panelGridColumns, resolveAnchor, resolveFloatingTarget, runAthAction, shortDay, sparklineGeometry, supportsTopLayer, toneOfKey, zonedWallClock };
+export { AI_MARK_REGULAR, AI_MARK_SMALL, AI_MARK_SMALL_MAX, ATH_DATE_CONTEXT, ATH_DECO_COLORS, ATH_DEFAULT_LABELS, ATH_LABELS, ATH_MARKDOWN_PARSER, ATH_PRIORITY_LABELS, ATH_STATUS_LABELS, ATH_STATUS_TONES, AVATAR_TONE_COUNT, AthAiMarkComponent, AthAlertComponent, AthAvatarComponent, AthAvatarStackComponent, AthBadgeComponent, AthBreadcrumbComponent, AthButtonComponent, AthChipComponent, AthCodeBlockComponent, AthColorSwatchComponent, AthComboboxComponent, AthCopyButtonComponent, AthDialogComponent, AthDividerComponent, AthDropdownComponent, AthDropdownHeaderDirective, AthDueLabelComponent, AthEmptyStateComponent, AthFileDropComponent, AthFilterChipComponent, AthFloatingDirective, AthIconComponent, AthInputComponent, AthKbdComponent, AthKpiStripComponent, AthKpiTileComponent, AthListboxComponent, AthMarkdownComponent, AthMenuComponent, AthMenuItemComponent, AthMenuSeparatorComponent, AthMenuTriggerDirective, AthNavItemComponent, AthOptionPickerComponent, AthOverlayStack, AthPageComponent, AthPageHeaderComponent, AthPaginationComponent, AthPanelComponent, AthPanelGridComponent, AthPermissionRowComponent, AthPopoverComponent, AthPopoverContentDirective, AthPopoverTriggerDirective, AthPriorityComponent, AthProgressComponent, AthRoleBadgeComponent, AthSaveBarComponent, AthSearchInputComponent, AthSegmentComponent, AthSelectComponent, AthSheetComponent, AthSidebarComponent, AthSkeletonCardComponent, AthSkeletonComponent, AthSkeletonListComponent, AthSkeletonTableComponent, AthSlaBarComponent, AthSparklineComponent, AthSpinnerComponent, AthStatusPillComponent, AthTableComponent, AthTabsComponent, AthTextareaComponent, AthTimelineComponent, AthTimelineEntryComponent, AthTimelineEventComponent, AthTimerPillComponent, AthToastContainerComponent, AthToastService, AthToggleComponent, AthTooltipDirective, AthTriStateComponent, AthUserPickerComponent, DROPDOWN_SEPARATOR, athDecoColorLabel, athEscapeHtml, athPlainTextHtml, avatarInitials, avatarToneFor, calendarDayOf, calendarDaysUntil, compactDueText, describeDue, dueToneOf, floatPanel, formatAthLabel, fullDueDate, hasKpiTrend, injectAthLabels, installTopLayerStyles, isAthDecoColor, isDayOnly, isDropdownSeparator, isVirtualAnchor, panelGridColumns, resolveAnchor, resolveFloatingTarget, runAthAction, shortDay, sparklineGeometry, supportsTopLayer, toneOfKey, zonedWallClock };
 
 //# sourceMappingURL=athenos-webcomponents.mjs.map

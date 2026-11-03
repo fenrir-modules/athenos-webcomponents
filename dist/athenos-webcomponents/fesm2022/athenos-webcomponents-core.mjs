@@ -81,6 +81,7 @@ var AthToastService = class AthToastService {
 		this.toasts = this.toastsSignal.asReadonly();
 		this.pausedSignal = signal(false, ...ngDevMode ? [{ debugName: "pausedSignal" }] : /* istanbul ignore next */ []);
 		this.paused = this.pausedSignal.asReadonly();
+		this.maxQueued = 10;
 		this.clocks = /* @__PURE__ */ new Map();
 		this.pauses = /* @__PURE__ */ new Set();
 		this.holds = /* @__PURE__ */ new Set();
@@ -145,6 +146,8 @@ var AthToastService = class AthToastService {
 		const opts = typeof options === "number" ? { duration: options } : options;
 		const action = opts.action;
 		const duration = opts.duration ?? (action ? Math.max(fallback, ACTION_MIN_DURATION) : fallback);
+		const same = action ? void 0 : this.toastsSignal().find((t) => !t.action && t.variant === variant && t.message === message && (t.title ?? "") === (opts.title ?? ""));
+		if (same) return this.repeat(same, duration);
 		const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 		const toast = {
 			id,
@@ -155,15 +158,30 @@ var AthToastService = class AthToastService {
 		};
 		if (opts.title) toast.title = opts.title;
 		this.toastsSignal.update((toasts) => [...toasts, toast]);
-		if (duration > 0) {
-			this.clocks.set(id, {
-				remaining: duration,
-				since: null,
-				handle: null
-			});
-			this.sync(id);
-		}
+		this.startClock(id, duration);
+		const list = this.toastsSignal();
+		for (const old of list.slice(0, Math.max(0, list.length - Math.max(1, this.maxQueued)))) this.remove(old.id);
 		return id;
+	}
+	repeat(toast, duration) {
+		const clock = this.clocks.get(toast.id);
+		if (clock?.handle) clearTimeout(clock.handle);
+		this.clocks.delete(toast.id);
+		this.toastsSignal.update((toasts) => [...toasts.filter((t) => t.id !== toast.id), {
+			...toast,
+			duration
+		}]);
+		this.startClock(toast.id, duration);
+		return toast.id;
+	}
+	startClock(id, duration) {
+		if (duration <= 0) return;
+		this.clocks.set(id, {
+			remaining: duration,
+			since: null,
+			handle: null
+		});
+		this.sync(id);
 	}
 	sync(id) {
 		if (this.pausedSignal() || this.holds.has(id)) this.stop(id);
