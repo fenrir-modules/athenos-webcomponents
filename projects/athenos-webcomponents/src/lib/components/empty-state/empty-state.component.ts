@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 
 import { AthIconComponent, type AthIconData } from '../icon/icon.component';
@@ -42,7 +43,7 @@ export type EmptyStateSize = 'default' | 'compact';
  */
 @Component({
   selector: 'ath-empty-state',
-  imports: [AthIconComponent, AthButtonComponent],
+  imports: [NgTemplateOutlet, AthIconComponent, AthButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './empty-state.component.html',
   styleUrl: './empty-state.component.scss',

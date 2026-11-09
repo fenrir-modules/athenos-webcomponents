@@ -1,6 +1,18 @@
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Inbox } from 'lucide';
-import { AthEmptyStateComponent } from './empty-state.component';
+import { AthEmptyStateComponent, type EmptyStateSize } from './empty-state.component';
+
+@Component({
+  imports: [AthEmptyStateComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<ath-empty-state message="Nothing here" [size]="size()"
+    ><button type="button" data-projected>Go</button></ath-empty-state
+  >`,
+})
+class ProjectingHostComponent {
+  readonly size = signal<EmptyStateSize>('default');
+}
 
 describe('AthEmptyStateComponent', () => {
   let fixture: ComponentFixture<AthEmptyStateComponent>;
@@ -16,6 +28,15 @@ describe('AthEmptyStateComponent', () => {
     fixture.detectChanges();
     expect(el().querySelector('.ath-empty-state--compact')).toBeNull();
     expect(el().querySelector('.ath-empty-state__message')?.textContent).toContain('Nothing here');
+  });
+
+  it('sets the title 14/600 in both sizes, one empty-state form (A-07)', () => {
+    fixture.detectChanges();
+    const title = () => getComputedStyle(el().querySelector('.ath-empty-state__message')!);
+    expect([title().fontSize, title().fontWeight]).toEqual(['14px', '600']);
+    fixture.componentRef.setInput('size', 'compact');
+    fixture.detectChanges();
+    expect(title().fontWeight).toBe('600');
   });
 
   it('renders the compact layout with tile, hints and actions', () => {
@@ -47,5 +68,15 @@ describe('AthEmptyStateComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.bare()).toBe(true);
     expect(el().querySelector('.ath-empty-state--bare')).not.toBeNull();
+  });
+
+  it('shows projected content in both sizes', () => {
+    const host = TestBed.createComponent(ProjectingHostComponent);
+    host.detectChanges();
+    const root = host.nativeElement as HTMLElement;
+    expect(root.querySelector('.ath-empty-state [data-projected]')).not.toBeNull();
+    host.componentInstance.size.set('compact');
+    host.detectChanges();
+    expect(root.querySelector('.ath-empty-state--compact [data-projected]')).not.toBeNull();
   });
 });

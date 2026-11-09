@@ -20,9 +20,12 @@ export type RoleBadgeSize = 'sm' | 'md';
  * A workspace role (or team): a dot in its colour and its name. `locked`
  * adds a lock for the fixed roles (Owner, Admin), read out as "Fixed
  * role". The colour is a palette token or a `#RRGGBB` colour (a team's);
- * anything else draws the neutral dot.
+ * anything else draws the neutral dot. `accent` draws the whole chip in the
+ * accent tint: Owner and Admin, the roles that run a workspace, while every
+ * other role (Mitglied) stays neutral (UX tour A-06).
  *
  * @example
+ * <ath-role-badge name="Owner" color="accent" />
  * <ath-role-badge name="Developer" color="blue" />
  * <ath-role-badge name="Team Web" color="#2f80ed" size="sm" />
  * <ath-role-badge name="Owner" color="amber" [locked]="true" size="sm" />
@@ -38,7 +41,10 @@ export class AthRoleBadgeComponent {
   private readonly labels = injectAthLabels();
 
   readonly name = input.required<string>();
-  /** A palette token (`AthDecoColor`) or `#RRGGBB`; anything else is neutral. */
+  /**
+   * A palette token (`AthDecoColor`), `accent` (the accent tint, for Owner
+   * and Admin) or `#RRGGBB`; anything else is neutral.
+   */
   readonly color = input<string | null | undefined>(null);
   readonly size = input<RoleBadgeSize>('md');
   readonly locked = input(false, { transform: booleanAttribute });
@@ -52,6 +58,7 @@ export class AthRoleBadgeComponent {
   protected readonly tone = computed(() => {
     const color = this.color();
     if (this.hex()) return 'custom';
+    if (color === 'accent') return 'accent';
     return isAthDecoColor(color) ? color : 'neutral';
   });
   protected readonly lockedText = computed(() => this.labels.roleLocked());

@@ -36,10 +36,13 @@
     color: var(--fg-3);
   }
 
+  // The title: 14/600, the weight of the compact form's title, so the two
+  // sizes read as one empty state (UX tour A-07; there is no 15 px step).
+  // In the lib because every "nothing here" in the app is this component.
   &__message {
     margin: 0;
     font-size: var(--text-md);
-    font-weight: var(--weight-medium);
+    font-weight: var(--weight-semibold);
     color: var(--fg);
   }
 
@@ -79,9 +82,9 @@
     gap: 2px;
   }
 
+  // Semibold like the default size's title (above).
   .ath-empty-state__message {
     font-size: var(--panel-title-size);
-    font-weight: var(--weight-semibold);
   }
 
   .ath-empty-state__sub {

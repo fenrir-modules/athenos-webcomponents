@@ -83,6 +83,33 @@ describe('AthKpiTileComponent', () => {
     expect(delta.getAttribute('aria-label')).toBe('1 overdue');
   });
 
+  it("puts the delta on the figure's line, at its far end, in the sans face (A-09)", () => {
+    const [due] = tiles();
+    const delta = due.querySelector<HTMLElement>('.ath-kpi__delta')!;
+    // Out of the label's row: the label has its line to itself.
+    expect(delta.parentElement!.closest('.ath-kpi__bottom')).not.toBeNull();
+    expect(due.querySelector('.ath-kpi__row .ath-kpi__delta')).toBeNull();
+    const value = due.querySelector('.ath-kpi__value')!.getBoundingClientRect();
+    const box = delta.getBoundingClientRect();
+    expect(Math.abs(box.bottom - value.bottom)).toBeLessThanOrEqual(1);
+    expect(due.getBoundingClientRect().right - box.right).toBeLessThanOrEqual(17);
+    // No empty sparkline slot beside it: the delta holds the far end.
+    expect(due.querySelector('.ath-kpi__spark-slot')).toBeNull();
+    const style = getComputedStyle(delta);
+    expect(style.fontFamily).toContain('Geist');
+    expect(style.fontFamily).not.toContain('Mono');
+    expect(style.fontSize).toBe('11px');
+    expect(style.fontVariantNumeric).toBe('tabular-nums');
+  });
+
+  it('keeps a wide strip to one label line (no two-line room reserved)', () => {
+    for (const tile of tiles()) {
+      const label = tile.querySelector<HTMLElement>('.ath-kpi__label')!;
+      expect(getComputedStyle(label).whiteSpace).not.toBe('nowrap');
+      expect(label.getBoundingClientRect().height).toBeLessThanOrEqual(19);
+    }
+  });
+
   it('tints the trend by tone; a muted tile keeps the empty slot', () => {
     const [, week, progress] = tiles();
     expect(
@@ -150,6 +177,10 @@ describe('AthKpiTileComponent', () => {
   });
 });
 
+const LONG_NOTE =
+  'in the last 7 days, across all projects of this workspace together, ' +
+  'counted once per ticket and day';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AthKpiStripComponent, AthKpiTileComponent],
@@ -157,18 +188,16 @@ describe('AthKpiTileComponent', () => {
     <div style="width: 480px">
       <ath-kpi-strip [columns]="4">
         <ath-kpi-tile label="Created" [value]="null" note="in the last 7 days" />
-        <ath-kpi-tile
-          label="Resolved"
-          [value]="9"
-          note="in the last 7 days, across all projects of this workspace together"
-        />
+        <ath-kpi-tile label="Resolved" [value]="9" [note]="longNote" />
         <ath-kpi-tile label="Velocity" value="–" [muted]="true" note="No sprint finished yet" />
         <ath-kpi-tile label="Open" [value]="0" />
       </ath-kpi-strip>
     </div>
   `,
 })
-class NotesHostComponent {}
+class NotesHostComponent {
+  readonly longNote = LONG_NOTE;
+}
 
 describe('AthKpiTileComponent loading and notes (P04)', () => {
   it('draws a 48x22 skeleton for a null figure, with the loading label for screen readers', () => {
@@ -186,7 +215,7 @@ describe('AthKpiTileComponent loading and notes (P04)', () => {
     expect(zero.querySelector('.ath-kpi__value')!.textContent.trim()).toBe('0');
   });
 
-  it('puts the note under the figure in the sans face, one line ending in an ellipsis', () => {
+  it('puts the note under the figure in the sans face, two lines at most', () => {
     const fixture = TestBed.createComponent(NotesHostComponent);
     fixture.detectChanges();
     const tiles = Array.from(
@@ -199,15 +228,17 @@ describe('AthKpiTileComponent loading and notes (P04)', () => {
       const style = getComputedStyle(note);
       expect(style.fontFamily).toContain('Geist');
       expect(style.fontFamily).not.toContain('Mono');
-      expect(style.textOverflow).toBe('ellipsis');
+      expect(style.whiteSpace).not.toBe('nowrap');
+      expect(style.webkitLineClamp).toBe('2');
+      expect(note.getBoundingClientRect().height).toBeLessThanOrEqual(2 * 16 + 1);
       expect(note.getBoundingClientRect().right).toBeLessThanOrEqual(
         tile.getBoundingClientRect().right
       );
     }
+    // Longer than two lines: cut after the second, the full text is the tooltip.
     const long = tiles[1].querySelector<HTMLElement>('.ath-kpi__note')!;
-    expect(long.scrollWidth).toBeGreaterThan(long.clientWidth);
-    // The full text stays reachable as the tooltip.
-    expect(long.title).toBe('in the last 7 days, across all projects of this workspace together');
+    expect(long.scrollHeight).toBeGreaterThan(long.clientHeight);
+    expect(long.title).toBe(LONG_NOTE);
   });
 
   it('lines the figures up across tiles with and without a note, skeleton included', () => {
@@ -225,6 +256,89 @@ describe('AthKpiTileComponent loading and notes (P04)', () => {
     expect(byRow.size).toBe(2);
     for (const tops of byRow.values()) {
       expect(new Set(tops).size, `value tops ${tops.join(', ')}`).toBe(1);
+    }
+  });
+});
+
+// A phone's strip (390 px window, 16 px gutters): Home's four tiles and
+// the project reports' notes, as the UX tour shot them (A-09).
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthKpiStripComponent, AthKpiTileComponent],
+  template: `
+    <div style="width: 358px">
+      <ath-kpi-strip class="home" [columns]="4">
+        <ath-kpi-tile label="Zugewiesen" [value]="26" />
+        <ath-kpi-tile label="Diese Woche faellig" [value]="2" />
+        <ath-kpi-tile label="In Pruefung" [value]="8" />
+        <ath-kpi-tile
+          label="Diese Woche fertig"
+          [value]="5"
+          delta="+5 zur Vorwoche"
+          deltaDirection="up"
+        />
+      </ath-kpi-strip>
+      <ath-kpi-strip class="reports" [columns]="4">
+        <ath-kpi-tile label="Sprint-Fortschritt" value="50 %" note="17 von 34 Punkten erledigt" />
+        <ath-kpi-tile
+          label="Durchschnittliche Velocity"
+          [value]="24"
+          note="Punkte je abgeschlossenem Sprint"
+        />
+        <ath-kpi-tile label="Erledigt" [value]="12" note="in den letzten 7 Tagen" />
+        <ath-kpi-tile label="Erstellt" [value]="16" note="in den letzten 7 Tagen" />
+      </ath-kpi-strip>
+    </div>
+  `,
+})
+class PhoneHostComponent {}
+
+describe('AthKpiTileComponent on a phone (A-09: the label wins)', () => {
+  let root: HTMLElement;
+  const strip = (name: string) =>
+    Array.from(root.querySelectorAll<HTMLElement>(`ath-kpi-strip.${name} ath-kpi-tile`));
+
+  beforeEach(() => {
+    const fixture = TestBed.createComponent(PhoneHostComponent);
+    fixture.detectChanges();
+    root = fixture.nativeElement as HTMLElement;
+  });
+
+  it('reads every label in full, on two lines at most, never one cut line', () => {
+    for (const tile of [...strip('home'), ...strip('reports')]) {
+      const label = tile.querySelector<HTMLElement>('.ath-kpi__label')!;
+      expect(getComputedStyle(label).whiteSpace).not.toBe('nowrap');
+      // Nothing clipped: the whole text fits its two lines.
+      expect(label.scrollHeight, label.title).toBeLessThanOrEqual(label.clientHeight + 1);
+      expect(label.title).toBe(label.textContent.trim());
+    }
+    const [, , , done] = strip('home');
+    const label = done.querySelector<HTMLElement>('.ath-kpi__label')!.getBoundingClientRect();
+    const delta = done.querySelector<HTMLElement>('.ath-kpi__delta')!.getBoundingClientRect();
+    // The delta no longer shares the label's line: it sits below it, inside the tile.
+    expect(delta.top).toBeGreaterThanOrEqual(label.bottom);
+    expect(delta.right).toBeLessThanOrEqual(done.getBoundingClientRect().right);
+  });
+
+  it('lets a note wrap instead of cutting it mid-word', () => {
+    for (const tile of strip('reports')) {
+      const note = tile.querySelector<HTMLElement>('.ath-kpi__note')!;
+      expect(note.scrollHeight, note.title).toBeLessThanOrEqual(note.clientHeight + 1);
+    }
+  });
+
+  it('keeps the figures of a strip row level whatever their label length', () => {
+    for (const name of ['home', 'reports']) {
+      const byRow = new Map<number, number[]>();
+      for (const t of strip(name)) {
+        const row = Math.round(t.getBoundingClientRect().top);
+        const top = Math.round(t.querySelector('.ath-kpi__value')!.getBoundingClientRect().top);
+        byRow.set(row, [...(byRow.get(row) ?? []), top]);
+      }
+      expect(byRow.size).toBe(2);
+      for (const tops of byRow.values()) {
+        expect(new Set(tops).size, `${name} value tops ${tops.join(', ')}`).toBe(1);
+      }
     }
   });
 });

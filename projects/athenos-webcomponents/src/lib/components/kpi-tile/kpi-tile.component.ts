@@ -31,6 +31,13 @@ export function hasKpiTrend(spark: readonly number[] | null | undefined): boolea
  * no chrome of its own; the strip draws one card and hairlines between the
  * tiles, so the row reads as one instrument panel.
  *
+ * The label wins (UX tour A-09): it has its line to itself and may take two
+ * lines (then an ellipsis, the full text as its tooltip); the delta sits on
+ * the figure's line, at its far end, in the sans face. In a narrow strip
+ * (two columns) every label keeps the room for two lines, so the figures of
+ * a row stay level. The rule lives here because Home, Reports, My work and
+ * the project overview all draw their figures with this tile.
+ *
  * With `link` the whole cell is the hit area (a stretched link on the
  * label), still drawn as part of the strip.
  *
@@ -68,7 +75,7 @@ export class AthKpiTileComponent {
   /** The figure; `null` (or `undefined`): still loading, drawn as a 48 × 22 skeleton. */
   readonly value = input<number | string | null | undefined>(0);
 
-  /** Pre-formatted delta ("+1", "−2"); `null` hides the badge. */
+  /** Pre-formatted delta ("+1", "−2") on the figure's line; `null` hides the badge. */
   readonly delta = input<string | null | undefined>(null);
   readonly deltaDirection = input<KpiDeltaDirection | null | undefined>(null);
   /** Long form of a compact delta ("+1" → "1 overdue"): tooltip and accessible name. */
@@ -83,8 +90,8 @@ export class AthKpiTileComponent {
 
   /**
    * A small quiet note under the figure ("3 done"), drawn instead of a
-   * trend; one line, ending in an ellipsis when the tile is narrow (the
-   * full text is the tooltip unless `noteTitle` says more).
+   * trend; two lines at most, ending in an ellipsis when the tile is narrow
+   * (the full text is the tooltip unless `noteTitle` says more).
    */
   readonly note = input<string | null | undefined>(null);
   readonly noteTitle = input<string | null | undefined>(null);
@@ -108,6 +115,7 @@ export class AthKpiTileComponent {
   readonly linkLabel = input<string | null>(null);
 
   protected readonly loading = computed(() => this.value() == null);
+  protected readonly hasDelta = computed(() => this.delta() != null);
   protected readonly loadingLabel = computed(() => this.labels.loading());
   protected readonly samples = computed(() => this.spark() ?? null);
   protected readonly showTrend = computed(

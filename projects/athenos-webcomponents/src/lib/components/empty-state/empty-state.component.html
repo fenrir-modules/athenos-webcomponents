@@ -1,3 +1,6 @@
+<!-- One slot for both sizes: a bare <ng-content> in each branch would only
+     ever fill the last one, so the compact state dropped what was projected. -->
+<ng-template #projected><ng-content /></ng-template>
 @if (size() === 'compact') {
   <div class="ath-empty-state ath-empty-state--compact" [class.ath-empty-state--bare]="bare()">
     <div class="ath-empty-state__lead">
@@ -49,7 +52,7 @@
         }
       </ul>
     }
-    <ng-content />
+    <ng-container [ngTemplateOutlet]="projected" />
   </div>
 } @else {
   <div class="ath-empty-state" [class.ath-empty-state--bare]="bare()">
@@ -76,6 +79,6 @@
         }
       </div>
     }
-    <ng-content />
+    <ng-container [ngTemplateOutlet]="projected" />
   </div>
 }

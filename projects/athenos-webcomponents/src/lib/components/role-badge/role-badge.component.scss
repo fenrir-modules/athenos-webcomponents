@@ -34,6 +34,17 @@
     }
   }
 
+  // Owner and Admin in the accent tint, every other role neutral (UX tour
+  // A-06): one role chip on the members pages, the general settings and
+  // the project overview. In the lib, as all four draw it with this badge.
+  &[data-color='accent'] {
+    --_dot: var(--accent);
+
+    border-color: var(--accent-ring);
+    background: var(--accent-faint);
+    color: var(--accent-text);
+  }
+
   &[data-size='sm'] {
     gap: 4px;
     padding: 1px 6px;

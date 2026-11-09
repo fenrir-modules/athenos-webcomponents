@@ -39,6 +39,33 @@ describe('AthRoleBadgeComponent', () => {
     expect(badge().getAttribute('data-color')).toBe('neutral');
   });
 
+  it('draws Owner and Admin in the accent tint; no colour stays neutral (A-06)', () => {
+    render({ name: 'Eigentuemer', color: 'accent' });
+    expect(badge().getAttribute('data-color')).toBe('accent');
+    const probe = document.createElement('span');
+    document.body.append(probe);
+    const token = (name: string, prop: 'color' | 'backgroundColor') => {
+      probe.style.color = '';
+      probe.style.backgroundColor = '';
+      probe.style[prop] = `var(${name})`;
+      return getComputedStyle(probe)[prop];
+    };
+    const style = getComputedStyle(badge());
+    expect(style.backgroundColor).toBe(token('--accent-faint', 'backgroundColor'));
+    expect(getComputedStyle(badge().querySelector('.ath-role-badge__name')!).color).toBe(
+      token('--accent-text', 'color')
+    );
+    expect(getComputedStyle(badge().querySelector('.ath-role-badge__dot')!).backgroundColor).toBe(
+      token('--accent', 'backgroundColor')
+    );
+    // Mitglied: no colour, the neutral look (surface fill, grey dot).
+    fixture.componentRef.setInput('color', null);
+    fixture.detectChanges();
+    expect(badge().getAttribute('data-color')).toBe('neutral');
+    expect(getComputedStyle(badge()).backgroundColor).toBe(token('--surface', 'backgroundColor'));
+    probe.remove();
+  });
+
   it('marks a fixed role with a lock that is read out', () => {
     render({ name: 'Owner', color: 'amber', locked: true, size: 'sm' });
     expect(badge().querySelector('ath-icon')).not.toBeNull();

@@ -1,0 +1,85 @@
+// ===========================================
+// STICKY FIRST COLUMN
+// ===========================================
+// For a table that stays a table on a phone (flags, keys, audit, a table in
+// a doc): the first column, the row's name, stays put while the others
+// scroll under it, and the end edge fades while columns are still hidden
+// there (UX tour B-09). Two tables use it: `<ath-table
+// class="ath-table--sticky">` (opt-in host class, so callers on 0.7.6
+// compile too) and every rendered Markdown table (`.ath-md__table`). Global and in one place, so one copy
+// ships: the rules, the fade width and its keyframes.
+
+// The sticky cells.
+.ath-table--sticky :is(th, td):first-child,
+.ath-md .ath-md__table :is(th, td):first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: var(--z-raised);
+}
+
+// End side: the scroller's edge fades while columns are still hidden there;
+// a table that fits has no fade, the end once reached none. Where the fade
+// cannot follow the scroll there is none (the column still sticks).
+@supports (animation-timeline: scroll()) {
+  .ath-table--sticky .ath-table,
+  .ath-md .ath-md__table {
+    mask-image: linear-gradient(to left, transparent, currentColor var(--_table-fade-end));
+    animation: ath-table-fade linear both;
+    animation-timeline: scroll(self inline);
+  }
+}
+
+// ath-table: opaque on the frame's own fill, so the scrolled columns pass
+// under it; a filled head keeps its band. Flush sits on the page canvas.
+.ath-table--sticky {
+  .ath-table {
+    --_sticky-bg: var(--surface);
+  }
+
+  .ath-table--flush {
+    --_sticky-bg: var(--bg-0);
+  }
+
+  td:first-child,
+  .ath-table--flush th:first-child {
+    background: var(--_sticky-bg);
+  }
+
+  // The row's hover tint over the sticky cell's fill, in step with the row.
+  tr:hover > td:first-child {
+    background: linear-gradient(var(--hover), var(--hover)), var(--_sticky-bg);
+  }
+}
+
+// Markdown: the grid's line at the cell's end. The collapsed border scrolls
+// away with the table, so the sticky cell draws its own instead (hidden wins
+// the collapse, so it is one line at rest too); opaque body cells, the head
+// keeps its fill.
+.ath-md .ath-md__table {
+  :is(th, td):first-child {
+    border-inline-end-style: hidden;
+    box-shadow: inset -1px 0 var(--border);
+  }
+
+  td:first-child {
+    background: var(--surface);
+  }
+}
+
+// The fade's width, driven by the scroller's position.
+@property --_table-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes ath-table-fade {
+  from,
+  92% {
+    --_table-fade-end: 24px;
+  }
+
+  to {
+    --_table-fade-end: 0px;
+  }
+}

@@ -90,8 +90,8 @@ export const LongText: Story = {
 
 /**
  * Notes as on a project's reports: the note sits under the figure in the
- * sans face and ends in an ellipsis when the tile is narrow (the full text
- * is its tooltip). A figure still loading (`null`) is a skeleton.
+ * sans face, two lines at most, then an ellipsis (the full text is its
+ * tooltip). A figure still loading (`null`) is a skeleton.
  */
 export const NotesAndLoading: Story = {
   render: () => ({
@@ -102,6 +102,34 @@ export const NotesAndLoading: Story = {
           <ath-kpi-tile label="Average velocity" value="–" [muted]="true" note="No sprint finished yet" />
           <ath-kpi-tile label="Resolved" [value]="9" note="in the last 7 days" />
           <ath-kpi-tile label="Created" [value]="null" note="in the last 7 days" />
+        </ath-kpi-strip>
+      </div>
+    `,
+  }),
+};
+
+/**
+ * A phone's strip (358 px, two columns), as Home and the reports draw it:
+ * the label wins (UX tour A-09). It may take two lines and every label
+ * keeps the room for two, so the figures of a row stay level; the delta
+ * sits on the figure's line in the sans face; a note wraps instead of
+ * ending mid-word.
+ */
+export const PhoneWidth: Story = {
+  render: () => ({
+    template: `
+      <div style="display:grid;gap:12px;width:358px">
+        <ath-kpi-strip [columns]="4">
+          <ath-kpi-tile label="Zugewiesen" [value]="26" />
+          <ath-kpi-tile label="Diese Woche fällig" [value]="2" />
+          <ath-kpi-tile label="In Prüfung" [value]="8" />
+          <ath-kpi-tile label="Diese Woche fertig" [value]="5" delta="+5 zur Vorwoche" deltaDirection="up" />
+        </ath-kpi-strip>
+        <ath-kpi-strip [columns]="4">
+          <ath-kpi-tile label="Sprint-Fortschritt" value="50 %" note="17 von 34 Punkten erledigt" />
+          <ath-kpi-tile label="Durchschnittliche Velocity" [value]="24" note="Punkte je abgeschlossenem Sprint" />
+          <ath-kpi-tile label="Erledigt" [value]="12" note="in den letzten 7 Tagen" />
+          <ath-kpi-tile label="Erstellt" [value]="16" note="in den letzten 7 Tagen" />
         </ath-kpi-strip>
       </div>
     `,

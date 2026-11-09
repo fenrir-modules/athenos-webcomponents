@@ -10,7 +10,7 @@ const meta: Meta<AthRoleBadgeComponent> = {
   argTypes: {
     color: {
       control: 'select',
-      options: ['neutral', 'blue', 'green', 'amber', 'red', 'purple', 'pink'],
+      options: ['neutral', 'accent', 'blue', 'green', 'amber', 'red', 'purple', 'pink'],
     },
     size: { control: 'inline-radio', options: ['sm', 'md'] },
   },
@@ -21,6 +21,23 @@ type Story = StoryObj<AthRoleBadgeComponent>;
 
 export const Default: Story = {};
 export const Fixed: Story = { args: { name: 'Owner', color: 'amber', locked: true } };
+/**
+ * Roles in two inks (UX tour A-06): the accent tint for Owner and Admin,
+ * neutral for every other member, on every page that shows a role.
+ */
+export const TwoInks: Story = {
+  render: () => ({
+    template: `
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <ath-role-badge name="Eigentümer" color="accent" />
+        <ath-role-badge name="Admin" color="accent" />
+        <ath-role-badge name="Mitglied" />
+        <ath-role-badge name="Eigentümer" color="accent" size="sm" />
+        <ath-role-badge name="Mitglied" size="sm" />
+      </div>
+    `,
+  }),
+};
 /** Every role of a workspace, as in the members list. */
 export const AllColours: Story = {
   render: () => ({

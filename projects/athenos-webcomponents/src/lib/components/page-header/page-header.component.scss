@@ -1,5 +1,8 @@
 // ===========================================
 // ATH-PAGE-HEADER STYLES
+// ViewEncapsulation.None, scoped by the .ath-page-header prefix: the head is
+// in every route, and the scoping attribute on every selector cost more
+// than the compact phone head below adds.
 // ===========================================
 
 .ath-page-header {
@@ -125,13 +128,18 @@
     max-width: 62ch;
   }
 
-  // Centred on the title block, not hung from its top edge (ref 01/05).
+  // On the title line (UX tour A-05): the box is the title's line box and
+  // its buttons are centred in it, so a 28 px button sits level with the
+  // title instead of hanging between title and meta. One measure for every
+  // page head; in the lib because Tickets, Home, Projects, Docs and My work
+  // all draw their head with this component. (A taller button reaches a
+  // few px past the line box; a level-1 head's meta line has the room.)
   &__actions {
     display: flex;
     align-items: center;
-    align-self: center;
     gap: var(--space-2);
     flex-shrink: 0;
+    height: calc(var(--page-title-size) * var(--line-tight));
   }
 }
 
@@ -149,10 +157,53 @@
     &__actions {
       flex-basis: 100%;
       justify-content: flex-start;
+      height: auto;
     }
 
     &__actions:empty {
       display: none;
+    }
+  }
+
+  // Compact phone head (opt-in host class, UX tour A-12): leading, title and
+  // actions in one 44 px row, the title on one line with an ellipsis, the
+  // actions never on a row of their own; the meta line spans the full width
+  // under it. For a page whose head would otherwise take four rows (a
+  // project: key, name, meta, buttons) before its tabs.
+  .ath-page-header--compact {
+    .ath-page-header {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-rows: minmax(44px, auto);
+      align-items: center;
+      gap: 0;
+    }
+
+    // Its children join the head's grid.
+    .ath-page-header__text {
+      display: contents;
+    }
+
+    // Logical, so it overrides the base margin in either direction.
+    .ath-page-header__leading {
+      margin-inline: 0 var(--space-2);
+    }
+
+    // Placed, so it keeps the wide column when there is no leading tile.
+    .ath-page-header__title {
+      grid-column: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ath-page-header__actions {
+      grid-area: 1 / 3;
+      margin-inline-start: var(--space-3);
+    }
+
+    :is(.ath-page-header__sub, .ath-page-header__description) {
+      grid-column: 1 / -1;
     }
   }
 }

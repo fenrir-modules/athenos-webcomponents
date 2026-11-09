@@ -157,7 +157,11 @@
     min-width: 0;
   }
 
-  // Tables: hairline grid, a quiet header row; wide ones scroll sideways.
+  // Tables: hairline grid, a quiet header row; wide ones scroll sideways
+  // with the first column sticky and the edges faded where columns are
+  // still hidden (UX tour B-09): a table in a doc or a ticket description
+  // stays a table on a phone. The sticky part is global, shared with
+  // ath-table--sticky (_sticky-table.scss).
   .ath-md__table {
     margin: 0 0 0.8em;
     overflow-x: auto;
@@ -173,6 +177,9 @@
   td {
     min-width: 60px;
     padding: 6px 10px;
+    // Words stay whole: a narrow table scrolls (first column sticky, above)
+    // instead of breaking "Schlüssel" into "Schlü/ssel".
+    overflow-wrap: break-word;
     border: 1px solid var(--border);
     text-align: left;
     vertical-align: top;

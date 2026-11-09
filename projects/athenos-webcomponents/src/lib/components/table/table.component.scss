@@ -110,6 +110,10 @@
   }
 }
 
+// Sticky first column: <ath-table class="ath-table--sticky"> (UX tour B-09).
+// Global, in styles/_sticky-table.scss: the Markdown tables share it, and
+// one copy ships instead of two.
+
 // -------------------------------------------
 // Compact Toggle in Table
 // -------------------------------------------

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ViewEncapsulation,
   booleanAttribute,
   computed,
   input,
@@ -36,6 +37,8 @@ export type PageHeaderLevel = 1 | 2;
 @Component({
   selector: 'ath-page-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Global, scoped by the .ath-page-header prefix (see the stylesheet).
+  encapsulation: ViewEncapsulation.None,
   templateUrl: './page-header.component.html',
   styleUrl: './page-header.component.scss',
 })

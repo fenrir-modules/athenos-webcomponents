@@ -1,3 +1,5 @@
+<!-- The label has its line to itself (UX tour A-09): two lines at most, the
+     full text as its tooltip. The delta sits on the figure's line below. -->
 <div class="ath-kpi__row">
   @if (link() !== null) {
     <a
@@ -5,6 +7,7 @@
       [routerLink]="routerLink()"
       [queryParams]="linkParams()"
       [attr.aria-label]="linkLabel() ?? label()"
+      [attr.title]="label()"
     >
       @if (dot()) {
         <span class="ath-kpi__dot" [style.background]="dot()" aria-hidden="true"></span>
@@ -12,49 +15,52 @@
       {{ label() }}</a
     >
   } @else {
-    <span class="ath-kpi__label">
+    <span class="ath-kpi__label" [attr.title]="label()">
       @if (dot()) {
         <span class="ath-kpi__dot" [style.background]="dot()" aria-hidden="true"></span>
       }
       {{ label() }}</span
     >
   }
-  @if (delta() !== null && delta() !== undefined) {
-    <span
-      class="ath-kpi__delta"
-      [attr.data-direction]="deltaDirection() ?? 'neutral'"
-      [attr.title]="deltaTitle()"
-      [attr.aria-label]="deltaTitle()"
-      >{{ delta() }}</span
-    >
-  }
 </div>
 
 <div class="ath-kpi__bottom" [class.ath-kpi__bottom--note]="!!note()">
-  @if (loading()) {
-    <!-- The figure is not there yet: a skeleton the size of a number, not
-         a fake "–" or 0. -->
-    <span class="ath-kpi__value ath-kpi__value--loading">
-      <ath-skeleton variant="rectangular" width="48px" height="22px" />
-      <span class="ath-kpi__sr">{{ loadingLabel() }}</span>
-    </span>
-  } @else {
-    <span
-      class="ath-kpi__value"
-      [attr.data-tone]="figureTone()"
-      [class.ath-kpi__value--alert]="alert()"
-      [class.ath-kpi__value--muted]="muted()"
-      >{{ value() }}</span
-    >
-  }
+  <!-- The figure's line: the value, and the delta at its far end. -->
+  <span class="ath-kpi__figure">
+    @if (loading()) {
+      <!-- The figure is not there yet: a skeleton the size of a number, not
+           a fake "–" or 0. -->
+      <span class="ath-kpi__value ath-kpi__value--loading">
+        <ath-skeleton variant="rectangular" width="48px" height="22px" />
+        <span class="ath-kpi__sr">{{ loadingLabel() }}</span>
+      </span>
+    } @else {
+      <span
+        class="ath-kpi__value"
+        [attr.data-tone]="figureTone()"
+        [class.ath-kpi__value--alert]="alert()"
+        [class.ath-kpi__value--muted]="muted()"
+        >{{ value() }}</span
+      >
+    }
+    @if (hasDelta()) {
+      <span
+        class="ath-kpi__delta"
+        [attr.data-direction]="deltaDirection() ?? 'neutral'"
+        [attr.title]="deltaTitle()"
+        [attr.aria-label]="deltaTitle()"
+        >{{ delta() }}</span
+      >
+    }
+  </span>
   @if (note()) {
-    <!-- Under the figure; a narrow tile ends it in an ellipsis, the full
-         text is the tooltip. -->
+    <!-- Under the figure; two lines at most, the full text is the tooltip. -->
     <span class="ath-kpi__note" [attr.title]="noteTitle() ?? note()">{{ note() }}</span>
   } @else if (showTrend()) {
     <ath-sparkline [data]="samples()" [color]="trendColor()" />
-  } @else {
-    <!-- No trend: the slot keeps the sparkline's footprint so tiles line up. -->
+  } @else if (!hasDelta()) {
+    <!-- No trend: the slot keeps the sparkline's footprint so tiles line up
+         (a delta holds the far end instead). -->
     <span class="ath-kpi__spark-slot" aria-hidden="true"></span>
   }
 </div>
