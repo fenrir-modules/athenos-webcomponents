@@ -161,14 +161,23 @@
       },
       "tab": {
         "segment-active-bg": {
-          "$value": "{color.surface.surface-3}",
-          "$description": "Lighter than its bg-2 track, so the active item is raised as in light (was bg-1, which read as punched in)."
+          "$value": "#33333a",
+          "$description": "UX tour A-08/B-12: a visible pill on the bg-2 track (1.26:1; surface-3 was 1.05:1, so only the label said which view was on), with an edge in --segment-active-border."
+        },
+        "segment-active-border": {
+          "$value": "{color.border.border-strong}",
+          "$description": "The active segment's 1px edge: the raise shadow is invisible on dark."
         },
         "segment-active-shadow": {
           "$value": "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4)"
         },
+        "segment-count-active-fg": {
+          "$value": "{color.text.fg-2}",
+          "$description": "On the lighter #33333a pill the accent text on its tint fell under 4.5:1 (blue 3.9); the count reads neutral, as in the neutral preset, and keeps the accent tint."
+        },
         "progress-track": {
-          "$value": "{color.surface.bg-2}"
+          "$value": "#686872",
+          "$description": "UX tour B-12: 3.1:1 on --surface, so an empty bar still reads as a bar (bg-2 was 1.2:1 and a 0 % sprint showed nothing)."
         }
       },
       "brand-mark": {

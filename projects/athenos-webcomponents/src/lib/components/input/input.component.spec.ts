@@ -140,3 +140,70 @@ describe('AthInputComponent wrapped error (P04)', () => {
     expect(icon.top - box.top).toBeLessThan(6); // at the first line, not centred
   });
 });
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthInputComponent],
+  template: `
+    <div style="width:120px;display:grid;gap:8px">
+      <ath-input class="mb" size="sm" type="number" inputId="q-mb"
+        ><span athInputSuffix>MB</span></ath-input
+      >
+      <ath-input class="days" size="sm" type="number" inputId="q-days"
+        ><span athInputSuffix>Tage</span></ath-input
+      >
+      <ath-input class="plain" size="sm" type="number" inputId="q-plain" />
+      <ath-input class="pw" type="password" inputId="q-pw" />
+    </div>
+  `,
+})
+class SuffixHostComponent {}
+
+/** UX tour A-05 (admin-settings-unit-misalign): the unit sits inside the field. */
+describe('AthInputComponent [athInputSuffix]', () => {
+  let fixture: ComponentFixture<SuffixHostComponent>;
+  let root: HTMLElement;
+  const el = (sel: string): HTMLElement => root.querySelector<HTMLElement>(sel)!;
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(SuffixHostComponent);
+    fixture.detectChanges();
+    root = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => fixture.destroy());
+
+  it('renders a projected unit inside the wrapper, at the field end, in fg-3', () => {
+    for (const name of ['mb', 'days']) {
+      const suffix = el(`.${name} .ath-input__suffix`);
+      expect(suffix.parentElement?.classList).toContain('ath-input__wrapper');
+      expect(suffix.querySelector('[athInputSuffix]')).not.toBeNull();
+      const field = el(`.${name} .ath-input__field`).getBoundingClientRect();
+      const unit = suffix.getBoundingClientRect();
+      expect(unit.right, name).toBeLessThanOrEqual(field.right - 8);
+      expect(unit.top, name).toBeGreaterThan(field.top);
+      expect(unit.bottom, name).toBeLessThan(field.bottom);
+      // The value never runs under the unit.
+      const pad = parseFloat(getComputedStyle(el(`.${name} .ath-input__field`)).paddingRight);
+      expect(field.right - pad, name).toBeLessThanOrEqual(unit.left);
+      expect(getComputedStyle(suffix).pointerEvents).toBe('none');
+    }
+  });
+
+  it('keeps one right edge: fields with and without a unit are the same width', () => {
+    const widths = ['mb', 'days', 'plain'].map(
+      (n) => el(`.${n} .ath-input__field`).getBoundingClientRect().right
+    );
+    expect(new Set(widths).size).toBe(1);
+  });
+
+  it('draws nothing without a unit; the password toggle still works', () => {
+    expect(getComputedStyle(el('.plain .ath-input__suffix')).display).toBe('none');
+    expect(getComputedStyle(el('.plain .ath-input__field')).paddingRight).toBe('10px');
+    expect(getComputedStyle(el('.pw .ath-input__suffix')).display).toBe('none');
+    const toggle = el('.pw .ath-input__toggle') as HTMLButtonElement;
+    toggle.click();
+    fixture.detectChanges();
+    expect(el('.pw input').getAttribute('type')).toBe('text');
+  });
+});

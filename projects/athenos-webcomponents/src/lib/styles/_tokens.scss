@@ -89,6 +89,7 @@
   --tab-active-indicator: var(--accent);
   --segment-track-bg: var(--bg-2);
   --segment-active-bg: var(--surface);
+  --segment-active-border: transparent; // A 1px edge drawn inside the active segment (no box change). Light needs none: the white pill and its shadow read on the grey track.
   --segment-active-shadow: var(--shadow-1); // The active segment is raised off its track in both themes.
   --segment-active-fg: var(--fg);
   --segment-count-active-bg: var(--accent-faint);
@@ -445,9 +446,11 @@
   --nav-active-icon: var(--accent);
 
   // color.role.tab
-  --segment-active-bg: var(--surface-3); // Lighter than its bg-2 track, so the active item is raised as in light (was bg-1, which read as punched in).
+  --segment-active-bg: #33333a; // UX tour A-08/B-12: a visible pill on the bg-2 track (1.26:1; surface-3 was 1.05:1, so only the label said which view was on), with an edge in --segment-active-border.
+  --segment-active-border: var(--border-strong); // The active segment's 1px edge: the raise shadow is invisible on dark.
   --segment-active-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
-  --progress-track: var(--bg-2);
+  --segment-count-active-fg: var(--fg-2); // On the lighter #33333a pill the accent text on its tint fell under 4.5:1 (blue 3.9); the count reads neutral, as in the neutral preset, and keeps the accent tint.
+  --progress-track: #686872; // UX tour B-12: 3.1:1 on --surface, so an empty bar still reads as a bar (bg-2 was 1.2:1 and a 0 % sprint showed nothing).
 
   // color.role.control
   --control-mark: var(--ink);

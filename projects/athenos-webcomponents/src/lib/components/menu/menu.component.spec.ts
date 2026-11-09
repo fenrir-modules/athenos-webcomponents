@@ -1,6 +1,7 @@
 import { ApplicationRef, ChangeDetectionStrategy, Component, Directive } from '@angular/core';
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
 import { Pencil } from 'lucide';
+import { page } from 'vitest/browser';
 import { AthButtonComponent } from '../button/button.component';
 import { AthPopoverContentDirective } from '../popover/popover.component';
 import { AthMenuComponent } from './menu.component';
@@ -211,6 +212,25 @@ describe('AthMenuComponent', () => {
     inner.click();
     await settle();
     expect(inner.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  /** UX tour A-03 (mobile-menu-rows-32px): rows a thumb can hit on a phone. */
+  it('keeps 32px rows on the desktop and 44px rows in 14px text at a phone width', async () => {
+    await openWith('click');
+    const separator = q('ath-menu-separator')!;
+    const heights = () => items().map((i) => Math.round(i.getBoundingClientRect().height));
+    expect(items().length).toBe(4);
+    expect(heights().every((h) => h === 32)).toBe(true);
+    expect(separator.getBoundingClientRect().height).toBe(1);
+    try {
+      await page.viewport(390, 844);
+      expect(items().length).toBe(4);
+      expect(heights().every((h) => h >= 44)).toBe(true);
+      expect(getComputedStyle(items()[0]).fontSize).toBe('14px');
+      expect(separator.getBoundingClientRect().height).toBe(1);
+    } finally {
+      await page.viewport(800, 600);
+    }
   });
 });
 

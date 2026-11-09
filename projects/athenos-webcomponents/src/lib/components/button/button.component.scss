@@ -184,17 +184,23 @@
   }
 
   // A destructive action that is not the point of the screen: revoking
-  // one session out of eight, removing one member out of thirty. Solid
-  // red on every row turns a list into a warning sign, so the weight
-  // only arrives on hover — where the pointer has already committed.
+  // one session out of eight, removing one member out of thirty. Red text
+  // at rest, never a red box: it reads as destructive without turning a
+  // list into a warning sign; the tint arrives on hover. A solid red
+  // button (`danger`) only confirms, inside a dialog (UX tour A-01; in the
+  // lib so every row delete changes at once).
   &--danger-ghost {
     background-color: transparent;
-    color: var(--fg-3);
+    color: var(--red-text);
     border-color: transparent;
+
+    // Disabled reads neutral, as before and as outline's disabled state.
+    &:disabled {
+      color: var(--fg-3);
+    }
 
     &:hover:not(:disabled) {
       background-color: var(--red-tint);
-      color: var(--red-text);
     }
 
     &:active:not(:disabled) {

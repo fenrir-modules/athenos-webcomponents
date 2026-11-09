@@ -60,6 +60,20 @@ export const Password: Story = { args: { label: 'Password', type: 'password', pl
 
 export const Small: Story = { args: { size: 'sm' } };
 
+/** A unit inside the field ([athInputSuffix]): with and without one, the fields share one right edge. */
+export const WithUnit: Story = {
+  render: () => ({
+    props: { quota: 1024, days: 7, members: 500 },
+    template: `
+      <div style="width:120px;display:grid;gap:12px">
+        <ath-input label="Storage" size="sm" type="number" [(ngModel)]="quota"><span athInputSuffix>MB</span></ath-input>
+        <ath-input label="Retention" size="sm" type="number" [(ngModel)]="days"><span athInputSuffix>days</span></ath-input>
+        <ath-input label="Members" size="sm" type="number" [(ngModel)]="members" />
+      </div>
+    `,
+  }),
+};
+
 export const LongText: Story = {
   render: () => ({
     props: { value: LONG_TEXT, label: LONG_TEXT },

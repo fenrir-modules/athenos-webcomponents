@@ -165,7 +165,7 @@ export class AthMenuItemComponent {
   selector: 'ath-menu-separator',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: '',
-  styleUrl: './menu-item.component.scss',
+  styleUrl: './menu-separator.component.scss',
   host: { class: 'ath-menu-separator', role: 'separator' },
 })
 export class AthMenuSeparatorComponent {}

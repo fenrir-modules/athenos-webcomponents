@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AthSegmentComponent, type SegmentOption } from './segment.component';
-import { backdrop, inTheme, luminance } from '../../testing/colour';
+import { backdrop, contrast, inTheme, luminance, parseColour } from '../../testing/colour';
 
 const VIEWS: SegmentOption[] = [
   { value: 'list', label: 'List' },
@@ -98,5 +98,33 @@ describe('AthSegmentComponent active item (P04)', () => {
         expect(getComputedStyle(active).boxShadow, theme).not.toBe('none');
       });
     }
+  });
+});
+
+/** UX tour A-08/B-12 (dark-segment-active-pill). */
+describe('AthSegmentComponent active pill in dark', () => {
+  it('is #33333a with a 1px --border-strong edge in dark, no edge in light, same box', () => {
+    const fixture = TestBed.createComponent(SegmentHostComponent);
+    fixture.detectChanges();
+    const host = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('ath-segment')!;
+    const active = host.querySelector<HTMLElement>('.ath-seg__item--active')!;
+    active.style.transition = 'none';
+    const boxes: string[] = [];
+    inTheme('dark', () => {
+      const style = getComputedStyle(active);
+      expect(parseColour(style.backgroundColor)).toEqual([51, 51, 58, 1]);
+      expect(style.boxShadow).toContain('rgb(60, 60, 70) 0px 0px 0px 1px inset');
+      expect(contrast(backdrop(active), backdrop(host))).toBeGreaterThan(1.2);
+      const r = active.getBoundingClientRect();
+      boxes.push(`${r.width}x${r.height}`);
+    });
+    inTheme('light', () => {
+      expect(getComputedStyle(active).boxShadow).toMatch(
+        /^rgba\(0, 0, 0, 0\) 0px 0px 0px 1px inset/
+      );
+      const r = active.getBoundingClientRect();
+      boxes.push(`${r.width}x${r.height}`);
+    });
+    expect(boxes[0]).toBe(boxes[1]);
   });
 });

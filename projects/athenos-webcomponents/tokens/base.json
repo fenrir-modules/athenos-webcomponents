@@ -245,6 +245,10 @@
         "segment-active-bg": {
           "$value": "{color.surface.surface}"
         },
+        "segment-active-border": {
+          "$value": "transparent",
+          "$description": "A 1px edge drawn inside the active segment (no box change). Light needs none: the white pill and its shadow read on the grey track."
+        },
         "segment-active-shadow": {
           "$type": "shadow",
           "$value": "{shadow.shadow-1}",

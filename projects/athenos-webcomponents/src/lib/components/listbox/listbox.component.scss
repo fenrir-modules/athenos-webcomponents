@@ -125,6 +125,13 @@
   &--create {
     color: var(--fg);
   }
+
+  // A phone or a coarse pointer: rows a thumb can hit (32px before; UX
+  // tour A-03). In the lib: every picker and filter list is this listbox.
+  @media (pointer: coarse), (max-width: 639px) {
+    min-height: 44px;
+    contain-intrinsic-size: auto 44px;
+  }
 }
 
 // The highlighted row (aria-activedescendant). Under the pointer, or the

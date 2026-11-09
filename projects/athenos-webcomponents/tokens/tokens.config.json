@@ -402,6 +402,13 @@
       "why": "WCAG 1.4.3 — toast detail line under a title (W5-D)"
     },
     {
+      "fg": "progress-track",
+      "bg": ["surface"],
+      "when": { "theme": "dark" },
+      "min": 3,
+      "why": "WCAG 1.4.11 — an empty progress bar still reads as a bar on its card (UX tour B-12, dark-progress-track-invisible)"
+    },
+    {
       "fg": "control-off-bg",
       "bg": ["surface", "bg-0", "bg-1", "surface-2", "bg-2"],
       "min": 3,

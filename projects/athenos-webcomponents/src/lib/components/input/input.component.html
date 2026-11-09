@@ -29,6 +29,7 @@
       (blur)="onTouched()"
       class="ath-input__field"
     />
+    <span class="ath-input__suffix"><ng-content select="[athInputSuffix]" /></span>
 
     @if (type() === 'password') {
       <button

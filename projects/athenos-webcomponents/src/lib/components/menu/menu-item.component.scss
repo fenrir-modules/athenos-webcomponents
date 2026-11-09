@@ -1,5 +1,5 @@
 // ===========================================
-// ATH-MENU-ITEM / ATH-MENU-SEPARATOR
+// ATH-MENU-ITEM (the separator has its own sheet)
 // ===========================================
 
 @use '../../styles/mixins' as m;
@@ -100,10 +100,11 @@
   white-space: nowrap;
 }
 
-:host(.ath-menu-separator) {
-  display: block;
-  height: 1px;
-  margin: var(--space-1) calc(var(--space-1) * -1);
-  // The panel's own edge colour: --border-faint vanished on the raised panel in dark.
-  background: var(--border-raised);
+// A phone or a coarse pointer: rows a thumb can hit, in 14px text (32px
+// and 13.5px before; UX tour A-03). In the lib: every menu is this item.
+@media (pointer: coarse), (max-width: 639px) {
+  :host(.ath-menu-item) {
+    min-height: 44px;
+    font-size: var(--text-md);
+  }
 }

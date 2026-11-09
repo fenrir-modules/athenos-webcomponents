@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AthPopoverComponent } from '../popover/popover.component';
 import { AthPopoverTriggerDirective } from '../popover/popover-trigger.directive';
+import { parseColour, tokenColour } from '../../testing/colour';
 import { AthDialogComponent } from './dialog.component';
 
 @Component({
@@ -429,5 +430,83 @@ describe('AthDialogComponent uncover', () => {
     el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     fixture.detectChanges();
     expect(fixture.componentInstance.closedCount).toBe(1);
+  });
+});
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AthDialogComponent],
+  template: `
+    <ath-dialog
+      [open]="true"
+      role="alertdialog"
+      size="sm"
+      title="WEB-42 loeschen?"
+      description="Das Ticket wandert in den Papierkorb, wo Owner und Admins es 30 Tage lang wiederherstellen koennen."
+    >
+      @if (body()) {
+        <p class="text">Mit Inhalt</p>
+      }
+      <div slot="footer">
+        <button type="button" class="cancel">Abbrechen</button>
+        <button type="button" class="confirm">Loeschen</button>
+      </div>
+    </ath-dialog>
+  `,
+})
+class ConfirmDialogHostComponent {
+  readonly body = signal(false);
+}
+
+/** UX tour A-01 (cons-13-dialog-cancel-three-variants, tickets-confirm-dialog-gap). */
+describe('AthDialogComponent footer contract', () => {
+  let fixture: ComponentFixture<ConfirmDialogHostComponent>;
+  let root: HTMLElement;
+  const q = (sel: string): HTMLElement => root.querySelector<HTMLElement>(sel)!;
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(ConfirmDialogHostComponent);
+    root = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+    // Measured without the opening scale.
+    q('dialog').style.animation = 'none';
+  });
+
+  afterEach(() => fixture.destroy());
+
+  it('draws no body without projected content: the footer sits 24px under the description', () => {
+    const body = q('.ath-dialog__body');
+    expect(body.childElementCount).toBe(0);
+    expect(getComputedStyle(body).display).toBe('none');
+    expect(getComputedStyle(q('.ath-dialog__header')).paddingBottom).toBe('24px');
+    const gap =
+      q('.ath-dialog__footer').getBoundingClientRect().top -
+      q('.ath-dialog__description').getBoundingClientRect().bottom;
+    expect(Math.round(gap)).toBe(24);
+  });
+
+  it('keeps the body (and the header without bottom padding) when content is projected', () => {
+    fixture.componentInstance.body.set(true);
+    fixture.detectChanges();
+    expect(getComputedStyle(q('.ath-dialog__body')).display).toBe('block');
+    expect(getComputedStyle(q('.ath-dialog__header')).paddingBottom).toBe('0px');
+  });
+
+  it('lays out the footer: right-aligned, 8px apart, white under a hairline', () => {
+    const footer = q('.ath-dialog__footer');
+    const style = getComputedStyle(footer);
+    expect(style.justifyContent).toBe('flex-end');
+    expect(style.columnGap).toBe('8px');
+    expect(style.borderTopWidth).toBe('1px');
+    expect(parseColour(style.backgroundColor)).toEqual(tokenColour('surface'));
+    // The projected wrapper follows the same contract (no page class needed).
+    const wrapper = getComputedStyle(q('[slot=footer]'));
+    expect(wrapper.display).toBe('flex');
+    expect(wrapper.columnGap).toBe('8px');
+    const cancel = q('.cancel').getBoundingClientRect();
+    const confirm = q('.confirm').getBoundingClientRect();
+    expect(Math.round(confirm.left - cancel.right)).toBe(8);
+    const right = footer.getBoundingClientRect().right - parseFloat(style.paddingRight);
+    expect(Math.round(confirm.right)).toBe(Math.round(right));
   });
 });

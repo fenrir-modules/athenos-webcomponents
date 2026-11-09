@@ -44,10 +44,15 @@
 
 // Raised off the track in both themes (dark: a lighter fill and a top
 // highlight; it used to be darker than its track and read as pressed).
+// The edge is an inset ring, so the item keeps its box: transparent in
+// light, --border-strong in dark (UX tour A-08/B-12). In the lib because
+// every segmented switch (views, language, Kommentare/Verlauf) is this one.
 .ath-seg__item--active {
   background: var(--segment-active-bg);
   color: var(--segment-active-fg);
-  box-shadow: var(--segment-active-shadow);
+  box-shadow:
+    inset 0 0 0 1px var(--segment-active-border),
+    var(--segment-active-shadow);
 }
 
 .ath-seg__item--disabled {

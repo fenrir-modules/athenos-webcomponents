@@ -48,7 +48,13 @@ let nextDialogId = 0;
  * `[athDialogHeader]`) goes into the header under the title,
  * `[slot=footer]` (or `[athDialogFooter]`) into the footer. Initial focus:
  * an element with `autofocus`, else the first control in the body/footer,
- * else the close button.
+ * else the close button. With nothing in the default slot (a confirm that
+ * says it all in `title` and `description`) no body is drawn.
+ *
+ * Footer contract (UX tour A-01): one `<div slot="footer">` holding a
+ * `ghost` Cancel, then one `primary` (or `danger` for a destructive
+ * confirm), default size. The dialog lays it out: right-aligned, 8px
+ * apart, on a white footer under a hairline; the page adds no footer class.
  *
  * `bare`: no header, footer, close button or surface. The dialog is a
  * transparent layer over the viewport and the content draws and places its
@@ -61,7 +67,7 @@ let nextDialogId = 0;
  * <ath-dialog [(open)]="isOpen" title="Create item" (closed)="onClose()">
  *   <p>Dialog content here</p>
  *   <div slot="footer">
- *     <ath-button variant="secondary" (clicked)="isOpen = false">Cancel</ath-button>
+ *     <ath-button variant="ghost" (clicked)="isOpen = false">Cancel</ath-button>
  *     <ath-button (clicked)="save()">Save</ath-button>
  *   </div>
  * </ath-dialog>

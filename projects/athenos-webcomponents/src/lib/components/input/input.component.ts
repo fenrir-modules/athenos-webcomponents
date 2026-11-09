@@ -24,9 +24,13 @@ export type InputSize = 'sm' | 'md';
 /**
  * Athenos Input Component
  *
+ * A unit goes inside the field, at its end: project it with
+ * `[athInputSuffix]` (a content selector, no import). Not with a password.
+ *
  * @example
  * <ath-input label="Email" type="email" [(ngModel)]="email" />
  * <ath-input label="Password" type="password" [error]="errorMessage" />
+ * <ath-input size="sm" type="number" [(ngModel)]="quota"><span athInputSuffix>MB</span></ath-input>
  */
 @Component({
   selector: 'ath-input',

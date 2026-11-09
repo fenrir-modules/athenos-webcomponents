@@ -185,20 +185,43 @@
   overflow-y: auto;
   // A modal's own pane (the page behind is locked): the wheel stays in it.
   overscroll-behavior-y: contain;
+
+  // Nothing projected (a confirm: title and description only): no 48px
+  // blank slot; the header keeps its 24px under the text instead.
+  &:empty {
+    display: none;
+  }
 }
 
+.ath-dialog__header:has(+ .ath-dialog__body:empty) {
+  padding-bottom: var(--space-6);
+}
+
+// The footer contract (UX tour A-01), in the lib so every dialog follows
+// it: right-aligned, 8px between the buttons, a white (--surface) footer
+// under a hairline that no page tints.
 .ath-dialog__footer {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-4) var(--space-6);
+  background: var(--surface);
   border-top: 1px solid var(--border);
 
   &:empty {
     display: none;
   }
+}
+
+// The projected `[slot=footer]` / `[athDialogFooter]` wrapper lays out its
+// buttons by the same contract, so a page needs no footer class of its own.
+// Zero specificity: a page that needs another layout still sets it.
+::ng-deep :where(.ath-dialog__footer > *) {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 @keyframes ath-dialog-backdrop-in {

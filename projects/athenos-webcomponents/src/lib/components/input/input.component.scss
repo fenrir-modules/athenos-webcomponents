@@ -70,6 +70,29 @@
   }
 
   // -------------------------------------------
+  // Suffix: a unit ("MB", "Tage") projected with [athInputSuffix]
+  // -------------------------------------------
+  // Inside the field at its end, so fields with and without a unit share
+  // one right edge (UX tour A-05; in the lib so no page places units
+  // itself). Room for a short unit of about four letters.
+  &__suffix {
+    position: absolute;
+    inset-inline-end: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--fg-3);
+    white-space: nowrap;
+    pointer-events: none;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__wrapper:has(.ath-input__suffix:not(:empty)) .ath-input__field {
+    padding-inline-end: 3.5em;
+  }
+
+  // -------------------------------------------
   // Password Toggle
   // -------------------------------------------
   &__toggle {

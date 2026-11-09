@@ -1,0 +1,13 @@
+// ===========================================
+// ATH-MENU-SEPARATOR
+// ===========================================
+// Its own sheet: it used to load all of menu-item.component.scss, a second
+// copy of the item styles in every bundle.
+
+:host {
+  display: block;
+  height: 1px;
+  margin: var(--space-1) calc(var(--space-1) * -1);
+  // The panel's own edge colour: --border-faint vanished on the raised panel in dark.
+  background: var(--border-raised);
+}

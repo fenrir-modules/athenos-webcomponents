@@ -31,7 +31,7 @@ const meta: Meta<AthDialogComponent> = {
         <ath-input label="Title" [required]="true" />
         <div style="margin-top:12px"><ath-option-picker [options]="options" placeholder="Priority" ariaLabel="Priority" /></div>
         <div slot="footer">
-          <ath-button variant="secondary" (clicked)="open = false">Cancel</ath-button>
+          <ath-button variant="ghost" (clicked)="open = false">Cancel</ath-button>
           <ath-button (clicked)="open = false">Create</ath-button>
         </div>
       </ath-dialog>
@@ -68,7 +68,7 @@ export const Confirm: Story = {
     template: `
       <ath-dialog [(open)]="open" role="alertdialog" title="Delete ticket?" description="This cannot be undone." size="sm">
         <div slot="footer">
-          <ath-button variant="secondary" (clicked)="open = false">Cancel</ath-button>
+          <ath-button variant="ghost" (clicked)="open = false">Cancel</ath-button>
           <ath-button variant="danger" (clicked)="open = false">Delete</ath-button>
         </div>
       </ath-dialog>

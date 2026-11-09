@@ -1,7 +1,8 @@
 import type { MockedObject } from 'vitest';
-import { Component, ErrorHandler, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ErrorHandler, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
+import { inTheme, parseColour, tokenColour } from '../../testing/colour';
 import { AthButtonComponent } from './button.component';
 import { runAthAction } from './button.action';
 
@@ -201,6 +202,38 @@ describe('AthButtonComponent', () => {
       hostInner().click();
       expect(host.componentInstance.save).not.toHaveBeenCalled();
     });
+  });
+});
+
+/** UX tour A-01 (admin-ai-ghost-actions): a row delete reads as destructive at rest. */
+describe('danger-ghost', () => {
+  @Component({
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [AthButtonComponent],
+    template: `
+      <ath-button class="rest" variant="danger-ghost">Entfernen</ath-button>
+      <ath-button class="off" variant="danger-ghost" [disabled]="true">Entfernen</ath-button>
+    `,
+  })
+  class DangerGhostHostComponent {}
+
+  it('is red text at rest, never a red box; disabled reads neutral', () => {
+    const fixture = TestBed.createComponent(DangerGhostHostComponent);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const rest = root.querySelector<HTMLButtonElement>('.rest button')!;
+    const off = root.querySelector<HTMLButtonElement>('.off button')!;
+    for (const b of [rest, off]) b.style.transition = 'none';
+    for (const theme of ['light', 'dark'] as const) {
+      inTheme(theme, () => {
+        const style = getComputedStyle(rest);
+        expect(parseColour(style.color), theme).toEqual(tokenColour('red-text'));
+        expect(parseColour(style.backgroundColor)[3], theme).toBe(0);
+        expect(parseColour(style.borderTopColor)[3], theme).toBe(0);
+        expect(parseColour(getComputedStyle(off).color), theme).toEqual(tokenColour('fg-3'));
+      });
+    }
+    fixture.destroy();
   });
 });
 

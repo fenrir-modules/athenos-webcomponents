@@ -22,8 +22,9 @@ export type ButtonVariant =
   | 'outline'
   | 'ghost'
   | 'danger'
-  // Quiet destructive: reads as a neutral ghost until hovered, for
-  // per-row actions where a solid red button would shout.
+  // Quiet destructive: red text at rest, no box (a red tint on hover), for
+  // per-row actions where a solid red button would shout. Solid `danger`
+  // is the confirm inside a dialog.
   | 'danger-ghost'
   // The global create action (topbar "+ New") — green, distinct from the
   // page's own ink primary.

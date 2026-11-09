@@ -7,6 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
+import { page } from 'vitest/browser';
 import { AthListboxComponent, type ListboxOption } from './listbox.component';
 import { AthOptionPickerComponent } from './option-picker.component';
 
@@ -240,6 +241,21 @@ describe('AthListboxComponent', () => {
     expect(document.getElementById(groups[1].getAttribute('aria-labelledby')!)?.textContent).toBe(
       'Other'
     );
+  });
+
+  /** UX tour A-03 (mobile-menu-rows-32px): rows a thumb can hit on a phone. */
+  it('keeps a 32px row minimum on the desktop and 44px rows at a phone width', async () => {
+    const heights = () => options().map((o) => Math.round(o.getBoundingClientRect().height));
+    expect(options().length).toBe(4);
+    expect(getComputedStyle(options()[0]).minHeight).toBe('32px');
+    try {
+      await page.viewport(390, 844);
+      expect(options().length).toBe(4);
+      expect(getComputedStyle(options()[0]).minHeight).toBe('44px');
+      expect(heights().every((h) => h >= 44)).toBe(true);
+    } finally {
+      await page.viewport(800, 600);
+    }
   });
 
   it('handles a few hundred options', () => {
