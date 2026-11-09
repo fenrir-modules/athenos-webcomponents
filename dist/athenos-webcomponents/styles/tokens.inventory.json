@@ -291,6 +291,11 @@
       "type": "color"
     },
     {
+      "name": "--segment-active-border",
+      "path": "color.role.tab.segment-active-border",
+      "type": "color"
+    },
+    {
       "name": "--segment-active-shadow",
       "path": "color.role.tab.segment-active-shadow",
       "type": "shadow"

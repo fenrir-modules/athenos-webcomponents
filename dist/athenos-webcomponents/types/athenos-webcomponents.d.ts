@@ -1850,7 +1850,7 @@ export declare class AthEmptyStateComponent {
   }, {
     "action": "action";
     "secondaryAction": "secondaryAction";
-  }, never, ["*", "*"], true, never>;
+  }, never, ["*"], true, never>;
 }
 /** Path geometry of a sparkline, or `null` below two samples. */
 export interface SparklineGeometry {
@@ -2052,6 +2052,13 @@ export declare function hasKpiTrend(spark: readonly number[] | null | undefined)
  * no chrome of its own; the strip draws one card and hairlines between the
  * tiles, so the row reads as one instrument panel.
  *
+ * The label wins (UX tour A-09): it has its line to itself and may take two
+ * lines (then an ellipsis, the full text as its tooltip); the delta sits on
+ * the figure's line, at its far end, in the sans face. In a narrow strip
+ * (two columns) every label keeps the room for two lines, so the figures of
+ * a row stay level. The rule lives here because Home, Reports, My work and
+ * the project overview all draw their figures with this tile.
+ *
  * With `link` the whole cell is the hit area (a stretched link on the
  * label), still drawn as part of the strip.
  *
@@ -2076,7 +2083,7 @@ export declare class AthKpiTileComponent {
   readonly label: import("@angular/core").InputSignal<string>;
   /** The figure; `null` (or `undefined`): still loading, drawn as a 48 × 22 skeleton. */
   readonly value: import("@angular/core").InputSignal<string | number | null | undefined>;
-  /** Pre-formatted delta ("+1", "−2"); `null` hides the badge. */
+  /** Pre-formatted delta ("+1", "−2") on the figure's line; `null` hides the badge. */
   readonly delta: import("@angular/core").InputSignal<string | null | undefined>;
   readonly deltaDirection: import("@angular/core").InputSignal<KpiDeltaDirection | null | undefined>;
   /** Long form of a compact delta ("+1" → "1 overdue"): tooltip and accessible name. */
@@ -2089,8 +2096,8 @@ export declare class AthKpiTileComponent {
   readonly sparkColor: import("@angular/core").InputSignal<string | null>;
   /**
    * A small quiet note under the figure ("3 done"), drawn instead of a
-   * trend; one line, ending in an ellipsis when the tile is narrow (the
-   * full text is the tooltip unless `noteTitle` says more).
+   * trend; two lines at most, ending in an ellipsis when the tile is narrow
+   * (the full text is the tooltip unless `noteTitle` says more).
    */
   readonly note: import("@angular/core").InputSignal<string | null | undefined>;
   readonly noteTitle: import("@angular/core").InputSignal<string | null | undefined>;
@@ -2111,6 +2118,7 @@ export declare class AthKpiTileComponent {
   /** Accessible name of the link; defaults to the label. */
   readonly linkLabel: import("@angular/core").InputSignal<string | null>;
   protected readonly loading: import("@angular/core").Signal<boolean>;
+  protected readonly hasDelta: import("@angular/core").Signal<boolean>;
   protected readonly loadingLabel: import("@angular/core").Signal<string>;
   protected readonly samples: import("@angular/core").Signal<readonly number[] | null>;
   protected readonly showTrend: import("@angular/core").Signal<boolean>;
@@ -2612,9 +2620,13 @@ export type InputSize = 'sm' | 'md';
 /**
  * Athenos Input Component
  *
+ * A unit goes inside the field, at its end: project it with
+ * `[athInputSuffix]` (a content selector, no import). Not with a password.
+ *
  * @example
  * <ath-input label="Email" type="email" [(ngModel)]="email" />
  * <ath-input label="Password" type="password" [error]="errorMessage" />
+ * <ath-input size="sm" type="number" [(ngModel)]="quota"><span athInputSuffix>MB</span></ath-input>
  */
 export declare class AthInputComponent implements ControlValueAccessor {
   private readonly labels;
@@ -2731,7 +2743,7 @@ export declare class AthInputComponent implements ControlValueAccessor {
       "required": false;
       "isSignal": true;
     };
-  }, {}, never, never, true, never>;
+  }, {}, never, ["[athInputSuffix]"], true, never>;
 }
 /**
  * Select option definition
@@ -3970,9 +3982,12 @@ export type RoleBadgeSize = 'sm' | 'md';
  * A workspace role (or team): a dot in its colour and its name. `locked`
  * adds a lock for the fixed roles (Owner, Admin), read out as "Fixed
  * role". The colour is a palette token or a `#RRGGBB` colour (a team's);
- * anything else draws the neutral dot.
+ * anything else draws the neutral dot. `accent` draws the whole chip in the
+ * accent tint: Owner and Admin, the roles that run a workspace, while every
+ * other role (Mitglied) stays neutral (UX tour A-06).
  *
  * @example
+ * <ath-role-badge name="Owner" color="accent" />
  * <ath-role-badge name="Developer" color="blue" />
  * <ath-role-badge name="Team Web" color="#2f80ed" size="sm" />
  * <ath-role-badge name="Owner" color="amber" [locked]="true" size="sm" />
@@ -3980,14 +3995,17 @@ export type RoleBadgeSize = 'sm' | 'md';
 export declare class AthRoleBadgeComponent {
   private readonly labels;
   readonly name: import("@angular/core").InputSignal<string>;
-  /** A palette token (`AthDecoColor`) or `#RRGGBB`; anything else is neutral. */
+  /**
+   * A palette token (`AthDecoColor`), `accent` (the accent tint, for Owner
+   * and Admin) or `#RRGGBB`; anything else is neutral.
+   */
   readonly color: import("@angular/core").InputSignal<string | null | undefined>;
   readonly size: import("@angular/core").InputSignal<RoleBadgeSize>;
   readonly locked: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
   protected readonly lockIcon: import("lucide").IconNode;
   /** `#RRGGBB` (a team's colour) as the dot's colour; `null` for a token. */
   protected readonly hex: import("@angular/core").Signal<string | null>;
-  protected readonly tone: import("@angular/core").Signal<import("@athenos/webcomponents").AthDecoColor | "custom">;
+  protected readonly tone: import("@angular/core").Signal<import("@athenos/webcomponents").AthDecoColor | "accent" | "custom">;
   protected readonly lockedText: import("@angular/core").Signal<string>;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthRoleBadgeComponent, never>;
   static ɵcmp: i0.ɵɵComponentDeclaration<AthRoleBadgeComponent, "ath-role-badge", never, {
@@ -4138,7 +4156,13 @@ export type DialogRole = 'dialog' | 'alertdialog';
  * `[athDialogHeader]`) goes into the header under the title,
  * `[slot=footer]` (or `[athDialogFooter]`) into the footer. Initial focus:
  * an element with `autofocus`, else the first control in the body/footer,
- * else the close button.
+ * else the close button. With nothing in the default slot (a confirm that
+ * says it all in `title` and `description`) no body is drawn.
+ *
+ * Footer contract (UX tour A-01): one `<div slot="footer">` holding a
+ * `ghost` Cancel, then one `primary` (or `danger` for a destructive
+ * confirm), default size. The dialog lays it out: right-aligned, 8px
+ * apart, on a white footer under a hairline; the page adds no footer class.
  *
  * `bare`: no header, footer, close button or surface. The dialog is a
  * transparent layer over the viewport and the content draws and places its
@@ -4151,7 +4175,7 @@ export type DialogRole = 'dialog' | 'alertdialog';
  * <ath-dialog [(open)]="isOpen" title="Create item" (closed)="onClose()">
  *   <p>Dialog content here</p>
  *   <div slot="footer">
- *     <ath-button variant="secondary" (clicked)="isOpen = false">Cancel</ath-button>
+ *     <ath-button variant="ghost" (clicked)="isOpen = false">Cancel</ath-button>
  *     <ath-button (clicked)="save()">Save</ath-button>
  *   </div>
  * </ath-dialog>

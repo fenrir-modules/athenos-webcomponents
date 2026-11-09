@@ -58,6 +58,7 @@
     "--tab-active-indicator": "var(--accent)",
     "--segment-track-bg": "var(--bg-2)",
     "--segment-active-bg": "var(--surface)",
+    "--segment-active-border": "transparent",
     "--segment-active-shadow": "var(--shadow-1)",
     "--segment-active-fg": "var(--fg)",
     "--segment-count-active-bg": "var(--accent-faint)",
