@@ -85,6 +85,16 @@
   }
 }
 
+// The shimmer of mixins.skeleton-animation, defined once here.
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 // -------------------------------------------
 // Animation Classes
 // -------------------------------------------

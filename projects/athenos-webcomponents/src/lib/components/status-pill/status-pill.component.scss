@@ -25,12 +25,9 @@
   height: 8px;
   border-radius: 999px;
   flex-shrink: 0;
-  // Inner white ring on top of color = elegant donut effect
+  // A plain dot in the category colour: the same mark on every surface,
+  // never a radio-like ring (UX tour A-06, cons-10).
   background: var(--fg-4);
-  box-shadow:
-    inset 0 0 0 2px var(--bg-1),
-    0 0 0 1px currentColor;
-  color: var(--fg-4);
 }
 
 .ath-status-pill__label {
@@ -42,33 +39,28 @@
 :host([data-status='open']) {
   .ath-status-pill__dot {
     background: var(--status-open);
-    color: var(--status-open);
   }
 }
 :host([data-status='prog']),
 :host([data-status='in_progress']) {
   .ath-status-pill__dot {
     background: var(--amber);
-    color: var(--amber);
   }
 }
 :host([data-status='review']),
 :host([data-status='in_review']) {
   .ath-status-pill__dot {
     background: var(--blue);
-    color: var(--blue);
   }
 }
 :host([data-status='done']) {
   .ath-status-pill__dot {
     background: var(--green);
-    color: var(--green);
   }
 }
 :host([data-status='blocked']) {
   .ath-status-pill__dot {
     background: var(--red);
-    color: var(--red);
   }
 }
 :host([data-status='closed']) {
@@ -97,7 +89,6 @@ $status-tones: (
 
     .ath-status-pill__dot {
       background: #{$value};
-      color: #{$value};
     }
   }
 }
