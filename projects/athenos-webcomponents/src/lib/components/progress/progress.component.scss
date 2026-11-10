@@ -22,8 +22,10 @@
     background-color var(--t-base);
 }
 
+// The sans with tabular figures, as the percentages around it (the head's
+// "39 % erledigt"); mono is for keys (UX tour B-07).
 .ath-progress__label {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-feature-settings: 'tnum';
   font-size: 11.5px;
   color: var(--fg-3);

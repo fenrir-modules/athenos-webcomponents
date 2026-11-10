@@ -24,14 +24,14 @@ describe('AthProgressComponent', () => {
     });
   });
 
-  it('paints the track with the token and shows an empty bar with its "0%" label', () => {
+  it('paints the track with the token and shows an empty bar with its "0 %" label', () => {
     const { fixture, el } = render({ value: 0, showLabel: true, ariaLabel: 'Sprint' });
     const track = el.querySelector<HTMLElement>('.ath-progress__track')!;
     const label = el.querySelector<HTMLElement>('.ath-progress__label')!;
     expect(track.getBoundingClientRect().height).toBe(4);
     expect(track.getBoundingClientRect().width).toBeGreaterThan(40);
     expect(track.getAttribute('aria-valuenow')).toBe('0');
-    expect(label.textContent?.trim()).toBe('0%');
+    expect(label.textContent?.trim()).toBe('0\u00a0%');
     inTheme('dark', () => {
       expect(parseColour(getComputedStyle(track).backgroundColor)).toEqual(
         tokenColour('progress-track')

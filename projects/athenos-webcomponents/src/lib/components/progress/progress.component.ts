@@ -39,7 +39,7 @@ export class AthProgressComponent {
   readonly tone = input<ProgressTone>('accent');
   readonly size = input<ProgressSize>('sm');
 
-  /** Show a small `X / Y` (or `X%`) label next to the bar. */
+  /** Show a small `X / Y` (or `X %`) label next to the bar. */
   readonly showLabel = input(false, { transform: booleanAttribute });
 
   /** Optional aria-label for screen readers. */
@@ -59,6 +59,8 @@ export class AthProgressComponent {
     if (total != null) {
       return `${Math.round(this.value())} / ${total}`;
     }
-    return `${Math.round(this.pct())}%`;
+    // "39 %" with a no-break space, as every other percentage in the app
+    // ("39 % erledigt"); the bare "39%" read as a second notation.
+    return `${Math.round(this.pct())}\u00a0%`;
   });
 }
