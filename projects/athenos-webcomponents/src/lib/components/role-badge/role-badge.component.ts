@@ -4,11 +4,12 @@ import {
   booleanAttribute,
   computed,
   input,
+  type Signal,
 } from '@angular/core';
 import { AthIconComponent } from '../icon/icon.component';
 import { Lock } from 'lucide';
 import { injectAthLabels } from '../../i18n/labels';
-import { isAthDecoColor } from '../color-swatch/deco-color';
+import { isAthDecoColor, type AthDecoColor } from '../color-swatch/deco-color';
 
 /** A colour as a team stores it. */
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
@@ -55,7 +56,12 @@ export class AthRoleBadgeComponent {
     const color = this.color();
     return typeof color === 'string' && HEX_COLOR.test(color) ? color : null;
   });
-  protected readonly tone = computed(() => {
+  /**
+   * The chip's `data-color`. Typed as written so the printed d.ts does not
+   * depend on the order the compiler met the union's members in (a clean
+   * build and an incremental one printed it differently).
+   */
+  protected readonly tone: Signal<AthDecoColor | 'accent' | 'custom'> = computed(() => {
     const color = this.color();
     if (this.hex()) return 'custom';
     if (color === 'accent') return 'accent';

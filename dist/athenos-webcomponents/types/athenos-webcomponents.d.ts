@@ -4004,9 +4004,14 @@ export declare class AthRoleBadgeComponent {
   readonly locked: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
   protected readonly lockIcon: import("lucide").IconNode;
   /** `#RRGGBB` (a team's colour) as the dot's colour; `null` for a token. */
-  protected readonly hex: import("@angular/core").Signal<string | null>;
-  protected readonly tone: import("@angular/core").Signal<"accent" | import("@athenos/webcomponents").AthDecoColor | "custom">;
-  protected readonly lockedText: import("@angular/core").Signal<string>;
+  protected readonly hex: Signal<string | null>;
+  /**
+   * The chip's `data-color`. Typed as written so the printed d.ts does not
+   * depend on the order the compiler met the union's members in (a clean
+   * build and an incremental one printed it differently).
+   */
+  protected readonly tone: Signal<AthDecoColor | 'accent' | 'custom'>;
+  protected readonly lockedText: Signal<string>;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthRoleBadgeComponent, never>;
   static ɵcmp: i0.ɵɵComponentDeclaration<AthRoleBadgeComponent, "ath-role-badge", never, {
     "name": {
