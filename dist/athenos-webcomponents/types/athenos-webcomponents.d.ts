@@ -2305,7 +2305,7 @@ export declare class AthProgressComponent {
   readonly total: import("@angular/core").InputSignal<number | null>;
   readonly tone: import("@angular/core").InputSignal<ProgressTone>;
   readonly size: import("@angular/core").InputSignal<ProgressSize>;
-  /** Show a small `X / Y` (or `X%`) label next to the bar. */
+  /** Show a small `X / Y` (or `X %`) label next to the bar. */
   readonly showLabel: import("@angular/core").InputSignalWithTransform<boolean, unknown>;
   /** Optional aria-label for screen readers. */
   readonly ariaLabel: import("@angular/core").InputSignal<string | null>;
@@ -4005,7 +4005,7 @@ export declare class AthRoleBadgeComponent {
   protected readonly lockIcon: import("lucide").IconNode;
   /** `#RRGGBB` (a team's colour) as the dot's colour; `null` for a token. */
   protected readonly hex: import("@angular/core").Signal<string | null>;
-  protected readonly tone: import("@angular/core").Signal<import("@athenos/webcomponents").AthDecoColor | "accent" | "custom">;
+  protected readonly tone: import("@angular/core").Signal<"accent" | import("@athenos/webcomponents").AthDecoColor | "custom">;
   protected readonly lockedText: import("@angular/core").Signal<string>;
   static ɵfac: i0.ɵɵFactoryDeclaration<AthRoleBadgeComponent, never>;
   static ɵcmp: i0.ɵɵComponentDeclaration<AthRoleBadgeComponent, "ath-role-badge", never, {
